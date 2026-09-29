@@ -20,6 +20,8 @@ Registro das decisões tomadas até 29/09/2026. Mudar qualquer uma exige uma nov
 | D14 | Escopos de permissão mínimos, cada um justificado aqui | Menos acesso, menos risco |
 | D15 | O código pode ser aberto; a licença será escolhida com o advogado | Confiança da cliente; a renda vem do serviço |
 | D16 | `.clasp.json` fica fora do Git; o repositório traz só `.clasp.json.exemplo` (29/09/2026) | O ID do projeto é um identificador real (ver `SEGURANCA-LGPD.md`); cada pessoa aponta para o próprio projeto de teste |
+| D17 | Nenhuma cobrança nasce de preço não validado: preço ausente ou zero só gera aviso na configuração, mas `precoParaCobranca` (`src/Configuracoes.js`) bloqueia a cobrança. Cortesia é escolha explícita, nunca um preço zero. A aba guarda centavos inteiros; na interface final (T08) ela digita R$ 150,00 e o sistema converte para 15000 (29/09/2026) | Configuração incompleta não pode virar cobrança de R$ 0,00 por acidente; "150,00" no campo em centavos seria ambíguo |
+| D18 | A coluna `valor` da aba Configurações é gravada como texto puro pelo instalador. Campo textual (principalmente `chave_pix`) que chegar como número, data ou verdadeiro/falso é rejeitado. Valor já alterado pelo Planilhas nunca é consertado sozinho: nada de completar zeros nem multiplicar preços; a nutricionista confere e digita de novo (29/09/2026) | O Planilhas converte sozinho o que parece número ou data (CPF e telefone perdem zeros à esquerda). Não dá para saber o valor original, e uma chave Pix "consertada" errada faria o paciente pagar à pessoa errada |
 
 ## Escopos de permissão
 
