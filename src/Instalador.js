@@ -7,6 +7,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Kit do Consultório')
     .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
+    .addItem('Testar alerta de falha', 'testarAlertaDeFalha')
     .addToUi();
 }
 
