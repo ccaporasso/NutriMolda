@@ -1,0 +1,15 @@
+# Configuração local do clasp: aponta para um projeto real, fica fora do Git.
+.clasp.json
+.clasprc.json
+
+# Dados exportados (CSV, planilhas, PDFs) nunca vão para o repositório.
+*.csv
+*.xlsx
+*.pdf
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
