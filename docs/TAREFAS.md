@@ -9,7 +9,7 @@ Situação: a fazer · em andamento · feita.
 | # | Tarefa | Dono | Depende de | Critérios de aceite | Situação |
 |---|---|---|---|---|---|
 | T00 | Estrutura do repositório: `src/`, `tests/`, `appsscript.json` com fuso `America/Sao_Paulo` e escopos mínimos, `.clasp.json` apontando para o projeto de teste, `.gitignore` | Ambos | Primeiros passos | `node --test` roda (mesmo sem testes); `clasp` envia para o projeto de teste | em andamento: estrutura pronta e `node --test` passando; falta você ligar o `clasp` ao projeto de teste e enviar (ver `PRIMEIROS-PASSOS.md`, passo 8) |
-| T01 | Instalador da planilha: cria as abas e cabeçalhos da especificação, validações (listas de status e formas) e proteção dos cabeçalhos | Code | T00 | Rodar duas vezes não duplica nada; abas iguais à especificação | a fazer |
+| T01 | Instalador da planilha: cria as abas e cabeçalhos da especificação, validações (listas de status e formas) e proteção dos cabeçalhos | Code | T00 | Rodar duas vezes não duplica nada; abas iguais à especificação | feita no código (testes passando); falta você testar na planilha de teste |
 | T02 | Leitura e validação das Configurações, com mensagens claras quando faltar algo | Code | T01 | Testes cobrem chave ausente, valor inválido e nome Pix longo demais | a fazer |
 | T03 | Registro e alerta de falha: função única de log e e-mail de erro, sem dados de paciente | Code | T01 | Um erro forçado aparece no Registro e gera e-mail na conta de teste | a fazer |
 | T04 | Gerador de dados de teste: pacientes e eventos inventados na agenda de TESTE | Code | T01 | Cria e apaga os dados de teste com um comando; nunca roda fora da conta de teste | a fazer |
