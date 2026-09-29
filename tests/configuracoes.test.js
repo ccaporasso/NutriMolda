@@ -234,3 +234,72 @@ test('sem configuração ou tipo desconhecido, a cobrança é bloqueada', () => 
   assert.throws(() => precoParaCobranca(linhasValidas(), 'cortesia'), /Tipo de consulta inválido/);
   assert.throws(() => precoParaCobranca({ valor_primeira_consulta_centavos: 100 }, undefined), /Tipo de consulta inválido/);
 });
+
+// Preservar como texto e rejeitar tipos incompatíveis nos campos textuais.
+const CHAVES_TEXTO = ['nome_profissional', 'crn', 'chave_pix', 'nome_recebedor_pix', 'cidade_recebedor_pix',
+  'calendario_id', 'prefixo_evento_consulta', 'email_alertas', 'id_modelo_recibo', 'id_pasta_recibos'];
+
+test('chave Pix que chega como número é rejeitada, sem corrigir e sem repetir o valor', () => {
+  const r = validarConfiguracoes(com('chave_pix', 12345678901));
+  assert.equal(r.erros.length, 1);
+  assert.match(r.erros[0], /"chave_pix" foi guardada como número/);
+  assert.match(r.erros[0], /Nada foi corrigido automaticamente/);
+  assert.ok(!r.erros[0].includes('12345678901'));
+  assert.equal(r.config.chave_pix, null);
+});
+
+test('chave Pix que chega como data ou verdadeiro/falso é rejeitada', () => {
+  const data = validarConfiguracoes(com('chave_pix', new Date(2026, 0, 5)));
+  assert.match(data.erros[0], /guardada como data/);
+  const logico = validarConfiguracoes(com('chave_pix', true));
+  assert.match(logico.erros[0], /guardada como verdadeiro\/falso/);
+  assert.equal(data.config.chave_pix, null);
+  assert.equal(logico.config.chave_pix, null);
+});
+
+test('todo campo textual rejeita número, data e verdadeiro/falso', () => {
+  for (const chave of CHAVES_TEXTO) {
+    for (const valor of [12345, 0, new Date(0), false]) {
+      const r = validarConfiguracoes(com(chave, valor));
+      assert.equal(r.erros.length, 1, `${chave}: ${String(valor)}`);
+      assert.match(r.erros[0], new RegExp(`"${chave}" foi guardada como`));
+      assert.equal(r.config[chave], null);
+    }
+  }
+});
+
+test('zeros à esquerda são preservados quando o valor chega como texto', () => {
+  const cpf = '00123456789';
+  const r = validarConfiguracoes(com('chave_pix', cpf));
+  assert.deepEqual(r.erros, []);
+  assert.strictEqual(r.config.chave_pix, cpf);
+  const telefone = validarConfiguracoes(com('chave_pix', '+5511999990000'));
+  assert.strictEqual(telefone.config.chave_pix, '+5511999990000');
+  const crn = validarConfiguracoes(com('crn', '000123'));
+  assert.strictEqual(crn.config.crn, '000123');
+});
+
+test('número no lugar de texto nunca é "consertado" com zeros ou formatação', () => {
+  // 123456789 poderia ter sido 00123456789: não dá para saber, então rejeita.
+  const r = validarConfiguracoes(com('chave_pix', 123456789));
+  assert.equal(r.config.chave_pix, null);
+  assert.equal(r.erros.length, 1);
+});
+
+test('preço já alterado pelo Planilhas não é multiplicado nem ganha zeros', () => {
+  // "150,00" digitado em célula automática vira o número 150: fica 150 centavos, com aviso.
+  const r = validarConfiguracoes(com('valor_primeira_consulta_centavos', 150));
+  assert.strictEqual(r.config.valor_primeira_consulta_centavos, 150);
+  assert.equal(r.avisos.length, 1);
+  assert.throws(() => precoParaCobranca({ valor_primeira_consulta_centavos: 0 }, 'primeira'));
+  // Data (ex.: "1/5") no preço: erro, sem tentar reaproveitar.
+  const data = validarConfiguracoes(com('valor_retorno_centavos', new Date(2026, 4, 1)));
+  assert.equal(data.erros.length, 1);
+  assert.equal(data.config.valor_retorno_centavos, null);
+});
+
+test('preço digitado como texto puro mantém "150,00" como erro (sem ambiguidade)', () => {
+  const r = validarConfiguracoes(com('valor_primeira_consulta_centavos', '150,00'));
+  assert.equal(r.erros.length, 1);
+  assert.equal(r.config.valor_primeira_consulta_centavos, null);
+});

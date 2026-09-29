@@ -117,3 +117,8 @@ test('CPF, telefone e códigos ficam como texto', () => {
   const pac = ABAS.find((a) => a.nome === 'Pacientes');
   assert.deepEqual(colunasDeTexto(pac), [1, 4]);
 });
+
+test('a coluna valor de Configurações também fica como texto (posição B)', () => {
+  const config = ABAS.find((a) => a.nome === 'Configurações');
+  assert.deepEqual(colunasDeTexto(config), [2]);
+});

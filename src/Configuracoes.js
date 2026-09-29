@@ -64,6 +64,13 @@ function textoDe_(valor) {
   return typeof valor === 'string' ? valor.trim() : String(valor);
 }
 
+function descreverTipo_(valor) {
+  if (typeof valor === 'number') return 'número';
+  if (typeof valor === 'boolean') return 'verdadeiro/falso';
+  if (Object.prototype.toString.call(valor) === '[object Date]') return 'data';
+  return 'outro tipo de dado';
+}
+
 function validarPreco_(chave, valor, erros, avisos) {
   if (ehVazio_(valor)) {
     avisos.push(`"${chave}" não foi preenchida. Nenhuma cobrança desse tipo será criada até você informar o preço.`);
@@ -111,6 +118,15 @@ function validarTexto_(chave, valor, erros, avisos) {
       return PADROES_CONFIGURACAO[chave];
     }
     avisos.push(`"${chave}" não foi preenchida. ${AVISOS_SE_VAZIO[chave]}`);
+    return null;
+  }
+  // Campo de texto que chega como número, data ou verdadeiro/falso foi mudado
+  // pelo Planilhas (ex.: zeros à esquerda perdidos). Não dá para saber o original:
+  // nada é "consertado" aqui; ela confere e digita de novo.
+  if (typeof valor !== 'string') {
+    erros.push(`"${chave}" foi guardada como ${descreverTipo_(valor)}, mas este campo precisa ser texto. `
+      + 'O Planilhas pode ter mudado o conteúdo (por exemplo, tirado zeros do começo). '
+      + 'Nada foi corrigido automaticamente: apague, digite o valor de novo e confira.');
     return null;
   }
   const texto = textoDe_(valor);
