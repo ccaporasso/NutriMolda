@@ -24,6 +24,9 @@ function instalarPlanilha() {
       folha.setFrozenRows(1);
       folha.getRange(1, 1, 1, aba.cabecalho.length).setFontWeight('bold');
       aplicarValidacoes_(folha, aba);
+      for (const coluna of colunasDeTexto(aba)) {
+        folha.getRange(1, coluna, folha.getMaxRows(), 1).setNumberFormat('@');
+      }
       protegerCabecalho_(folha, aba);
     }
   }
@@ -32,7 +35,7 @@ function instalarPlanilha() {
     folha.getRange(folha.getLastRow() + 1, 1, plano.chavesNovas.length, 2).setValues(plano.chavesNovas);
   }
   // Remove a aba padrão vazia criada pelo Google, se sobrou.
-  const padrao = planilha.getSheetByName('Página1') || planilha.getSheetByName('Sheet1');
+  const padrao = planilha.getSheets().find((f) => /^(Página ?1|Sheet ?1|Hoja ?1)$/.test(f.getName()));
   if (padrao && planilha.getSheets().length > 1 && padrao.getLastRow() === 0) planilha.deleteSheet(padrao);
 
   const resumo = `Abas criadas: ${plano.criarAbas.length}. Chaves de configuração novas: ${plano.chavesNovas.length}.`;
@@ -46,7 +49,7 @@ function lerEstadoAtual_(planilha) {
     if (!folha) continue;
     const largura = aba.cabecalho.length;
     estado[aba.nome] = {
-      cabecalho: folha.getRange(1, 1, 1, largura).getValues()[0],
+      cabecalho: folha.getRange(1, 1, 1, Math.min(largura, folha.getMaxColumns())).getValues()[0],
       chaves: aba.nome === 'Configurações' && folha.getLastRow() > 1
         ? folha.getRange(2, 1, folha.getLastRow() - 1, 1).getValues().map((l) => String(l[0]))
         : [],

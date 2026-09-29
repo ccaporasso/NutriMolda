@@ -27,6 +27,10 @@ const CONFIGURACOES_INICIAIS = [
   ['id_pasta_recibos', ''],
 ];
 
+// Colunas que guardam identificadores: ficam como texto para o Google não
+// tirar o zero à esquerda (CPF, telefone, códigos).
+const COLUNAS_TEXTO = ['codigo', 'codigo_paciente', 'telefone', 'pagador_cpf', 'id_evento', 'id'];
+
 // `validacoes`: coluna do cabeçalho -> nome da lista em LISTAS.
 const ABAS = [
   { nome: 'Configurações', cabecalho: ['chave', 'valor'], validacoes: {} },
@@ -84,8 +88,10 @@ function planejarInstalacao(existente) {
       plano.avisos.push(`A aba "${aba.nome}" tem cabeçalho diferente do esperado. Não foi alterada; confira com o suporte.`);
     }
   }
+  // Se Configurações tem cabeçalho estranho, não acrescenta nada nela.
+  const configComAviso = plano.avisos.some((a) => a.includes('"Configurações"'));
   const chavesExistentes = new Set((existente['Configurações'] || {}).chaves || []);
-  for (const [chave, valor] of CONFIGURACOES_INICIAIS) {
+  if (!configComAviso) for (const [chave, valor] of CONFIGURACOES_INICIAIS) {
     if (!chavesExistentes.has(chave)) plano.chavesNovas.push([chave, valor]);
   }
   return plano;
@@ -99,6 +105,13 @@ function colunasComValidacao(aba) {
   }));
 }
 
+// Posições (1 = A) das colunas de texto de uma aba.
+function colunasDeTexto(aba) {
+  return aba.cabecalho
+    .map((nome, i) => (COLUNAS_TEXTO.includes(nome) ? i + 1 : 0))
+    .filter((n) => n > 0);
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { LISTAS, CONFIGURACOES_INICIAIS, ABAS, planejarInstalacao, colunasComValidacao };
+  module.exports = { colunasDeTexto, LISTAS, CONFIGURACOES_INICIAIS, ABAS, planejarInstalacao, colunasComValidacao };
 }

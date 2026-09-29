@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
-  LISTAS, CONFIGURACOES_INICIAIS, ABAS, planejarInstalacao, colunasComValidacao,
+  colunasDeTexto, LISTAS, CONFIGURACOES_INICIAIS, ABAS, planejarInstalacao, colunasComValidacao,
 } = require('../src/Esquema.js');
 
 const espec = fs.readFileSync(path.join(__dirname, '..', 'docs', 'ESPECIFICACAO.md'), 'utf8');
@@ -100,4 +100,20 @@ test('aba existente com cabeçalho vazio recebe o cabeçalho', () => {
   const estado = aplicar({}, planejarInstalacao({}));
   estado.Pacotes.cabecalho = ['', '', '', '', ''];
   assert.deepEqual(planejarInstalacao(estado).escreverCabecalho, ['Pacotes']);
+});
+
+test('cabeçalho estranho em Configurações: não acrescenta chaves', () => {
+  const estado = aplicar({}, planejarInstalacao({}));
+  estado['Configurações'].cabecalho = ['x', 'y'];
+  estado['Configurações'].chaves = [];
+  const plano = planejarInstalacao(estado);
+  assert.deepEqual(plano.chavesNovas, []);
+  assert.equal(plano.avisos.length, 1);
+});
+
+test('CPF, telefone e códigos ficam como texto', () => {
+  const pag = ABAS.find((a) => a.nome === 'Pagamentos');
+  assert.deepEqual(colunasDeTexto(pag), [1, 2, 3, 5]);
+  const pac = ABAS.find((a) => a.nome === 'Pacientes');
+  assert.deepEqual(colunasDeTexto(pac), [1, 4]);
 });
