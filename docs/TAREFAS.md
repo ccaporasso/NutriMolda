@@ -19,7 +19,7 @@ Situação: a fazer · em andamento · feita.
 | T08 | Menu na planilha: sincronizar, marcar pago/faltou/cortesia/pacote, gerar Pix, gerar recibo, relatório do mês | Code | T07 | Cada item do menu funciona na conta de teste | feita no código (testes passando com Google simulado); falta validar cada item na conta de teste (ver `docs/VALIDACAO-NO-GOOGLE.md`) |
 | T09 | Recibo em PDF a partir do modelo no Docs | Ambos | T07 | PDF com todos os campos obrigatórios salvo na pasta configurada | feita no código (testes passando); falta validar no Google, principalmente o escopo `drive.file` (ver `docs/VALIDACAO-NO-GOOGLE.md` e D20) |
 | T10 | Relatório mensal do carnê-leão: aba e CSV por pagador | Code | T07 | Totais batem com a soma manual dos dados de teste | feita no código (testes passando, totais conferidos à mão nos testes); falta validar no Google (ver `docs/VALIDACAO-NO-GOOGLE.md`) |
-| T11 | Manual de operação da nutricionista e seu manual de suporte | Code | T08 | Passo a passo para instalar, usar o menu e resolver as 5 falhas mais prováveis | a fazer |
+| T11 | Manual de operação da nutricionista e seu manual de suporte | Code | T08 | Passo a passo para instalar, usar o menu e resolver as 5 falhas mais prováveis | feita: `docs/MANUAL-NUTRICIONISTA.md` e `docs/MANUAL-SUPORTE.md`; falta você ler e testar o passo a passo na conta de teste |
 
 ## Fase 1 — Agenda sem código (feita à mão, com a cliente)
 

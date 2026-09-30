@@ -10,6 +10,12 @@ Solução para consultórios de nutrição que roda **dentro da conta Google de 
 - `tests/` — testes da lógica pura, rodados com `node --test`, sem dependências.
 - `docs/` — especificação, tarefas, decisões, segurança e manutenção.
 
+## Manuais
+
+- `docs/MANUAL-NUTRICIONISTA.md`: uso no dia a dia.
+- `docs/MANUAL-SUPORTE.md`: instalação, atualização e falhas comuns.
+- `docs/VALIDACAO-NO-GOOGLE.md`: o que está implementado e o que ainda precisa ser conferido no Google.
+
 ## Por onde começar
 
 1. Leia `docs/PRIMEIROS-PASSOS.md` e faça a parte manual.
