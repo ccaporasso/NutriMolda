@@ -139,11 +139,20 @@ function planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, origemTeste 
   const daAgendaDeTeste = (c) => !!c.origem && !!origemTeste && c.origem === origemTeste;
   const comIdDeTeste = consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)));
   const consultasGeradas = comIdDeTeste.filter(daAgendaDeTeste);
-  const ids = new Set(consultasGeradas.map((c) => String(c.id_evento)));
+  // Pagamento só sai se o id NÃO aparece em nenhuma consulta preservada (sem origem ou de outra agenda) e o código bate (R03l).
+  const idsAmbiguos = new Set(comIdDeTeste.filter((c) => !daAgendaDeTeste(c)).map((c) => String(c.id_evento)));
+  const codigoPorId = new Map(consultasGeradas.map((c) => [String(c.id_evento), String(c.codigo_paciente || '')]));
+  const vinculoInequivoco = (p) => {
+    const id = String(p.id_evento);
+    if (!codigoPorId.has(id) || idsAmbiguos.has(id)) return false;
+    const cp = String(p.codigo_paciente || '');
+    const cc = codigoPorId.get(id);
+    return !cp || !cc || cp === cc;
+  };
   return {
     Pacientes: descendente(pacientes.filter(ehPacienteGerado)),
     Consultas: descendente(consultasGeradas),
-    Pagamentos: descendente(pagamentos.filter((p) => ids.has(String(p.id_evento)))),
+    Pagamentos: descendente(pagamentos.filter(vinculoInequivoco)),
     Pacotes: [],
   };
 }

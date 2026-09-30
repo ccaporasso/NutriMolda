@@ -237,3 +237,25 @@ test('R03k: erro de leitura na pré-conferência interrompe antes de gravar paci
   assert.equal(dados.Pacientes.length, 2);
   assert.equal(eventos.size, 0);
 });
+
+test('R03l: pagamento com id repetido em consulta preservada, ou com código divergente, não é apagado', () => {
+  const id = D.idEventoTeste(0);
+  const dupla = D.planejarLimpezaDeTeste({
+    pacientes: [], origemTeste: 'ateste',
+    consultas: [{ linha: 2, id_evento: id, origem: 'ateste', codigo_paciente: 'P9001' }, { linha: 3, id_evento: id, origem: '', codigo_paciente: 'P0001' }],
+    pagamentos: [{ linha: 2, id_evento: id, codigo_paciente: 'P0001' }],
+  });
+  assert.deepEqual(dupla, { Pacientes: [], Consultas: [2], Pagamentos: [], Pacotes: [] });
+  const outraOrigem = D.planejarLimpezaDeTeste({
+    pacientes: [], origemTeste: 'ateste',
+    consultas: [{ linha: 2, id_evento: id, origem: 'ateste', codigo_paciente: 'P9001' }, { linha: 3, id_evento: id, origem: 'aoutra', codigo_paciente: 'P9001' }],
+    pagamentos: [{ linha: 2, id_evento: id, codigo_paciente: 'P9001' }],
+  });
+  assert.deepEqual(outraOrigem.Pagamentos, []);
+  const divergente = D.planejarLimpezaDeTeste({
+    pacientes: [], origemTeste: 'ateste',
+    consultas: [{ linha: 2, id_evento: id, origem: 'ateste', codigo_paciente: 'P9001' }],
+    pagamentos: [{ linha: 2, id_evento: id, codigo_paciente: 'P0001' }, { linha: 3, id_evento: id, codigo_paciente: 'P9001' }],
+  });
+  assert.deepEqual(divergente.Pagamentos, [3]);
+});

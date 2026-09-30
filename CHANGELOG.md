@@ -2,6 +2,8 @@
 
 ## [não lançado]
 
+- 2026-09-30: revisão de 9e847b9 (R03l): a limpeza de teste não apaga pagamento cujo id de evento também está em consulta preservada (sem origem ou de outra agenda) nem pagamento com código de paciente divergente. Teste em `tests/dados-teste.test.js`.
+
 - 2026-09-30: revisão de a2ffd09 (R03i, R03k): limpeza de dados de teste não apaga mais consulta/pagamento com origem vazia (linha de versão antiga) e avisa quantas ficaram; a criação de dados de teste para na pré-conferência quando a leitura da agenda falha por outro motivo que "não encontrado". Confirmação do apagador não anuncia mais Pacotes. Decisão D29; testes em `tests/dados-teste.test.js`.
 
 - 2026-09-29: estrutura inicial de documentação criada (especificação, tarefas, decisões, segurança, manutenção).
