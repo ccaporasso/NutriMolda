@@ -31,7 +31,7 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 **Implementado:** validação dos dados, montagem dos campos, cópia do modelo, troca dos campos, PDF na pasta, cópia de trabalho na lixeira, link gravado, não gera recibo duas vezes, recusa modelo com campo desconhecido, criação do modelo e da pasta.
 
 **Validar no Google (o mais arriscado do lote):**
-1. **Escopo `drive.file`:** rode "Criar modelo e pasta de recibos", preencha um pagamento pago (Pix, `pagador_nome`, `data_pagamento` AAAA-MM-DD) e use "Gerar recibo da linha selecionada". O PDF deve aparecer na pasta. Se o Google disser "arquivo não encontrado" ou pedir permissão maior, `drive.file` não basta e é preciso decidir com você (D20).
+1. **Escopo `drive.file`:** rode "Criar modelo e pasta de recibos", preencha um pagamento pago (Pix, `pagador_nome`, `data_pagamento` AAAA-MM-DD) e use "Gerar recibo em PDF" (submenu Pagamento). O PDF deve aparecer na pasta. Se o Google disser "arquivo não encontrado" ou pedir permissão maior, `drive.file` não basta e é preciso decidir com você (D20).
 2. Confira no PDF: nome e CRN, pagador, CPF (se preenchido), valor, data, descrição, forma. Sem CPF, a linha some.
 3. Confira que o nome do arquivo é `Recibo-PG000001-P9001.pdf` e que não sobrou o arquivo `rascunho-...` fora da lixeira.
 4. A troca de campos no Docs (`replaceText`) foi testada só em simulação; confira que valores com acento e vírgula (R$ 1.234,56) saem certos.

@@ -42,7 +42,7 @@ test('há um evento de paciente desconhecido, passado e futuro, primeira e retor
 });
 
 test('trava: agenda principal e ids vazios são recusados', () => {
-  for (const id of ['primary', '', undefined, 'alguem@gmail.com']) {
+  for (const id of ['primary', '', undefined, 'alguem@exemplo.invalid']) {
     const r = D.validarAgendaDeTeste(id);
     assert.equal(r.ok, false);
     assert.match(r.erro, /agenda separada/);

@@ -21,6 +21,16 @@ Situação: a fazer · em andamento · feita.
 | T10 | Relatório mensal do carnê-leão: aba e CSV por pagador | Code | T07 | Totais batem com a soma manual dos dados de teste | feita no código (testes passando, totais conferidos à mão nos testes); falta validar no Google (ver `docs/VALIDACAO-NO-GOOGLE.md`) |
 | T11 | Manual de operação da nutricionista e seu manual de suporte | Code | T08 | Passo a passo para instalar, usar o menu e resolver as 5 falhas mais prováveis | feita: `docs/MANUAL-NUTRICIONISTA.md` e `docs/MANUAL-SUPORTE.md`; falta você ler e testar o passo a passo na conta de teste |
 
+## Lote de revisão e preparação do piloto (30/09/2026)
+
+| # | Tarefa | Dono | Situação |
+|---|---|---|---|
+| R1 | Revisão do próprio código (T00 a T11) contra a especificação, correções claras e dúvidas para o Caio (`docs/REVISAO-T00-T11.md`) | Code | feita: 5 correções em documentos e dados de teste; 15 dúvidas aguardam o Caio |
+| R2 | Testes de integração com Google simulado: agenda → consulta → cobrança → pagamento → recibo → relatório | Code | a fazer |
+| R3 | Casos de falha: cancelamentos, execuções repetidas, configuração incompleta, falha no PDF, erro no envio de alerta | Code | a fazer |
+| R4 | Separação teste/produção: pacote de produção sem gerador de dados fictícios e sem permissões só de teste, conferido por teste automático | Code | a fazer |
+| R5 | Preparação do piloto: roteiro no Google, resultados esperados e dúvidas para a nutricionista | Ambos | a fazer |
+
 ## Fase 1 — Agenda sem código (feita à mão, com a cliente)
 
 | # | Tarefa | Dono |

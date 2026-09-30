@@ -51,7 +51,7 @@ Menu **Gerar valores a receber**. Cada consulta marcada ou realizada ganha uma l
 ### 3. Registrar o pagamento
 Na aba **Pagamentos**, clique na linha (ou arraste para várias) e use **Pagamento**:
 
-- **Marcar como pago (Pix / cartão / dinheiro):** grava a forma e a data de hoje.
+- **Marcar como pago (Pix)**, **Marcar como pago (cartão)** e **Marcar como pago (dinheiro):** gravam a forma e a data de hoje.
 - **Marcar como cortesia:** valor zero, sem cobrança (o kit pede confirmação).
 - **Marcar como consulta de pacote:** gasta uma consulta do pacote do paciente (aba **Pacotes**).
 

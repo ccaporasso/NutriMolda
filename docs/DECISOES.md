@@ -37,7 +37,6 @@ Declarados em `src/appsscript.json`. Cada tarefa que precisar de um escopo novo 
 | `script.send_mail` | Enviar o e-mail de alerta de falha para `email_alertas`. Só envia; não lê nem apaga e-mails. O e-mail traz apenas o módulo e o horário, nunca dado de paciente. | T03 |
 | `calendar.events` | Criar e apagar os eventos FICTÍCIOS de teste (T04), via Serviço Avançado Calendar, só na agenda secundária indicada em `calendario_id` (a trava recusa `primary`). Não permite criar nem apagar agendas. Cobre também a leitura de eventos da T05, que por isso não precisa de `calendar.readonly`. | T04 |
 | `script.scriptapp` | Criar o gatilho de hora em hora da sincronização da agenda, uma vez só (item de menu "Ativar sincronização automática"). Só cria e consulta gatilhos deste projeto. | T05 |
-
 | `documents` | Preencher o modelo do recibo (Google Docs) trocando os campos `{{...}}`. Só abre documentos que o script pode acessar. | T09 |
 | `drive.file` | Copiar o modelo, salvar o PDF e apagar a cópia de trabalho **só em arquivos e pastas que o próprio kit criou** (o Google não deixa o kit ver o resto do Drive). O item de menu "Criar modelo e pasta de recibos" cria os dois. Escopo menor que `drive` completo. | T09 |
 
