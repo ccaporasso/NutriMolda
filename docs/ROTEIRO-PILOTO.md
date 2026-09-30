@@ -118,7 +118,7 @@ Como anotar: na coluna "Resultado", escreva **OK** ou descreva o que aconteceu d
 
 | # | O que fazer | Resultado esperado | Resultado |
 |---|---|---|---|
-| 8.1 | `node scripts/empacotar-producao.js` | "Pacote de produção montado em dist/producao/ (21 arquivos)"; ficaram de fora `DadosTeste.js` e `GeradorTeste.js` | |
+| 8.1 | `node scripts/empacotar-producao.js` | "Pacote de produção montado em dist/producao/ (com o número de arquivos de `src/`, menos 2)"; ficaram de fora `DadosTeste.js` e `GeradorTeste.js` | |
 | 8.2 | Abrir `dist/producao/appsscript.json` | 6 permissões, com `calendar.events.readonly` e **sem** `calendar.events` | |
 | 8.3 | Com o seu "ok", enviar o pacote de produção **ao projeto de TESTE** e autorizar de novo | A tela pede só leitura da agenda | |
 | 8.4 | **Sincronizar agenda** | Funciona como antes. **Se der erro de permissão:** a produção precisa de `calendar.events`; decidir e registrar (D23) | |

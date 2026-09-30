@@ -14,3 +14,5 @@ Regras que continuam valendo: a IA nunca escreve para o paciente (D5), nada cheg
 | P5 | Que pedidos de ajuste o paciente pode fazer (hoje: troca de alimento e outro) e por onde chegam (formulário, WhatsApp). Pedido em texto livre pode ter dado de saúde | Nutricionista e Caio | `TIPOS_AJUSTE` em `src/FilaAjustes.js` | aberta |
 | P6 | A tabela de substituições aprovada por ela (D7) e o formato dela. Sem a tabela, todo pedido vai para ela decidir | Nutricionista | `buscarNaTabela` em `src/FilaAjustes.js` | aberta |
 | P7 | As frases finais (texto e tom são dela), quais campos além do primeiro nome podem entrar (hoje só esse) e como as frases aparecem para ela (aba, menu). O link é só um endereço: quem clica e envia é ela | Nutricionista | `FRASES_MODELO` em `src/Frases.js` | aberta |
+| P9 | O que cada modo significa e quantas mensagens por semana cada um permite (hoje 0, 1 e 2, só exemplo) | Nutricionista | `LIMITE_SEMANAL_POR_MODO` em `src/Modos.js` | aberta |
+| P10 | Onde fica o registro das mensagens já mandadas (aba de controle nova, sem texto da mensagem) para contar a semana | Caio | `podeMandarMensagem` em `src/Modos.js` | aberta |

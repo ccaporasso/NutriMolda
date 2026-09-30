@@ -47,7 +47,7 @@ Situação: a fazer · em andamento · feita.
 | T21 | Painel de presença: "ainda não" duas vezes, silêncio, nota escrita, retorno sem data | Code | esqueleto feito (`src/Presenca.js`, lógica pura, sem painel na planilha); pendências P3, P4 |
 | T22 | Fila de ajustes com aprovação em um ou dois toques | Code | esqueleto feito (`src/FilaAjustes.js`, lógica pura, sem aba nem botão); pendências P5, P6 |
 | T23 | Biblioteca de frases e geração de links wa.me com texto pronto | Code | esqueleto feito (`src/Frases.js`, só monta o link; frases de exemplo); pendência P7 |
-| T24 | Os três modos de acompanhamento e o limite de mensagens por modo | Code | a fazer |
+| T24 | Os três modos de acompanhamento e o limite de mensagens por modo | Code | esqueleto feito (`src/Modos.js`, lógica pura, limites de exemplo); pendências P9, P10 |
 
 **Espera pela cliente:** frases, tabela de substituições, regras de modo e textos finais.
 
