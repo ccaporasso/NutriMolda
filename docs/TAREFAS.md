@@ -17,7 +17,7 @@ Situação: a fazer · em andamento · feita.
 | T06 | Pix copia e cola: função pura com testes do CRC e dos campos | Code | T00 | Testes passam; você escaneia o código num app de banco e o valor e o nome aparecem certos | feita no código (testes passando); falta você escanear num app de banco |
 | T07 | A receber: cria pagamentos a partir das consultas, pela tabela de valores | Code | T05 | Consulta sem pagamento gera um `a_receber`; não duplica; o valor vem de `precoParaCobranca` (nunca gera R$ 0,00; cortesia só por escolha explícita, D17) | a fazer |
 | T08 | Menu na planilha: sincronizar, marcar pago/faltou/cortesia/pacote, gerar Pix, gerar recibo, relatório do mês | Code | T07 | Cada item do menu funciona na conta de teste | a fazer |
-| T09 | Recibo em PDF a partir do modelo no Docs | Ambos | T07 | PDF com todos os campos obrigatórios salvo na pasta configurada | a fazer |
+| T09 | Recibo em PDF a partir do modelo no Docs | Ambos | T07 | PDF com todos os campos obrigatórios salvo na pasta configurada | feita no código (testes passando); falta você testar no Google de teste |
 | T10 | Relatório mensal do carnê-leão: aba e CSV por pagador | Code | T07 | Totais batem com a soma manual dos dados de teste | a fazer |
 | T11 | Manual de operação da nutricionista e seu manual de suporte | Code | T08 | Passo a passo para instalar, usar o menu e resolver as 5 falhas mais prováveis | a fazer |
 

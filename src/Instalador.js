@@ -9,6 +9,7 @@ function onOpen() {
     .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
     .addItem('Sincronizar agenda', 'sincronizarAgendaPeloMenu')
     .addItem('Ativar sincronização automática', 'ativarSincronizacaoAutomatica')
+    .addItem('Gerar recibo da linha selecionada (aba Pagamentos)', 'gerarReciboDaLinhaSelecionada')
     .addItem('Testar alerta de falha', 'testarAlertaDeFalha')
     .addSeparator()
     .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')
