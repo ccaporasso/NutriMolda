@@ -64,6 +64,24 @@ test('recusado ou já decidido nunca sai para o paciente nem é decidido de novo
   assert.equal(F.textoParaEnviarAoPaciente({ ...novo(), estado: 'aprovado' }), null);
 });
 
+test('troca ausente, vazia, só com espaços ou que não é texto nunca vira sugestão nem texto aprovado', () => {
+  for (const troca of [undefined, null, '', '   ', 42, {}]) {
+    const t = [{ alimento: 'Pão francês', troca }];
+    assert.equal(F.buscarNaTabela(t, 'pao frances'), null, String(troca));
+    const pedido = F.criarPedidoAjuste({ id: 'AJ0001', codigoPaciente: 'P9001', tipo: 'troca_alimento', termo: 'pão francês', criadoEm: 'x' }, t);
+    assert.equal(pedido.sugestao, null);
+    assert.equal(F.aprovarAjuste(pedido, { agoraTexto: 'x' }).ok, false);
+    assert.equal(F.aprovarAjuste(pedido, { textoEditado: '   ', agoraTexto: 'x' }).ok, false);
+  }
+  // sugestão malformada montada à mão também não aprova nem sai
+  const mal = { ...novo(), sugestao: { alimento: 'x', trecho: undefined } };
+  assert.equal(F.aprovarAjuste(mal, { agoraTexto: 'x' }).ok, false);
+  assert.equal(F.textoParaEnviarAoPaciente({ ...novo(), estado: 'aprovado', texto_final: undefined }), null);
+  assert.equal(F.textoParaEnviarAoPaciente({ ...novo(), estado: 'aprovado', texto_final: '   ' }), null);
+  // texto editado por ela continua valendo mesmo sem sugestão
+  assert.equal(F.aprovarAjuste(mal, { textoEditado: 'Troque por 2 fatias.', agoraTexto: 'x' }).ok, true);
+});
+
 test('fila: pendentes primeiro, do mais antigo ao mais novo', () => {
   const a = novo({ id: 'AJ0001', criadoEm: '2026-09-30 09:00:00' });
   const b = novo({ id: 'AJ0002', criadoEm: '2026-09-29 09:00:00' });

@@ -34,6 +34,15 @@ test('código desconhecido, resposta fora da lista e data ruim são recusados se
   }
 });
 
+test('data e hora impossíveis são recusadas; fevereiro, ano bissexto e limites de hora conferidos', () => {
+  const ruins = ['2026-02-31 10:00:00', '2026-02-29 10:00:00', '2026-13-01 10:00:00', '2026-00-10 10:00:00', '2026-09-31 10:00:00',
+    '2026-09-30 24:00:00', '2026-09-30 25:90:00', '2026-09-30 12:60:00', '2026-09-30 12:00:60', '0000-00-00 00:00:00'];
+  for (const dataHora of ruins) assert.equal(R.validarResposta(resp({ dataHora }), conhecidos).ok, false, dataHora);
+  for (const dataHora of ['2028-02-29 10:00:00', '2026-02-28 23:59:59', '2026-09-30 00:00:00', '2026-12-31 23:59:59']) {
+    assert.equal(R.validarResposta(resp({ dataHora }), conhecidos).ok, true, dataHora);
+  }
+});
+
 test('nota: e-mail e telefone são ocultados, texto longo é cortado e fórmula é neutralizada', () => {
   const r = R.validarResposta(resp({ nota: 'fale comigo em ana.teste@exemplo.invalid ou 11 90000-0001' }), conhecidos);
   assert.doesNotMatch(r.linha[3], /exemplo\.invalid|90000/);

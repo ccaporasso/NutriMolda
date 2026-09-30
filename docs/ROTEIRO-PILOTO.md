@@ -121,7 +121,7 @@ Como anotar: na coluna "Resultado", escreva **OK** ou descreva o que aconteceu d
 | 8.1 | `node scripts/empacotar-producao.js` | "Pacote de produção montado em dist/producao/ (com o número de arquivos de `src/`, menos 2)"; ficaram de fora `DadosTeste.js` e `GeradorTeste.js` | |
 | 8.2 | Abrir `dist/producao/appsscript.json` | 6 permissões, com `calendar.events.readonly` e **sem** `calendar.events` | |
 | 8.3 | Com o seu "ok", enviar o pacote de produção **ao projeto de TESTE** e autorizar de novo | A tela pede só leitura da agenda | |
-| 8.4 | **Sincronizar agenda** | Funciona como antes. **Se der erro de permissão:** a produção precisa de `calendar.events`; decidir e registrar (D23) | |
+| 8.4 | **Sincronizar agenda** | Funciona como antes. **Se der erro de permissão:** pare e avise; investigue a causa antes de qualquer mudança. Ampliar escopo só com decisão prévia do Caio (D23) | |
 | 8.5 | Abrir o menu | **Não** aparece "Somente na conta de TESTE" | |
 
 ## 9. Critério para dizer que o teste passou

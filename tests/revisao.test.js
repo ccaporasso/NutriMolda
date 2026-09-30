@@ -48,7 +48,7 @@ test('todo escopo declarado é usado por alguma chamada do código (nada de perm
     'calendar.events': /Calendar\.Events\./,
     'script.scriptapp': /ScriptApp\./,
     documents: /DocumentApp\./,
-    'drive.file': /DriveApp\./,
+    'drive.file': /DriveApp\./, // atenção: só prova que o serviço é usado; NÃO prova que o escopo basta (ver abaixo)
   };
   for (const escopo of manifesto.oauthScopes) {
     const nome = escopo.split('/').pop();
@@ -61,7 +61,7 @@ test('o código usa cada serviço do Google só com o escopo declarado (nada de 
   const nomes = manifesto.oauthScopes.map((e) => e.split('/').pop());
   const precisa = [
     [/SpreadsheetApp\./, 'spreadsheets.currentonly'], [/MailApp\./, 'script.send_mail'], [/Calendar\.Events\./, 'calendar.events'],
-    [/ScriptApp\./, 'script.scriptapp'], [/DocumentApp\./, 'documents'], [/DriveApp\./, 'drive.file'],
+    [/ScriptApp\./, 'script.scriptapp'], [/DocumentApp\./, 'documents'],
   ];
   for (const [uso, escopo] of precisa) if (uso.test(todoSrc)) assert.ok(nomes.includes(escopo), `usa ${uso} sem o escopo ${escopo}`);
   // serviços que exigiriam escopo amplo e não devem aparecer
@@ -134,4 +134,22 @@ test('dúvidas para a nutricionista: linguagem de consultório, sem dado real e 
   assert.ok(perguntas.length >= 25);
   for (const l of perguntas) assert.equal(l.split('|').length, 7, `linha de pergunta com colunas erradas: ${l.slice(0, 50)}`);
   assert.doesNotMatch(d, /clasp|Apps Script|escopo|vm\.|node --test/i);
+});
+
+// Achado N8-01 da revisão automática: existir DriveApp no código e drive.file no manifesto NÃO prova que o escopo
+// basta. A documentação do DriveApp lista `drive` para copiar arquivo e criar pasta. Este teste não finge validar
+// o escopo: só garante que o risco continua escrito e que nenhum escopo amplo entrou sem decisão do Caio.
+test('DriveApp com drive.file é um risco aberto e documentado; nenhum escopo amplo de Drive foi declarado', () => {
+  assert.match(todoSrc, /DriveApp\./);
+  assert.ok(manifesto.oauthScopes.some((e) => e.endsWith('/drive.file')));
+  assert.ok(!manifesto.oauthScopes.some((e) => /\/drive$/.test(e)), 'escopo drive completo declarado sem decisão do Caio');
+  assert.match(ler('docs', 'DECISOES.md'), /Risco aberto \(revisão automática R08\/N8-01\)/);
+  assert.match(ler('docs', 'VALIDACAO-NO-GOOGLE.md'), /risco conhecido: a documentação do `DriveApp`/);
+});
+
+test('D23: a documentação não manda ampliar escopo por conta própria', () => {
+  for (const doc of ['docs/DECISOES.md', 'docs/REVISAO-T00-T11.md', 'docs/ROTEIRO-PILOTO.md', 'docs/VALIDACAO-NO-GOOGLE.md']) {
+    assert.doesNotMatch(ler(doc), /manter `calendar\.events`|volta para `calendar\.events`|precisa de `calendar\.events`/, `${doc} ainda manda ampliar o escopo da agenda`);
+  }
+  assert.match(ler('docs', 'DECISOES.md'), /ampliar qualquer escopo depende de decisão prévia/);
 });

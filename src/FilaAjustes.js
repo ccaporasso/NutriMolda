@@ -11,13 +11,19 @@ function normalizarAjuste_(texto) {
   return String(texto === undefined || texto === null ? '' : texto).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+function textoValidoAjuste_(texto) {
+  return typeof texto === 'string' && texto.trim() !== '';
+}
+
 // tabela: [{ alimento, troca }] aprovada por ela (PENDENTE P6: a tabela real é dela; o formato pode mudar).
 // Só acha igualdade (sem acento e sem diferença de maiúscula). Nunca "parecido": na dúvida, devolve null.
 function buscarNaTabela(tabela, termo) {
   const t = normalizarAjuste_(termo);
   if (t === '') return null;
   const achados = tabela.filter((l) => normalizarAjuste_(l.alimento) === t);
-  return achados.length === 1 ? { alimento: achados[0].alimento, trecho: achados[0].troca } : null;
+  // Linha sem troca (ausente, vazia, só espaços ou que não é texto) não é sugestão: vai para ela decidir.
+  if (achados.length !== 1 || !textoValidoAjuste_(achados[0].troca)) return null;
+  return { alimento: achados[0].alimento, trecho: achados[0].troca };
 }
 
 // Entra na fila como pendente. `sugestao` é o trecho da tabela, ou null (vai só para ela).
@@ -36,8 +42,9 @@ function criarPedidoAjuste({ id, codigoPaciente, tipo, termo, criadoEm }, tabela
 // Sem sugestão e sem texto dela, não aprova: nada vai ao paciente por conta do kit.
 function aprovarAjuste(pedido, { textoEditado, agoraTexto }) {
   if (pedido.estado !== 'pendente') return { ok: false, motivo: `O pedido ${pedido.id} já foi decidido (${pedido.estado}).` };
-  const editado = typeof textoEditado === 'string' && textoEditado.trim() !== '';
-  const texto = editado ? textoEditado.trim() : (pedido.sugestao ? pedido.sugestao.trecho : '');
+  const editado = textoValidoAjuste_(textoEditado);
+  const sugerido = pedido.sugestao && textoValidoAjuste_(pedido.sugestao.trecho) ? pedido.sugestao.trecho.trim() : '';
+  const texto = editado ? textoEditado.trim() : sugerido;
   if (texto === '') return { ok: false, motivo: `O pedido ${pedido.id} não tem trecho na tabela. Escreva o texto para aprovar.` };
   return { ok: true, pedido: { ...pedido, estado: 'aprovado', texto_final: texto, decidido_em: agoraTexto, toques: editado ? 2 : 1 } };
 }
@@ -49,7 +56,7 @@ function recusarAjuste(pedido, { agoraTexto }) {
 
 // Única porta de saída para o paciente: só o que ela aprovou e só o texto aprovado.
 function textoParaEnviarAoPaciente(pedido) {
-  return pedido.estado === 'aprovado' && pedido.texto_final !== '' ? pedido.texto_final : null;
+  return pedido.estado === 'aprovado' && textoValidoAjuste_(pedido.texto_final) ? pedido.texto_final : null;
 }
 
 // Pendentes primeiro, do mais antigo para o mais novo.

@@ -26,6 +26,16 @@ function montarLinkFormulario({ urlBase, idCampoCodigo, codigo }) {
   return `${base}?usp=pp_url&${idCampoCodigo}=${encodeURIComponent(codigo)}`;
 }
 
+function textoParaDataRespostas_(texto) {
+  return typeof textoParaData !== 'undefined' ? textoParaData(texto) : require('./Formatos.js').textoParaData(texto);
+}
+
+// "AAAA-MM-DD HH:MM:SS" com data real (fevereiro, ano bissexto) e hora entre 00:00:00 e 23:59:59.
+function dataHoraRespostaValida_(texto) {
+  const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(String(texto));
+  return m !== null && textoParaDataRespostas_(m[1]) !== null && Number(m[2]) <= 23 && Number(m[3]) <= 59 && Number(m[4]) <= 59;
+}
+
 function mascararRespostas_(texto) {
   return typeof mascararDadosPessoais !== 'undefined' ? mascararDadosPessoais(texto) : require('./Registro.js').mascararDadosPessoais(texto);
 }
@@ -33,7 +43,7 @@ function mascararRespostas_(texto) {
 // Confere uma resposta recebida. Devolve { ok: true, linha } ou { ok: false, motivo } em português.
 // Código desconhecido é recusado: resposta de quem não é paciente não entra na planilha.
 function validarResposta({ dataHora, codigo, resposta, nota }, codigosConhecidos) {
-  if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(String(dataHora))) return { ok: false, motivo: 'Data e hora da resposta inválidas.' };
+  if (!dataHoraRespostaValida_(dataHora)) return { ok: false, motivo: 'Data e hora da resposta inválidas.' };
   if (!PADRAO_CODIGO_RESPOSTA.test(String(codigo)) || !codigosConhecidos.map(String).includes(String(codigo))) {
     return { ok: false, motivo: 'Resposta de um código que não é de paciente cadastrado. Nada foi gravado.' };
   }
