@@ -16,12 +16,21 @@ function hojeSaoPaulo_() {
 const CHAVE_ORIGEM_AGENDA = 'calendario_da_ultima_sincronizacao';
 const MAX_CONFERENCIAS_AGENDA = 40; // consultas ausentes conferidas uma a uma por execução
 
+// Marca curta e estável do calendario_id (não guarda o id na planilha). Começa com letra para não virar número.
+function marcaDaAgenda(calendarioId) {
+  let h = 5381;
+  for (const c of String(calendarioId)) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0;
+  return `a${h.toString(16).padStart(8, '0')}`;
+}
+
 // Consultas como objetos (já com data e hora em texto). Cabeçalho conferido em lerAbaComoObjetos.
-function lerConsultasExistentes_() {
+// Linha antiga, sem marca de agenda, pertence à última agenda sincronizada (ou a esta, se nunca houve outra).
+function lerConsultasExistentes_(origemAtual, origemLegado) {
   return lerAbaComoObjetos('Consultas').map((c) => ({
     linha: c.linha, id_evento: String(c.id_evento), data: String(c.data), hora: String(c.hora), tipo: String(c.tipo),
     codigo_paciente: String(c.codigo_paciente), status: String(c.status), atualizado_em: String(c.atualizado_em),
-  })).filter((c) => c.id_evento !== '');
+    origem: String(c.agenda_origem || ''), semMarca: String(c.agenda_origem || '') === '',
+  })).filter((c) => c.id_evento !== '').map((c) => (c.semMarca ? { ...c, origem: origemLegado || origemAtual } : c));
 }
 
 function lerPacientesParaAgenda_() {
@@ -42,12 +51,6 @@ function buscarEventosDaAgenda_(calendarioId, janela) {
     pagina = resposta.nextPageToken;
   } while (pagina);
   return itens;
-}
-
-// A agenda mudou desde a última sincronização? Só compara com o que ficou guardado; a primeira vez não conta.
-function agendaMudou_(calendarioId) {
-  const guardado = PropertiesService.getDocumentProperties().getProperty(CHAVE_ORIGEM_AGENDA);
-  return guardado !== null && guardado !== undefined && guardado !== calendarioId;
 }
 
 // Confere, uma a uma, as consultas que não vieram na leitura. Só um evento devolvido pela agenda
@@ -72,11 +75,12 @@ function sincronizarAgenda() {
   try {
     const cfg = lerConfiguracoes().config;
     const janela = calcularJanelaAgenda(hojeSaoPaulo_());
-    const existentes = lerConsultasExistentes_();
+    const origemAtual = marcaDaAgenda(cfg.calendario_id);
+    const ultima = PropertiesService.getDocumentProperties().getProperty(CHAVE_ORIGEM_AGENDA);
+    const existentes = lerConsultasExistentes_(origemAtual, ultima ? marcaDaAgenda(ultima) : '');
     const pacientes = lerPacientesParaAgenda_();
-    const mudou = agendaMudou_(cfg.calendario_id);
     const eventos = buscarEventosDaAgenda_(cfg.calendario_id, janela);
-    const entrada = { existentes, pacientes, prefixo: cfg.prefixo_evento_consulta, janela, agoraTexto: agoraTexto_(), agendaMudou: mudou };
+    const entrada = { existentes, pacientes, prefixo: cfg.prefixo_evento_consulta, janela, agoraTexto: agoraTexto_(), origemAtual };
 
     let plano = planejarSincronizacaoAgenda({ ...entrada, eventos });
     if (plano.ausentes.length > 0) {
@@ -89,9 +93,18 @@ function sincronizarAgenda() {
     }
 
     const folha = abrirFolhaConferida_('Consultas').folha;
-    for (const a of plano.atualizar) folha.getRange(a.linha, 1, 1, a.valores.length).setValues([a.valores]);
+    const colunaOrigem = ABAS.find((x) => x.nome === 'Consultas').cabecalho.indexOf('agenda_origem') + 1;
+    const gravadas = new Set(plano.atualizar.map((x) => x.linha));
+    for (const a of plano.atualizar) {
+      const antiga = existentes.find((c) => c.linha === a.linha);
+      folha.getRange(a.linha, 1, 1, a.valores.length + 1).setValues([a.valores.concat([antiga ? antiga.origem : origemAtual])]);
+    }
+    for (const c of existentes) { // linha antiga sem marca: passa a ter, sem mudar mais nada
+      if (c.semMarca && !gravadas.has(c.linha)) folha.getRange(c.linha, colunaOrigem, 1, 1).setValues([[c.origem]]);
+    }
     if (plano.inserir.length > 0) {
-      folha.getRange(folha.getLastRow() + 1, 1, plano.inserir.length, plano.inserir[0].length).setValues(plano.inserir);
+      const novas = plano.inserir.map((l) => l.concat([origemAtual]));
+      folha.getRange(folha.getLastRow() + 1, 1, novas.length, novas[0].length).setValues(novas);
     }
     PropertiesService.getDocumentProperties().setProperty(CHAVE_ORIGEM_AGENDA, String(cfg.calendario_id));
     registrar('sincronizacao', 'info', `Sincronização: ${plano.inserir.length} nova(s), ${plano.atualizar.length} atualizada(s), `

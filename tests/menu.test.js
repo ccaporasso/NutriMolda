@@ -24,19 +24,26 @@ test('cortesia: valor zero, forma cortesia, só a partir de a_receber', () => {
   assert.equal(A.aplicarCortesia(pag({ status: 'pago' })).ok, false);
 });
 
-test('pacote: gasta uma consulta do pacote com sobra e recusa quando não há', () => {
+test('pacote: gasta uma consulta do pacote vigente e recusa quando não há saldo, ambiguidade ou início no futuro', () => {
   const pacotes = [
-    { linha: 2, codigo_paciente: 'P9002', total_consultas: 4, usadas: 0 },
-    { linha: 3, codigo_paciente: 'P9001', total_consultas: 4, usadas: 4 },
-    { linha: 4, codigo_paciente: 'P9001', total_consultas: 4, usadas: 1 },
+    { linha: 2, codigo_paciente: 'P9002', total_consultas: 4, usadas: 0, inicio: '2026-09-01' },
+    { linha: 3, codigo_paciente: 'P9001', total_consultas: 4, usadas: 4, inicio: '2026-08-01' },
+    { linha: 4, codigo_paciente: 'P9001', total_consultas: 4, usadas: 1, inicio: '2026-09-01' },
   ];
   const r = A.aplicarPacote(pag(), pacotes, '2026-09-30');
   assert.equal(r.ok, true);
-  assert.equal(r.pacote.linha, 4);
+  assert.equal(r.pacote.linha, 4); // o vigente é o de início mais recente
   assert.equal(r.pacote.usadas, 2);
   assert.deepEqual([r.pagamento.forma, r.pagamento.status, r.pagamento.valor_centavos], ['pacote', 'pago', 0]);
-  assert.equal(A.aplicarPacote(pag(), [pacotes[1]], '2026-09-30').ok, false);
+  assert.equal(A.aplicarPacote(pag(), [pacotes[1]], '2026-09-30').ok, false); // sem saldo
   assert.equal(A.aplicarPacote(pag(), [], '2026-09-30').ok, false);
+  // pacote antigo com saldo não é usado quando o vigente esgotou
+  const esgotado = [{ linha: 2, codigo_paciente: 'P9001', total_consultas: 4, usadas: 1, inicio: '2026-08-01' }, { linha: 3, codigo_paciente: 'P9001', total_consultas: 2, usadas: 2, inicio: '2026-09-15' }];
+  assert.equal(A.aplicarPacote(pag(), esgotado, '2026-09-30').ok, false);
+  // mesmo início em dois pacotes, ou início depois de hoje: recusa antes de gravar
+  const iguais = [{ linha: 2, codigo_paciente: 'P9001', total_consultas: 4, usadas: 0, inicio: '2026-09-01' }, { linha: 3, codigo_paciente: 'P9001', total_consultas: 4, usadas: 0, inicio: '2026-09-01' }];
+  assert.match(A.aplicarPacote(pag(), iguais, '2026-09-30').motivo, /mesmo início/);
+  assert.match(A.aplicarPacote(pag(), [{ ...iguais[0], inicio: '2026-10-05' }], '2026-09-30').motivo, /depois de hoje/);
 });
 
 test('consulta: realizada e faltou; cancelada não muda', () => {

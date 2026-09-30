@@ -13,6 +13,7 @@ function criarAba(nome, cabecalho) {
     nome, linhas, formatos: [],
     getName: () => nome,
     getLastRow: () => linhas.length,
+    getLastColumn: () => linhas.reduce((m, l) => Math.max(m, l.length), 0),
     getMaxRows: () => 1000,
     getMaxColumns: () => 26,
     setFrozenRows() {},

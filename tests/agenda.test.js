@@ -132,15 +132,19 @@ test('R04: consulta remarcada para depois da janela não é cancelada por sumir 
   assert.deepEqual(conferido.atualizar.map((a) => [a.valores[1], a.valores[5]]), [['2027-02-01', 'marcada']]);
 });
 
-test('calendario_id trocado: nada é conferido nem cancelado por ausência', () => {
-  const existentes = [{ linha: 2, id_evento: 'a1', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '' }];
+test('calendario_id trocado: linha de outra agenda não é conferida, cancelada nem atualizada', () => {
+  const existentes = [
+    { linha: 2, id_evento: 'a1', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '', origem: 'aantiga' },
+    { linha: 3, id_evento: 'n1', data: '2026-10-12', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '', origem: 'anova' },
+  ];
   const p = A.planejarSincronizacaoAgenda({
-    eventos: [evento('n1', 'Consulta', '2026-10-12', '09:00')], existentes, pacientes: D.PACIENTES_TESTE.map((x) => ({ ...x })),
-    prefixo: 'Consulta', janela, agoraTexto: '2026-09-30 12:00:00', agendaMudou: true,
+    eventos: [evento('n1', 'Consulta', '2026-10-12', '09:00'), { id: 'a1', status: 'cancelled' }], existentes,
+    pacientes, prefixo: 'Consulta', janela, agoraTexto: '2026-09-30 12:00:00', origemAtual: 'anova',
   });
   assert.deepEqual(p.ausentes, []);
-  assert.equal(p.canceladas, 0);
-  assert.match(p.avisos[0], /calendario_id/);
+  assert.equal(p.canceladas, 0); // o mesmo id cancelado na agenda nova não mexe na linha da agenda antiga
+  assert.deepEqual(p.atualizar, []);
+  assert.match(p.avisos[0], /outra agenda/);
 });
 
 test('agenda que volta vazia não cancela nada e avisa', () => {

@@ -17,7 +17,8 @@ function abrirFolhaConferida_(nomeAba) {
   const aba = ABAS.find((a) => a.nome === nomeAba);
   const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nomeAba);
   if (!aba || !folha) throw erroDeUso_(`A aba "${nomeAba}" não existe. Use o menu Kit do Consultório > Instalar/atualizar planilha.`);
-  const lido = folha.getLastRow() >= 1 ? folha.getRange(1, 1, 1, aba.cabecalho.length).getValues()[0] : [];
+  const largura = Math.max(aba.cabecalho.length, typeof folha.getLastColumn === 'function' ? folha.getLastColumn() : 0);
+  const lido = folha.getLastRow() >= 1 ? folha.getRange(1, 1, 1, largura).getValues()[0] : [];
   const problema = divergenciaDeCabecalho(aba, lido);
   if (problema) throw erroDeUso_(problema);
   return { aba, folha };

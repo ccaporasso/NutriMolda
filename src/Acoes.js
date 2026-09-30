@@ -34,15 +34,31 @@ function aplicarCortesia(pagamento) {
 
 // Consulta de pacote: usa uma das consultas do pacote do paciente (a primeira com consulta sobrando).
 // A consulta fica paga com valor zero: o dinheiro do pacote entrou na venda dele (D21).
+// Só o pacote VIGENTE do paciente (o de `inicio` mais recente) pode ser usado: assim cada pagamento tem um pacote só,
+// o do `inicio` mais recente que não passa da data do pagamento. Início igual, início no futuro ou pacote sem saldo
+// (mesmo que um mais antigo tenha) recusam antes de qualquer gravação (R11).
+function pacoteVigente_(pagamento, pacotes, hojeTexto) {
+  const doPaciente = pacotes.filter((p) => String(p.codigo_paciente) === String(pagamento.codigo_paciente));
+  if (doPaciente.length === 0) return recusa_(`O paciente do pagamento ${pagamento.id} não tem pacote com consulta sobrando. Cadastre ou renove na aba Pacotes.`);
+  const maior = doPaciente.reduce((m, p) => (String(p.inicio || '') > m ? String(p.inicio || '') : m), '');
+  const vigentes = doPaciente.filter((p) => String(p.inicio || '') === maior);
+  if (vigentes.length > 1) return recusa_(`O paciente do pagamento ${pagamento.id} tem mais de um pacote com o mesmo início. Deixe só um, ou corrija o "inicio" na aba Pacotes.`);
+  if (maior > hojeTexto) return recusa_(`O pacote do paciente do pagamento ${pagamento.id} começa depois de hoje. Confira o "inicio" na aba Pacotes.`);
+  const p = vigentes[0];
+  if (!Number.isSafeInteger(p.total_consultas) || !Number.isSafeInteger(p.usadas) || p.usadas >= p.total_consultas) {
+    return recusa_(`O paciente do pagamento ${pagamento.id} não tem pacote com consulta sobrando. Cadastre ou renove na aba Pacotes.`);
+  }
+  return { ok: true, pacote: p };
+}
+
 function aplicarPacote(pagamento, pacotes, hojeTexto) {
   if (pagamento.status !== 'a_receber') return recusa_(`O pagamento ${pagamento.id} não pode usar pacote: ${estadoDoPagamento_(pagamento)}.`);
-  const pacote = pacotes.find((p) => String(p.codigo_paciente) === String(pagamento.codigo_paciente)
-    && Number.isSafeInteger(p.total_consultas) && Number.isSafeInteger(p.usadas) && p.usadas < p.total_consultas);
-  if (!pacote) return recusa_(`O paciente do pagamento ${pagamento.id} não tem pacote com consulta sobrando. Cadastre ou renove na aba Pacotes.`);
+  const v = pacoteVigente_(pagamento, pacotes, hojeTexto);
+  if (!v.ok) return v;
   return {
     ok: true,
     pagamento: { ...pagamento, status: 'pago', forma: 'pacote', valor_centavos: 0, data_pagamento: hojeTexto },
-    pacote: { ...pacote, usadas: pacote.usadas + 1 },
+    pacote: { ...v.pacote, usadas: v.pacote.usadas + 1 },
   };
 }
 
@@ -76,6 +92,7 @@ function consumidasPorPacote(pacotes, pagamentos) {
   return pacotes.map((p) => {
     const codigo = String(p.codigo_paciente);
     const inicio = String(p.inicio || '');
+    if (inicios(codigo).filter((i) => i === inicio).length > 1) return 0; // pacotes com o mesmo início: não dá para atribuir, não corrige
     const proximo = inicios(codigo).find((i) => i > inicio) || null;
     return pagamentos.filter((g) => String(g.codigo_paciente) === codigo && g.status === 'pago' && g.forma === 'pacote'
       && String(g.data_pagamento || '') >= inicio && (proximo === null || String(g.data_pagamento || '') < proximo)).length;

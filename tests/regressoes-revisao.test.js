@@ -81,7 +81,7 @@ test('R04: evento que a agenda não devolve (erro ou não achado) continua marca
   assert.match(plano.avisos.join('\n'), /não foi possível confirmar/);
 });
 
-test('R04: trocar o calendario_id não cancela consultas da agenda anterior', () => {
+test('R04: trocar o calendario_id não cancela consultas da agenda anterior, nem na segunda sincronização', () => {
   const eventos = [ev('a', '2026-10-10')];
   const amb = ambienteAgenda(eventos);
   amb.rodar('sincronizarAgenda()');
@@ -92,6 +92,8 @@ test('R04: trocar o calendario_id não cancela consultas da agenda anterior', ()
   const plano = amb.rodar('sincronizarAgenda()');
   assert.equal(amb.abas.get('Consultas').linhas.find((l) => l[0] === 'a')[5], 'marcada');
   assert.match(plano.avisos.join('\n'), /calendario_id/);
+  amb.rodar('sincronizarAgenda()'); // a origem ficou gravada na linha: a segunda rodada também não cancela
+  assert.equal(amb.abas.get('Consultas').linhas.find((l) => l[0] === 'a')[5], 'marcada');
 });
 
 // ---------- R09: modelo de recibo sem campos obrigatórios ----------
@@ -223,4 +225,55 @@ test('R08: nenhum DriveApp no código e nenhum escopo drive amplo (auditoria est
   for (const nome of fs.readdirSync(path.join(raiz, 'src')).filter((n) => n.endsWith('.js'))) {
     assert.doesNotMatch(fs.readFileSync(path.join(raiz, 'src', nome), 'utf8'), /\bDriveApp\.[A-Za-z]/, nome);
   }
+});
+
+test('R04c: mesmo id cancelado na agenda nova não cancela linha da agenda antiga (linha sem marca, agenda trocada)', () => {
+  const amb = ambienteAgenda([]);
+  amb.abas.get('Consultas').linhas.push(['mesmoid', '2026-10-10', '09:00', 'primeira', 'P0001', 'marcada', '']);
+  amb.propriedades.set('calendario_da_ultima_sincronizacao', 'agenda-antiga@group.calendar.google.com');
+  amb.contexto.Calendar.Events.list = () => ({ items: [{ id: 'mesmoid', status: 'cancelled' }, ev('outro', '2026-10-02')] });
+  amb.contexto.Calendar.Events.get = (cal, id) => ({ id, status: 'cancelled' });
+  amb.rodar('sincronizarAgenda()');
+  amb.rodar('sincronizarAgenda()');
+  assert.equal(amb.abas.get('Consultas').linhas[1][5], 'marcada');
+});
+
+test('R07: cabeçalho de Configurações trocado ou com coluna a mais é recusado, na leitura e na escrita', () => {
+  const invertido = ambiente();
+  invertido.abas.get('Configurações').linhas[0] = ['valor', 'chave'];
+  assert.throws(() => invertido.rodar('lerConfiguracoes()'), /cabeçalho diferente/);
+  const antes = JSON.stringify(invertido.abas.get('Configurações').linhas);
+  assert.throws(() => invertido.rodar("atualizarConfiguracao_('valor_retorno_centavos', 20000)"), /cabeçalho diferente/);
+  assert.equal(JSON.stringify(invertido.abas.get('Configurações').linhas), antes);
+  const extra = ambiente();
+  extra.abas.get('Configurações').linhas[0].push('coluna_extra');
+  assert.throws(() => extra.rodar('lerConfiguracoes()'), /coluna a mais/);
+  const pagamentos = ambiente();
+  pagamentos.abas.get('Pagamentos').linhas[0].push('coluna_extra');
+  assert.throws(() => pagamentos.rodar("lerAbaComoObjetos('Pagamentos')"), /coluna a mais/);
+});
+
+test('R11c: renovar o pacote não faz duas consultas consumirem três unidades', () => {
+  const amb = ambiente({ selecao: { aba: 'Pagamentos', linhas: [2] } });
+  amb.abas.get('Pagamentos').linhas.push(['PG000001', 'e1', 'P0001', '', '', 15000, '', 'a_receber', '', '']);
+  amb.abas.get('Pagamentos').linhas.push(['PG000002', 'e2', 'P0001', '', '', 15000, '', 'a_receber', '', '']);
+  amb.abas.get('Pacotes').linhas.push(['P0001', 2, 0, 25000, '2026-09-01']);
+  amb.abas.get('Pacotes').linhas.push(['P0001', 2, 0, 25000, '2026-09-15']);
+  amb.rodar('marcarConsultaDePacote()');
+  amb.selecao.linhas = [3];
+  amb.rodar('marcarConsultaDePacote()');
+  const pacotes = amb.abas.get('Pacotes').linhas.slice(1);
+  assert.equal(amb.abas.get('Pagamentos').linhas.filter((l) => l[7] === 'pago' && l[6] === 'pacote').length, 2);
+  assert.deepEqual(pacotes.map((l) => l[2]), [0, 2]); // tudo no pacote vigente (15/09); o antigo fica intacto
+});
+
+test('R11c: dois pacotes com o mesmo início: recusa e não escreve nada', () => {
+  const amb = ambiente({ selecao: { aba: 'Pagamentos', linhas: [2] } });
+  amb.abas.get('Pagamentos').linhas.push(['PG000001', 'e1', 'P0001', '', '', 15000, '', 'a_receber', '', '']);
+  amb.abas.get('Pacotes').linhas.push(['P0001', 2, 0, 25000, '2026-09-01']);
+  amb.abas.get('Pacotes').linhas.push(['P0001', 2, 0, 25000, '2026-09-01']);
+  const antes = JSON.stringify([amb.abas.get('Pagamentos').linhas, amb.abas.get('Pacotes').linhas]);
+  amb.rodar('marcarConsultaDePacote()');
+  assert.equal(JSON.stringify([amb.abas.get('Pagamentos').linhas, amb.abas.get('Pacotes').linhas]), antes);
+  assert.match(amb.alertas.at(-1), /mesmo início/);
 });

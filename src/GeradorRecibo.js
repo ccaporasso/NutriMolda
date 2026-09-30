@@ -75,7 +75,7 @@ function gerarReciboDaLinhaSelecionada() {
 
 // Grava um valor em Configurações (coluna B) na linha da chave indicada.
 function atualizarConfiguracao_(chave, valor) {
-  const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Configurações');
+  const { folha } = abrirFolhaConferida_('Configurações');
   const chaves = folha.getRange(2, 1, Math.max(folha.getLastRow() - 1, 1), 1).getValues().map((l) => String(l[0]).trim());
   const i = chaves.indexOf(chave);
   if (i < 0) throw erroDeUso_(`Falta a linha "${chave}" em Configurações. Rode Instalar/atualizar planilha.`);

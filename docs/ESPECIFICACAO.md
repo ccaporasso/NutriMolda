@@ -45,7 +45,7 @@ Não existe servidor próprio, web app público nem IA nesta versão.
 `codigo` (P0001) · `primeiro_nome` · `inicial_sobrenome` · `telefone` · `email` · `modo_acompanhamento` (porta_aberta, leve, proximo) · `autorizou_mensagens_em` · `ativo`
 
 ### Consultas
-`id_evento` · `data` · `hora` · `tipo` (primeira, retorno) · `codigo_paciente` · `status` (marcada, realizada, faltou, cancelada) · `atualizado_em`
+`id_evento` · `data` · `hora` · `tipo` (primeira, retorno) · `codigo_paciente` · `status` (marcada, realizada, faltou, cancelada) · `atualizado_em` · `agenda_origem` (preenchida pelo kit: de qual agenda vem a linha; ela não mexe)
 
 - O vínculo evento → paciente é feito pelo e-mail ou telefone de quem marcou. Evento sem paciente conhecido vai para a lista "a identificar".
 - O evento só leva o mínimo, como "Consulta — Ana S.". Nenhum dado clínico.

@@ -77,14 +77,18 @@ function linhaConsulta(c) {
 // eventos: itens do Google Agenda (v3), inclusive os cancelados.
 // existentes: linhas atuais de Consultas como objetos, cada uma com `linha` (número na planilha).
 // pacientes: { codigo, email, telefone, ativo }.
-// agendaMudou: true se o "calendario_id" não é mais o da última sincronização (nada é inferido por ausência).
+// origemAtual: marca da agenda lida agora. Linha com `origem` diferente é de OUTRA agenda: não é cancelada, atualizada
+// nem conferida (mesmo id em agenda diferente não prova nada). Linha sem `origem` conta como desta agenda.
 // Devolve { inserir, atualizar, canceladas, aIdentificar, ignorados, avisos, ausentes }; não muda nada por conta própria.
 // `ausentes` são consultas marcadas que não vieram na leitura: ausência NÃO cancela (pode ser remarcação para
 // depois da janela). Quem chama confere cada uma na agenda e repete o plano com o evento devolvido.
-function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, janela, agoraTexto, agendaMudou }) {
+function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, janela, agoraTexto, origemAtual }) {
   const f = formatosAgenda_();
+  const daAgenda = (c) => !c.origem || !origemAtual || c.origem === origemAtual;
+  const minhas = existentes.filter(daAgenda);
+  const deOutraAgenda = existentes.length - minhas.length;
   const porId = new Map();
-  for (const c of existentes) if (c.id_evento) porId.set(String(c.id_evento), c);
+  for (const c of minhas) if (c.id_evento) porId.set(String(c.id_evento), c);
   const vistos = new Set();
   const atualizacoes = new Map(); // id_evento -> linha final
   const avisos = [];
@@ -131,15 +135,16 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
 
   // 2) Marcada, dentro do período e ausente da leitura: não cancela. Só devolve a lista para conferência.
   // Agenda que voltou vazia ou trocada não é conferida: é mais provável erro de configuração.
-  const emJanela = existentes.filter((c) => c.status === 'marcada' && c.id_evento && !vistos.has(String(c.id_evento))
+  const emJanela = minhas.filter((c) => c.status === 'marcada' && c.id_evento && !vistos.has(String(c.id_evento))
     && String(c.data) >= janela.verificarDe && String(c.data) <= janela.verificarAte);
   let ausentes = [];
   if (emJanela.length > 0 && eventos.length === 0) {
     avisos.push(`A agenda voltou sem nenhum evento. Por segurança, nenhuma das ${emJanela.length} consultas marcadas foi cancelada. Confira o "calendario_id" na aba Configurações.`);
-  } else if (emJanela.length > 0 && agendaMudou) {
-    avisos.push(`O "calendario_id" mudou desde a última sincronização. Por segurança, nenhuma das ${emJanela.length} consultas marcadas foi cancelada por ausência na agenda nova.`);
   } else {
     ausentes = emJanela.map((c) => String(c.id_evento));
+  }
+  if (deOutraAgenda > 0) {
+    avisos.push(`${deOutraAgenda} consulta(s) vieram de outra agenda (o "calendario_id" mudou) e foram deixadas como estão: o kit não as cancela nem atualiza pela agenda nova.`);
   }
 
   // 3) Só agora as consultas novas: a cronologia usa o estado final (sem canceladas, com as datas remarcadas).
@@ -165,7 +170,7 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
   }
 
   const atualizar = [...atualizacoes.values()].map((c) => ({ linha: c.linha, valores: linhaConsulta(c) }));
-  const aIdentificar = finais.concat(novos)
+  const aIdentificar = finais.filter(daAgenda).concat(novos)
     .filter((c) => !c.codigo_paciente && c.status !== 'cancelada')
     .map((c) => ({ id_evento: c.id_evento, data: c.data, hora: c.hora }));
   return { inserir: novos.map(linhaConsulta), atualizar, canceladas, aIdentificar, ignorados, avisos, ausentes };

@@ -45,10 +45,11 @@ const ABAS = [
   },
   {
     nome: 'Consultas',
-    cabecalho: ['id_evento', 'data', 'hora', 'tipo', 'codigo_paciente', 'status', 'atualizado_em'],
+    cabecalho: ['id_evento', 'data', 'hora', 'tipo', 'codigo_paciente', 'status', 'atualizado_em', 'agenda_origem'],
     validacoes: { tipo: 'tipo_consulta', status: 'status_consulta' },
     // Data e hora guardadas como texto (2026-09-30 e 09:00): o Planilhas não converte em outro fuso (T05).
-    textoExtra: ['data', 'hora', 'atualizado_em'],
+    // `agenda_origem`: marca de qual agenda vem a linha (R04); o kit preenche, ela não mexe.
+    textoExtra: ['data', 'hora', 'atualizado_em', 'agenda_origem'],
   },
   {
     nome: 'Pagamentos',
@@ -88,7 +89,12 @@ function planejarInstalacao(existente) {
     }
     const atualCab = (atual.cabecalho || []).map(String);
     const vazio = atualCab.every((c) => c === '');
-    if (vazio) {
+    // Planilha de uma versão anterior: só faltam colunas novas no fim (células vazias). O cabeçalho é completado.
+    const semAsNovas = atualCab.slice(0, aba.cabecalho.length).map((c, i) => (c === '' ? aba.cabecalho[i] : c));
+    const faltamSoNoFim = !vazio && JSON.stringify(semAsNovas) === JSON.stringify(aba.cabecalho)
+      && atualCab.every((c, i) => c === '' || c === aba.cabecalho[i]) && atualCab.findIndex((c) => c === '') >= 0
+      && atualCab.slice(atualCab.findIndex((c) => c === '')).every((c) => c === '');
+    if (vazio || faltamSoNoFim) {
       plano.escreverCabecalho.push(aba.nome);
     } else if (JSON.stringify(atualCab.slice(0, aba.cabecalho.length)) !== JSON.stringify(aba.cabecalho)) {
       plano.avisos.push(`A aba "${aba.nome}" tem cabeçalho diferente do esperado. Não foi alterada; confira com o suporte.`);
@@ -104,9 +110,14 @@ function planejarInstalacao(existente) {
 }
 
 // Confere o cabeçalho lido (largura completa do esquema) com o esperado, coluna a coluna, em ordem.
-// Devolve a mensagem para a nutricionista, ou '' se está certo. Colunas a mais, à direita, são permitidas.
+// Devolve a mensagem para a nutricionista, ou '' se está certo. Coluna a mais no cabeçalho também é recusada.
 function divergenciaDeCabecalho(aba, lido) {
   const atual = (lido || []).map((c) => String(c === undefined || c === null ? '' : c).trim());
+  const extra = atual.findIndex((c, i) => i >= aba.cabecalho.length && c !== '');
+  if (extra >= 0) {
+    return `A aba "${aba.nome}" tem uma coluna a mais no cabeçalho (coluna ${extra + 1}). Nada foi lido nem gravado. `
+      + 'Não acrescente colunas ao cabeçalho do kit; use outra aba para anotações.';
+  }
   for (let i = 0; i < aba.cabecalho.length; i++) {
     if (atual[i] !== aba.cabecalho[i]) {
       return `A aba "${aba.nome}" está com o cabeçalho diferente do esperado (coluna ${i + 1} deveria ser "${aba.cabecalho[i]}"). `
