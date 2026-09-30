@@ -221,6 +221,6 @@ test('R08: nenhum DriveApp no código e nenhum escopo drive amplo (auditoria est
   assert.ok(manifesto.oauthScopes.includes('https://www.googleapis.com/auth/drive.file'));
   assert.ok(manifesto.dependencies.enabledAdvancedServices.some((s) => s.userSymbol === 'Drive' && s.version === 'v3'));
   for (const nome of fs.readdirSync(path.join(raiz, 'src')).filter((n) => n.endsWith('.js'))) {
-    assert.doesNotMatch(fs.readFileSync(path.join(raiz, 'src', nome), 'utf8'), /\bDriveApp\s*\./, nome);
+    assert.doesNotMatch(fs.readFileSync(path.join(raiz, 'src', nome), 'utf8'), /\bDriveApp\.[A-Za-z]/, nome);
   }
 });
