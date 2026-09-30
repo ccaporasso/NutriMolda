@@ -16,3 +16,5 @@ node_modules/
 
 # Pacote de produção montado por scripts/empacotar-producao.js
 dist/
+# Pacotes de revisão (gerados por scripts/revisao.js; copiam trechos do código)
+.revisao/
