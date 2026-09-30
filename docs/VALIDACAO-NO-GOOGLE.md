@@ -15,3 +15,14 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 4. As colunas `data`, `hora` e `atualizado_em` de Consultas devem ficar como texto (2026-10-01, 09:00). Se você já tinha instalado a planilha antes, rode "Instalar/atualizar planilha" de novo para aplicar o formato de texto.
 5. "Ativar sincronização automática" cria um gatilho em Apps Script > Gatilhos; rodar duas vezes não cria o segundo. O Google pede a autorização nova (`script.scriptapp`).
 6. O período lido é de 30 dias atrás a 120 dias à frente; confirme no Registro a linha "Sincronização: ...".
+
+## T07 — Gerar valores a receber
+
+**Implementado:** uma cobrança por consulta (marcada ou realizada), valor pelo preço configurado, nunca R$ 0,00, sem duplicar, ids `PG000001`, avisos para consulta sem paciente, sem preço ou cancelada com valor em aberto.
+
+**Validar no Google:**
+1. Preencha os preços em Configurações (R$ 150,00 = `15000`), sincronize e use "Gerar valores a receber": cada consulta marcada ou realizada ganha uma linha `a_receber` em Pagamentos.
+2. Rode de novo: nenhuma linha nova.
+3. Deixe um preço em branco: aparece o aviso e nada é criado para aquele tipo.
+4. A coluna `valor_centavos` deve ficar como número (não como data nem texto).
+

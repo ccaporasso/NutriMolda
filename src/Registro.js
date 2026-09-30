@@ -63,7 +63,7 @@ function montarEmailAlerta(modulo, dataHoraTexto) {
 // Valores conhecidos: só eles podem aparecer numa mensagem gerada a partir de uma exceção.
 // Mensagem de exceção (erro.message) pode trazer nome ou dado de saúde e nunca é copiada.
 const MODULOS_CONHECIDOS = [
-  'alertas', 'configuracoes', 'instalador', 'menu', 'pix', 'recibo', 'registro', 'relatorio', 'sincronizacao', 'teste',
+  'alertas', 'configuracoes', 'instalador', 'menu', 'pagamentos', 'pix', 'recibo', 'registro', 'relatorio', 'sincronizacao', 'teste',
 ];
 const TIPOS_ERRO_CONHECIDOS = ['Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'];
 
