@@ -156,6 +156,65 @@ function definirContrato(nome, fabrica) {
     await assert.rejects(() => r.saida.entregar(CONS, id), (e) => e instanceof C.FalhaExterna);
     assert.equal((await r.saida.listar(CONS))[0].estado, 'pendente');
   });
+
+  t('agenda: cancelar é atômico, idempotente pela chave e só para o dono; remarcar troca sem deixar o paciente sem consulta', async () => {
+    const x = await fabrica(); const r = x.repos; const [s1, s2, s3] = slots(x, 4);
+    const a = (await r.agenda.reservar(CONS, { chave: 'K1', pacienteCodigo: 'X001', inicio: s1.inicio, fim: s1.fim })).consulta;
+    assert.equal((await r.agenda.cancelar(CONS, { chave: 'C1', consultaId: a.id, pacienteCodigo: 'X002' })).estado, 'nao_encontrada', 'outro paciente não cancela');
+    assert.equal((await r.agenda.cancelar(CONS, { chave: 'C1', consultaId: 'C9999', pacienteCodigo: 'X001' })).estado, 'nao_encontrada');
+    assert.equal((await r.agenda.consultaAtiva(CONS, 'X001')).id, a.id, 'recusas não alteraram nada');
+    const c1 = await r.agenda.cancelar(CONS, { chave: 'C1', consultaId: a.id, pacienteCodigo: 'X001', motivo: 'cancelada_pelo_paciente' });
+    assert.equal(c1.estado, 'cancelada'); assert.equal(c1.consulta.status, 'cancelada'); assert.equal(c1.consulta.motivo, 'cancelada_pelo_paciente');
+    assert.equal((await r.agenda.cancelar(CONS, { chave: 'C1', consultaId: a.id, pacienteCodigo: 'X001' })).estado, 'existente');
+    assert.equal((await r.agenda.cancelar(CONS, { chave: 'OUTRA', consultaId: a.id, pacienteCodigo: 'X001' })).estado, 'ja_cancelada');
+    assert.equal((await r.agenda.buscarCancelamentoPorChave(CONS, 'C1')).id, a.id); assert.equal(await r.agenda.buscarCancelamentoPorChave(CONS, 'nada'), null);
+    assert.equal(await r.agenda.consultaAtiva(CONS, 'X001'), null);
+    assert.equal(await r.agenda.estaDisponivel(CONS, s1.inicio, s1.fim), true, 'o horário liberado volta a ser oferecido');
+    assert.equal((await r.agenda.reservar(CONS, { chave: 'K2', pacienteCodigo: 'X002', inicio: s1.inicio, fim: s1.fim })).estado, 'reservada');
+    assert.equal((await r.agenda.listarConsultas(CONS)).length, 2, 'a cancelada continua registrada');
+    // remarcar
+    const b = (await r.agenda.reservar(CONS, { chave: 'K3', pacienteCodigo: 'X001', inicio: s2.inicio, fim: s2.fim })).consulta;
+    assert.equal((await r.agenda.remarcar(CONS, { chave: 'R0', consultaId: b.id, pacienteCodigo: 'X002', inicio: s3.inicio, fim: s3.fim })).estado, 'nao_encontrada', 'outro paciente não remarca');
+    assert.equal((await r.agenda.remarcar(CONS, { chave: 'R0', consultaId: b.id, pacienteCodigo: 'X001', inicio: s1.inicio, fim: s1.fim })).estado, 'conflito', 'horário ocupado');
+    assert.equal((await r.agenda.consultaAtiva(CONS, 'X001')).id, b.id, 'conflito não tira a consulta atual');
+    assert.equal((await r.agenda.remarcar(CONS, { chave: 'R0', consultaId: b.id, pacienteCodigo: 'X001', inicio: s2.inicio, fim: s2.fim })).estado, 'mesmo_horario');
+    const m = await r.agenda.remarcar(CONS, { chave: 'R1', consultaId: b.id, pacienteCodigo: 'X001', inicio: s3.inicio, fim: s3.fim });
+    assert.equal(m.estado, 'remarcada'); assert.equal(m.consulta.inicio, s3.inicio); assert.equal(m.anterior.status, 'cancelada'); assert.equal(m.anterior.motivo, 'remarcada'); assert.equal(m.anterior.substituidaPor, m.consulta.id);
+    assert.equal((await r.agenda.remarcar(CONS, { chave: 'R1', consultaId: b.id, pacienteCodigo: 'X001', inicio: s3.inicio, fim: s3.fim })).consulta.id, m.consulta.id, 'repetir não cria outra');
+    assert.equal((await r.agenda.consultaAtiva(CONS, 'X001')).id, m.consulta.id);
+    assert.equal((await r.agenda.listarConsultas(CONS)).filter((c) => c.pacienteCodigo === 'X001' && c.status === 'confirmada').length, 1);
+    assert.equal((await r.agenda.buscarPorChave(CONS, 'R1')).id, m.consulta.id);
+    await assert.rejects(() => r.agenda.remarcar(CONS, { chave: 'R2', consultaId: m.consulta.id, pacienteCodigo: 'X001', inicio: x.relogio.agora() - 5, fim: x.relogio.agora() + 5 }), (e) => e.codigo === 'PEDIDO_INVALIDO');
+    // consulta que já passou não se cancela nem se remarca
+    x.relogio.definir(new Date(m.consulta.fim + 1000).toISOString());
+    assert.equal((await r.agenda.cancelar(CONS, { chave: 'C9', consultaId: m.consulta.id, pacienteCodigo: 'X001' })).estado, 'passada');
+  });
+
+  t('agenda: remarcações concorrentes para o mesmo horário -> uma vence; cancelar e remarcar ao mesmo tempo não dão duas consultas', async () => {
+    const x = await fabrica(true); const r = x.repos; const [s1, s2, s3] = slots(x, 4);
+    const a = (await r.agenda.reservar(CONS, { chave: 'KA', pacienteCodigo: 'X001', inicio: s1.inicio, fim: s1.fim })).consulta;
+    const b = (await r.agenda.reservar(CONS, { chave: 'KB', pacienteCodigo: 'X002', inicio: s2.inicio, fim: s2.fim })).consulta;
+    const rs = await Promise.all([r.agenda.remarcar(CONS, { chave: 'RA', consultaId: a.id, pacienteCodigo: 'X001', inicio: s3.inicio, fim: s3.fim }), r.agenda.remarcar(CONS, { chave: 'RB', consultaId: b.id, pacienteCodigo: 'X002', inicio: s3.inicio, fim: s3.fim })]);
+    assert.deepEqual(rs.map((q) => q.estado).sort(), ['conflito', 'remarcada']);
+    assert.equal((await r.agenda.listarConsultas(CONS)).filter((c) => c.status === 'confirmada').length, 2, 'cada paciente segue com uma consulta');
+    const y = await fabrica(true); const a2 = (await y.repos.agenda.reservar(CONS, { chave: 'KA', pacienteCodigo: 'X001', inicio: s1.inicio, fim: s1.fim })).consulta;
+    const [c, m] = await Promise.all([y.repos.agenda.cancelar(CONS, { chave: 'CX', consultaId: a2.id, pacienteCodigo: 'X001' }), y.repos.agenda.remarcar(CONS, { chave: 'RX', consultaId: a2.id, pacienteCodigo: 'X001', inicio: s3.inicio, fim: s3.fim })]);
+    const ativas = (await y.repos.agenda.listarConsultas(CONS)).filter((q) => q.status === 'confirmada').length;
+    assert.ok(ativas <= 1, `no máximo uma ativa, achou ${ativas}`);
+    assert.ok([c.estado, m.estado].includes('cancelada') || [c.estado, m.estado].includes('remarcada'));
+  });
+
+  t('agenda: falhas de cancelamento — antes não muda nada; depois já valeu e repetir acha o resultado', async () => {
+    const x = await fabrica(); const r = x.repos; const [s1] = slots(x);
+    const a = (await r.agenda.reservar(CONS, { chave: 'K1', pacienteCodigo: 'X001', inicio: s1.inicio, fim: s1.fim })).consulta;
+    r.falhas.armar('agenda.cancelar.antes');
+    await assert.rejects(() => r.agenda.cancelar(CONS, { chave: 'C1', consultaId: a.id, pacienteCodigo: 'X001' }), (e) => e instanceof C.FalhaExterna);
+    assert.equal((await r.agenda.consultaAtiva(CONS, 'X001')).id, a.id);
+    r.falhas.armar('agenda.cancelar.depois');
+    await assert.rejects(() => r.agenda.cancelar(CONS, { chave: 'C1', consultaId: a.id, pacienteCodigo: 'X001' }), (e) => e instanceof C.FalhaExterna);
+    assert.equal(await r.agenda.consultaAtiva(CONS, 'X001'), null, 'o cancelamento já tinha valido');
+    assert.equal((await r.agenda.cancelar(CONS, { chave: 'C1', consultaId: a.id, pacienteCodigo: 'X001' })).estado, 'existente');
+  });
 }
 
 module.exports = { definirContrato };

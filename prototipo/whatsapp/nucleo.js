@@ -5,15 +5,16 @@ const C = require('./contrato.js');
 const { ErroNucleo, FalhaExterna } = C;
 const { calcularAtencao } = require('./atencao.js');
 
-const COMANDOS_PACIENTE = ['menu', 'parar', 'ver_horarios', 'falar_com_nutricionista', 'escolher_horario', 'confirmar', 'texto_livre'];
+const COMANDOS_PACIENTE = ['menu', 'parar', 'ver_horarios', 'falar_com_nutricionista', 'escolher_horario', 'confirmar', 'remarcar_consulta', 'cancelar_consulta', 'confirmar_cancelamento', 'texto_livre'];
 const PARAMETROS_PERMITIDOS = ['opcaoId', 'versao'];
 
 // Quais comandos cada estado aceita. Fora disso: resultado neutro, sem gravação e sem saída.
 const COMANDOS_POR_ESTADO = {
-  menu: ['menu', 'ver_horarios', 'falar_com_nutricionista', 'parar'],
-  escolhendo_horario: ['menu', 'ver_horarios', 'escolher_horario', 'falar_com_nutricionista', 'parar'],
-  aguardando_confirmacao: ['menu', 'ver_horarios', 'confirmar', 'falar_com_nutricionista', 'parar'],
-  consulta_confirmada: ['menu', 'confirmar', 'ver_horarios', 'falar_com_nutricionista', 'parar'],
+  menu: ['menu', 'ver_horarios', 'remarcar_consulta', 'cancelar_consulta', 'falar_com_nutricionista', 'parar'],
+  escolhendo_horario: ['menu', 'ver_horarios', 'escolher_horario', 'cancelar_consulta', 'falar_com_nutricionista', 'parar'],
+  aguardando_confirmacao: ['menu', 'ver_horarios', 'confirmar', 'cancelar_consulta', 'falar_com_nutricionista', 'parar'],
+  consulta_confirmada: ['menu', 'confirmar', 'ver_horarios', 'remarcar_consulta', 'cancelar_consulta', 'falar_com_nutricionista', 'parar'],
+  aguardando_cancelamento: ['menu', 'confirmar_cancelamento', 'falar_com_nutricionista', 'parar'],
   atendimento_humano: ['parar'],
   revogado: [],
 };
@@ -271,7 +272,7 @@ function criarNucleo({ verificar, repos, relogio, config = C.CONFIG_TESTE, regis
   }
 
   // ---- Consultas: detalhes só para quem tem direito ----
-  const visaoConsulta = (c) => ({ id: c.id, pacienteCodigo: c.pacienteCodigo, origemAgenda: c.origemAgenda, inicio: c.inicio, fim: c.fim, status: c.status });
+  const visaoConsulta = (c) => ({ id: c.id, pacienteCodigo: c.pacienteCodigo, origemAgenda: c.origemAgenda, inicio: c.inicio, fim: c.fim, status: c.status, canceladaEm: c.canceladaEm || null, motivo: c.motivo || null });
 
   function listarConsultas(ctx, pedido) {
     return executar('profissional_listar_consultas', async () => {
@@ -299,6 +300,19 @@ function criarNucleo({ verificar, repos, relogio, config = C.CONFIG_TESTE, regis
     });
   }
 
+  // A profissional cancela uma consulta do SEU consultório. Não envia mensagem nem mexe em cobrança.
+  function cancelarConsultaProfissional(ctx, pedido) {
+    return executar('profissional_cancelar_consulta', async () => {
+      const cons = exigirContexto(ctx, 'profissional', pedido && pedido.consultorioId);
+      if (!C.ehId(pedido.consultaId)) throw new ErroNucleo('PEDIDO_INVALIDO');
+      const r = await repos.agenda.cancelar(cons, { chave: `prof:${pedido.consultaId}`, consultaId: pedido.consultaId, motivo: 'cancelada_pela_profissional' });
+      if (r.estado === 'nao_encontrada') throw new ErroNucleo('NAO_ENCONTRADA');
+      if (r.estado === 'passada' || r.estado === 'ja_cancelada') return semEfeito(r.estado === 'passada' ? 'consulta_passada' : 'ja_cancelada');
+      log('profissional_cancelar_consulta', { resultado: r.estado });
+      return { ok: true, tipo: 'resposta', acao: 'consulta_cancelada', consulta: visaoConsulta(r.consulta), cobranca: 'inalterada', repetido: r.estado === 'existente' };
+    });
+  }
+
   // ---- Recuperação: retoma operações pendentes (contexto de sistema) ----
   function reconciliarPendentes(ctx, pedido) {
     return executar('reconciliar', async () => {
@@ -317,7 +331,7 @@ function criarNucleo({ verificar, repos, relogio, config = C.CONFIG_TESTE, regis
 
   return {
     processarEventoPaciente, cadastrarPaciente, liberarPaciente, revogarLiberacao, pausarAutomacao, retomarAtendimento,
-    listarPacientes, listarAtencao, listarConsultas, detalharConsulta, reconciliarPendentes, despachar: (ctx, p) => executar('despachar', async () => ({ ok: true, enviados: await despachar(exigirContexto(ctx, 'sistema', p && p.consultorioId)) })),
+    listarPacientes, listarAtencao, listarConsultas, detalharConsulta, cancelarConsultaProfissional, reconciliarPendentes, despachar: (ctx, p) => executar('despachar', async () => ({ ok: true, enviados: await despachar(exigirContexto(ctx, 'sistema', p && p.consultorioId)) })),
   };
 }
 

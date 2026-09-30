@@ -206,7 +206,7 @@ test('jornada completa pela ponte: liberar -> menu -> horários -> escolher -> c
     await passo(botao('j3', CANAIS.F001, ultimaSaida().interactive.action.sections[0].rows[0].id, 'list_reply'));
     assert.match(ultimaSaida().interactive.body.text, /Confirmar consulta/);
     await passo(botao('j4', CANAIS.F001, ultimaSaida().interactive.action.buttons[0].reply.id)); // Confirmar
-    assert.match(ultimaSaida().text.body, /Consulta confirmada/);
+    assert.match(ultimaSaida().interactive.body.text, /Consulta confirmada/);
     const lista = await a.c.nucleo.listarConsultas(a.c.prof, { consultorioId: CONS });
     assert.equal(lista.consultas.length, 1);
     assert.equal(a.enviadas.length, 4); assert.ok(a.enviadas.every((m) => m.to === CANAIS.F001));

@@ -10,7 +10,7 @@ const LIMITES = Object.freeze({
   maxEntradas: 10, maxMensagens: 50, maxCorpoBytes: 262144, // proteção contra corpo gigante
   botoes: 3, tituloBotao: 20, linhasLista: 10, tituloLinha: 24, textoCorpo: 1024, // a conferir na Meta
 });
-const COMANDOS_BOTAO = ['menu', 'parar', 'ver_horarios', 'falar_com_nutricionista', 'escolher_horario', 'confirmar'];
+const COMANDOS_BOTAO = ['menu', 'parar', 'ver_horarios', 'falar_com_nutricionista', 'escolher_horario', 'confirmar', 'remarcar_consulta', 'cancelar_consulta', 'confirmar_cancelamento'];
 
 // X-Hub-Signature-256 = "sha256=" + HMAC-SHA256(segredo do app, corpo BRUTO). Conferir antes de ler o conteúdo.
 function verificarAssinatura(corpoBruto, cabecalho, segredo) {

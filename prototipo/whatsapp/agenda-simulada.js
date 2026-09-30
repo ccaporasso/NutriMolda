@@ -47,6 +47,44 @@ function criarAgendaSimulada({ falhas, latencia, relogio, config }) {
       await falhas.ponto('agenda.reservar.depois');
       return resultado;
     },
+    // Cancelamento atômico e idempotente pela chave. Nunca mexe em cobrança (fora deste repositório).
+    async cancelar(cons, { chave, consultaId, pacienteCodigo = null, motivo = 'cancelada' }) {
+      await cederVez(latencia);
+      await falhas.ponto('agenda.cancelar.antes');
+      const d = dados(cons);
+      const c = d.consultas.find((x) => x.id === consultaId);
+      let resultado;
+      if (!c || (pacienteCodigo && c.pacienteCodigo !== pacienteCodigo)) resultado = { estado: 'nao_encontrada' };
+      else if (c.status === 'cancelada') resultado = { estado: c.chaveCancelamento === chave ? 'existente' : 'ja_cancelada', consulta: copia(c) };
+      else if (c.fim <= relogio.agora()) resultado = { estado: 'passada', consulta: copia(c) };
+      else { c.status = 'cancelada'; c.canceladaEm = relogio.agora(); c.motivo = motivo; c.chaveCancelamento = chave; resultado = { estado: 'cancelada', consulta: copia(c) }; }
+      await falhas.ponto('agenda.cancelar.depois');
+      return resultado;
+    },
+    async buscarCancelamentoPorChave(cons, chave) { await cederVez(latencia); return copia(dados(cons).consultas.find((c) => c.chaveCancelamento === chave)); },
+    // Remarcação atômica: reserva o novo horário e cancela o antigo no MESMO passo; se o novo não servir, nada muda.
+    async remarcar(cons, { chave, consultaId, pacienteCodigo, inicio, fim }) {
+      await cederVez(latencia);
+      await falhas.ponto('agenda.reservar.antes');
+      if (!Number.isInteger(inicio) || !Number.isInteger(fim) || fim <= inicio || inicio <= relogio.agora() || !validos(inicio, fim)) throw new ErroNucleo('PEDIDO_INVALIDO');
+      const d = dados(cons);
+      let resultado;
+      const igual = d.porChave.get(chave);
+      const antiga = d.consultas.find((x) => x.id === consultaId);
+      if (igual) resultado = { estado: 'existente', consulta: copia(igual) };
+      else if (!antiga || antiga.pacienteCodigo !== pacienteCodigo || antiga.status !== 'confirmada') resultado = { estado: 'nao_encontrada' };
+      else if (antiga.fim <= relogio.agora()) resultado = { estado: 'passada' };
+      else if (antiga.inicio === inicio) resultado = { estado: 'mesmo_horario', consulta: copia(antiga) };
+      else if (ocupados(d).filter((o) => o !== antiga).some((o) => sobrepoe({ inicio, fim }, o))) resultado = { estado: 'conflito' };
+      else {
+        const nova = { id: `C${String(d.consultas.length + 1).padStart(4, '0')}`, consultorioId: cons, pacienteCodigo, origemAgenda: 'agenda_simulada', inicio, fim, status: 'confirmada', chave, criadaEm: relogio.agora() };
+        antiga.status = 'cancelada'; antiga.canceladaEm = relogio.agora(); antiga.motivo = 'remarcada'; antiga.substituidaPor = nova.id; antiga.chaveCancelamento = chave;
+        d.consultas.push(nova); d.porChave.set(chave, nova);
+        resultado = { estado: 'remarcada', consulta: copia(nova), anterior: copia(antiga) };
+      }
+      await falhas.ponto('agenda.reservar.depois');
+      return resultado;
+    },
     async buscarPorChave(cons, chave) { await cederVez(latencia); return copia(dados(cons).porChave.get(chave)); },
     async obterConsulta(cons, id) { await cederVez(latencia); return copia(dados(cons).consultas.find((c) => c.id === id)); },
     async listarConsultas(cons) { await cederVez(latencia); return dados(cons).consultas.map(copia).sort((a, b) => a.inicio - b.inicio); },

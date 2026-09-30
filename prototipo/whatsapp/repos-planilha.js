@@ -16,7 +16,7 @@ const ABAS = {
   Conversas: [['codigo', 's'], ['versao', 'n'], ['dados', 'j']],
   Operacoes: [['chave', 's'], ['impressao', 's'], ['estado', 's'], ['criadaEm', 'n'], ['resultado', 'j'], ['paciente', 's'], ['comando', 's']],
   Saida: [['id', 's'], ['chave', 's'], ['dados', 'j'], ['estado', 's'], ['motivo', 's']],
-  Consultas: [['id', 's'], ['pacienteCodigo', 's'], ['origemAgenda', 's'], ['inicio', 'n'], ['fim', 'n'], ['status', 's'], ['chave', 's'], ['criadaEm', 'n']],
+  Consultas: [['id', 's'], ['pacienteCodigo', 's'], ['origemAgenda', 's'], ['inicio', 'n'], ['fim', 'n'], ['status', 's'], ['chave', 's'], ['criadaEm', 'n'], ['canceladaEm', 'nn'], ['motivo', 's'], ['substituidaPor', 's'], ['chaveCancelamento', 's']],
   Bloqueios: [['inicio', 'n'], ['fim', 'n']],
 };
 
@@ -158,7 +158,7 @@ function criarRepositoriosPlanilha({ latencia = false, falhas = criarFalhas(), r
 
   const sobrepoe = (a, b) => a.inicio < b.fim && b.inicio < a.fim;
   const ocupados = (cons) => [...todos(cons, 'Consultas').filter((c) => c.status === 'confirmada'), ...todos(cons, 'Bloqueios')];
-  const consulta = (cons, c) => (c ? { id: c.id, consultorioId: cons, pacienteCodigo: c.pacienteCodigo, origemAgenda: c.origemAgenda, inicio: c.inicio, fim: c.fim, status: c.status, chave: c.chave, criadaEm: c.criadaEm } : null);
+  const consulta = (cons, c) => (c ? { id: c.id, consultorioId: cons, pacienteCodigo: c.pacienteCodigo, origemAgenda: c.origemAgenda, inicio: c.inicio, fim: c.fim, status: c.status, chave: c.chave, criadaEm: c.criadaEm, canceladaEm: c.canceladaEm, motivo: c.motivo, substituidaPor: c.substituidaPor, chaveCancelamento: c.chaveCancelamento } : null);
   const agenda = {
     async listarDisponiveis(cons, quantidade, excluirIds = []) {
       await tocar(cons);
@@ -178,9 +178,49 @@ function criarRepositoriosPlanilha({ latencia = false, falhas = criarFalhas(), r
         const dele = achar(cons, 'Consultas', (c) => c.pacienteCodigo === pacienteCodigo && c.status === 'confirmada' && c.fim > relogio.agora());
         if (dele) return { estado: 'paciente_ja_tem', consulta: consulta(cons, dele) };
         if (ocupados(cons).some((o) => sobrepoe({ inicio, fim }, o))) return { estado: 'conflito' };
-        const nova = { id: `C${String(planilha(cons).Consultas.length + 1).padStart(4, '0')}`, pacienteCodigo, origemAgenda: 'planilha_simulada', inicio, fim, status: 'confirmada', chave, criadaEm: relogio.agora() };
+        const nova = { id: `C${String(planilha(cons).Consultas.length + 1).padStart(4, '0')}`, pacienteCodigo, origemAgenda: 'planilha_simulada', inicio, fim, status: 'confirmada', chave, criadaEm: relogio.agora(), canceladaEm: null };
         inserir(cons, 'Consultas', nova);
         return { estado: 'reservada', consulta: consulta(cons, nova) };
+      });
+      await falhas.ponto('agenda.reservar.depois');
+      return resultado;
+    },
+    async cancelar(cons, { chave, consultaId, pacienteCodigo = null, motivo = 'cancelada' }) {
+      await tocar(cons);
+      await falhas.ponto('agenda.cancelar.antes');
+      const resultado = await comTrava(cons, async () => {
+        const i = indice(cons, 'Consultas', (x) => x.id === consultaId);
+        const c = i < 0 ? null : linhaParaObj('Consultas', planilha(cons).Consultas[i]);
+        if (!c || (pacienteCodigo && c.pacienteCodigo !== pacienteCodigo)) return { estado: 'nao_encontrada' };
+        if (c.status === 'cancelada') return { estado: c.chaveCancelamento === chave ? 'existente' : 'ja_cancelada', consulta: consulta(cons, c) };
+        if (c.fim <= relogio.agora()) return { estado: 'passada', consulta: consulta(cons, c) };
+        const n = { ...c, status: 'cancelada', canceladaEm: relogio.agora(), motivo, chaveCancelamento: chave };
+        gravarLinha(cons, 'Consultas', i, n);
+        return { estado: 'cancelada', consulta: consulta(cons, n) };
+      });
+      await falhas.ponto('agenda.cancelar.depois');
+      return resultado;
+    },
+    async buscarCancelamentoPorChave(cons, chave) { await tocar(cons); return consulta(cons, achar(cons, 'Consultas', (c) => c.chaveCancelamento === chave)); },
+    async remarcar(cons, { chave, consultaId, pacienteCodigo, inicio, fim }) {
+      await tocar(cons);
+      await falhas.ponto('agenda.reservar.antes');
+      const grade = gerarHorarios(relogio.agora(), { ...config, antecedenciaMin: 0 });
+      if (!Number.isInteger(inicio) || !Number.isInteger(fim) || fim <= inicio || inicio <= relogio.agora() || !grade.some((h) => h.inicio === inicio && h.fim === fim)) throw new ErroNucleo('PEDIDO_INVALIDO');
+      const resultado = await comTrava(cons, async () => {
+        await cederVez(latencia);
+        const igual = achar(cons, 'Consultas', (c) => c.chave === chave);
+        if (igual) return { estado: 'existente', consulta: consulta(cons, igual) };
+        const i = indice(cons, 'Consultas', (x) => x.id === consultaId);
+        const antiga = i < 0 ? null : linhaParaObj('Consultas', planilha(cons).Consultas[i]);
+        if (!antiga || antiga.pacienteCodigo !== pacienteCodigo || antiga.status !== 'confirmada') return { estado: 'nao_encontrada' };
+        if (antiga.fim <= relogio.agora()) return { estado: 'passada' };
+        if (antiga.inicio === inicio) return { estado: 'mesmo_horario', consulta: consulta(cons, antiga) };
+        if ([...todos(cons, 'Consultas').filter((c) => c.status === 'confirmada' && c.id !== consultaId), ...todos(cons, 'Bloqueios')].some((o) => sobrepoe({ inicio, fim }, o))) return { estado: 'conflito' };
+        const nova = { id: `C${String(planilha(cons).Consultas.length + 1).padStart(4, '0')}`, pacienteCodigo, origemAgenda: 'planilha_simulada', inicio, fim, status: 'confirmada', chave, criadaEm: relogio.agora(), canceladaEm: null };
+        const velha = { ...antiga, status: 'cancelada', canceladaEm: relogio.agora(), motivo: 'remarcada', substituidaPor: nova.id, chaveCancelamento: chave };
+        gravarLinha(cons, 'Consultas', i, velha); inserir(cons, 'Consultas', nova);
+        return { estado: 'remarcada', consulta: consulta(cons, nova), anterior: consulta(cons, velha) };
       });
       await falhas.ponto('agenda.reservar.depois');
       return resultado;

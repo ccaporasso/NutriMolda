@@ -100,7 +100,7 @@ Direção incorporada; integração real não implementada. B1 não depende de W
 | WA08 | Revisão independente de segurança e implantação | Programador | WA05, UI01 | Relatório, autorização por paciente/consultório, recuperação e concorrência reais; corrigir achados antes de dados reais | a fazer |
 | WA09 | Escolher hospedagem e persistência, inventário/retenção, contrato e orçamento | Você | — | Documentar localização dos dados/fila/estado, recuperação, limites e custo total com fontes vigentes; não presumir gratuidade | a fazer |
 | WA10 | Definir número real e eventual coexistência | Você | WA08 | Requisitos atuais da Meta conferidos e decisão registrada; D12 atendida antes de paciente real | a fazer |
-| WA11 | Remarcar e cancelar pela integração oficial | Ambos | WA05 | Propriedade da consulta, confirmação, conflito, repetição e recuperação cobertos; não alterar cobrança silenciosamente | posterior ao primeiro percurso |
+| WA11 | Remarcar e cancelar pela integração oficial | Ambos | WA05 | Propriedade da consulta, confirmação, conflito, repetição e recuperação cobertos; não alterar cobrança silenciosamente | núcleo local testado (`tests/bloco1-remarcacao.test.js`): remarcar atômico, cancelar com confirmação, propriedade, conflito, repetição e recuperação; cobrança não é tocada; integração real pendente (depende de WA05) |
 | WA12 | Check-ins definidos pela profissional | Ambos | WA05, D11 resolvida | Textos/consentimento e conteúdo permitido definidos; sem resposta clínica automática nem cobrança por silêncio | posterior ao primeiro percurso |
 
 ## Trilha UI — interface da profissional
