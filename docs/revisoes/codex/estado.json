@@ -6,12 +6,12 @@
   "reviews": [
     {
       "pr": 6,
-      "sha": "4682127fc3abfbc21b5f34de08fb445c73a6eae1",
+      "sha": "a2ffd099e1024bf1ae3429f44db63abc3f031347",
       "status": "REPROVADO",
-      "report": "docs/revisoes/codex/PR6-4682127.md",
-      "report_commit": "7e2342ebcef02905958c03d0eab0a932a11adf84",
+      "report": "docs/revisoes/codex/PR6-a2ffd09.md",
+      "report_commit": "427c75f8f1ffcd190b984d1694744f8327d1df9f",
       "published": true,
-      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/6#issuecomment-5903648798",
+      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/6#issuecomment-5903811250",
       "reviewed_on": "2026-09-30",
       "resolved": [
         "R01",
@@ -28,7 +28,10 @@
         "N8-04",
         "N9-01",
         "N9-02",
-        "N9-03"
+        "N9-03",
+        "R04",
+        "R07",
+        "R11"
       ],
       "previous_cases_confirmed": [
         "R03c",
@@ -39,32 +42,34 @@
         "R07b",
         "R07c",
         "R07d",
-        "R11c"
+        "R11c",
+        "R11d",
+        "R11e",
+        "R04d/R06b",
+        "R03f",
+        "R03g",
+        "R03h",
+        "R07e"
       ],
       "partially_resolved": [
-        "R03",
-        "R04",
-        "R07",
-        "R11"
+        "R03"
       ],
       "unresolved": [
-        "R11:renovacao-no-mesmo-dia-e-identidade",
-        "R04:colisao-confirmada-vinculos-financeiros",
-        "R03:origem-prova-de-geracao-e-colisao",
-        "R07:instalador-largura-real"
+        "R03i:origem-vazia-na-limpeza",
+        "R03k:leitura-inconclusiva-na-pre-checagem"
       ],
       "findings": {
-        "ALTA": 3,
+        "ALTA": 1,
         "MÉDIA": 1,
         "BAIXA": 0
       },
       "tests": {
-        "selected_cases_passed": 311,
-        "previous_and_n8_cases_passed": 28,
+        "selected_cases_passed": 318,
+        "previous_and_n8_cases_passed": 35,
         "n9_logic_cases_passed": 2,
         "new_independent": {
-          "passed": 0,
-          "failed": 7
+          "passed": 1,
+          "failed": 2
         },
         "cli_checks_passed": 7,
         "package_js": 28,
@@ -183,12 +188,80 @@
         "full_node_test": "TIMEOUT_15S_SUBPROCESS_CASE"
       },
       "google_validation": "PENDENTE"
+    },
+    {
+      "pr": 6,
+      "sha": "4682127fc3abfbc21b5f34de08fb445c73a6eae1",
+      "status": "REPROVADO",
+      "report": "docs/revisoes/codex/PR6-4682127.md",
+      "report_commit": "7e2342ebcef02905958c03d0eab0a932a11adf84",
+      "published": true,
+      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/6#issuecomment-5903648798",
+      "reviewed_on": "2026-09-30",
+      "resolved": [
+        "R01",
+        "R02",
+        "R05",
+        "R06",
+        "R08",
+        "R09",
+        "R10",
+        "D17",
+        "N8-01",
+        "N8-02",
+        "N8-03",
+        "N8-04",
+        "N9-01",
+        "N9-02",
+        "N9-03"
+      ],
+      "previous_cases_confirmed": [
+        "R03c",
+        "R03d",
+        "R03e",
+        "R04b",
+        "R04c",
+        "R07b",
+        "R07c",
+        "R07d",
+        "R11c"
+      ],
+      "partially_resolved": [
+        "R03",
+        "R04",
+        "R07",
+        "R11"
+      ],
+      "unresolved": [
+        "R11:renovacao-no-mesmo-dia-e-identidade",
+        "R04:colisao-confirmada-vinculos-financeiros",
+        "R03:origem-prova-de-geracao-e-colisao",
+        "R07:instalador-largura-real"
+      ],
+      "findings": {
+        "ALTA": 3,
+        "MÉDIA": 1,
+        "BAIXA": 0
+      },
+      "tests": {
+        "selected_cases_passed": 311,
+        "previous_and_n8_cases_passed": 28,
+        "n9_logic_cases_passed": 2,
+        "new_independent": {
+          "passed": 0,
+          "failed": 7
+        },
+        "cli_checks_passed": 7,
+        "package_js": 28,
+        "full_node_test": "TIMEOUT_20S_SUBPROCESS_CASE"
+      },
+      "google_validation": "PENDENTE"
     }
   ],
   "monitored_prs": [
     {
       "pr": 6,
-      "sha": "4682127fc3abfbc21b5f34de08fb445c73a6eae1",
+      "sha": "a2ffd099e1024bf1ae3429f44db63abc3f031347",
       "state": "open",
       "merged": false
     },
