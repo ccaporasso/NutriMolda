@@ -14,7 +14,7 @@ const LIMITE_TESTES = 6000;
 const PARECERES = ['APROVADO', 'APROVADO COM RESSALVAS', 'REPROVADO'];
 const PRIORIDADES = ['ALTA', 'MÉDIA', 'BAIXA'];
 
-// ---------- lógica pura (testada em tests/revisao.test.js) ----------
+// ---------- lógica pura (testada em tests/ciclo-revisao.test.js) ----------
 
 function idValido(id) {
   return typeof id === 'string' && /^[A-Za-z]\d{1,3}$/.test(id);
