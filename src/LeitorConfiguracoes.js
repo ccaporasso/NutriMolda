@@ -3,7 +3,7 @@
 function lerLinhasConfiguracoes_() {
   const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Configurações');
   if (!folha) {
-    throw new Error('A aba "Configurações" não existe. Use o menu Kit do Consultório > Instalar/atualizar planilha.');
+    throw Object.assign(new Error('A aba "Configurações" não existe. Use o menu Kit do Consultório > Instalar/atualizar planilha.'), { name: 'ErroDeUso' });
   }
   const ultima = folha.getLastRow();
   return ultima > 1 ? folha.getRange(2, 1, ultima - 1, 2).getValues() : [];
@@ -19,6 +19,6 @@ function lerEmailAlertas() {
 // Devolve { config, avisos }. Se houver erro, interrompe com a lista completa em português.
 function lerConfiguracoes() {
   const resultado = validarConfiguracoes(lerLinhasConfiguracoes_());
-  if (resultado.erros.length > 0) throw new Error(montarMensagemErros(resultado));
+  if (resultado.erros.length > 0) throw Object.assign(new Error(montarMensagemErros(resultado)), { name: 'ErroDeUso' });
   return { config: resultado.config, avisos: resultado.avisos };
 }

@@ -65,7 +65,7 @@ function criarAmbiente(opcoes = {}) {
   const arquivos = new Map(); // id -> { nome, tipo, conteudo, lixeira, pasta }
   let seq = 0;
   const ui = {
-    alert: (...a) => { alertas.push(a.join(' | ')); return 'OK'; },
+    alert: (...a) => { alertas.push(a.slice(0, 2).join(' | ')); return a[2] === 'YES_NO' ? (opcoes.negar ? 'NO' : 'YES') : 'OK'; },
     prompt: (...a) => { alertas.push(`PROMPT ${a[0]}`); return { getSelectedButton: () => 'OK', getResponseText: () => (opcoes.resposta || '') }; },
     ButtonSet: { OK: 'OK', OK_CANCEL: 'OK_CANCEL', YES_NO: 'YES_NO' },
     Button: { OK: 'OK', YES: 'YES', NO: 'NO' },
@@ -105,7 +105,7 @@ function criarAmbiente(opcoes = {}) {
     Calendar: { Events: { list: () => ({ items: opcoes.eventos || [] }) } },
     ...(opcoes.google || {}),
   };
-  const ambiente = { abas, alertas, emails, arquivos, contexto, ui, relogio, menu: null, sequencia: () => ++seq };
+  const ambiente = { selecao, abas, alertas, emails, arquivos, contexto, ui, relogio, menu: null, sequencia: () => ++seq };
   vm.createContext(contexto);
   ambiente.carregar = (...nomes) => {
     for (const n of nomes) vm.runInContext(fs.readFileSync(path.join(raiz, n), 'utf8'), contexto, { filename: n });

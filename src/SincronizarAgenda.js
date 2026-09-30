@@ -58,7 +58,7 @@ function buscarEventosDaAgenda_(calendarioId, janela) {
 // Devolve o plano aplicado. Lança erro em português se as Configurações estiverem erradas.
 function sincronizarAgenda() {
   const trava = LockService.getScriptLock();
-  if (!trava.tryLock(30000)) throw new Error('Outra sincronização está em andamento. Tente de novo em um minuto.');
+  if (!trava.tryLock(30000)) throw erroDeUso_('Outra sincronização está em andamento. Tente de novo em um minuto.');
   try {
     const cfg = lerConfiguracoes().config;
     const planilha = SpreadsheetApp.getActiveSpreadsheet();
@@ -90,8 +90,10 @@ function sincronizarAgenda() {
 
 // Item do menu.
 function sincronizarAgendaPeloMenu() {
-  const plano = sincronizarAgenda();
-  SpreadsheetApp.getUi().alert('Agenda sincronizada', resumirSincronizacao(plano), SpreadsheetApp.getUi().ButtonSet.OK);
+  executarNoMenu_('sincronizacao', () => {
+    const plano = sincronizarAgenda();
+    SpreadsheetApp.getUi().alert('Agenda sincronizada', resumirSincronizacao(plano), SpreadsheetApp.getUi().ButtonSet.OK);
+  });
 }
 
 // Cria o gatilho de hora em hora, uma única vez (idempotente). Escopo script.scriptapp.

@@ -1,105 +1,123 @@
-// Recibo em PDF (lógica pura, sem chamadas ao Google). A parte do Google está em ReciboPdf.js.
-// Campos exigidos: docs/ESPECIFICACAO.md, "O recibo". Nenhum dado de saúde: só o código no nome do arquivo.
+// Recibo (lógica pura, sem chamadas ao Google).
+// Fonte: docs/ESPECIFICACAO.md, "O recibo". Traz: nome e CRN da nutricionista, quem pagou (e o paciente,
+// se for outra pessoa), valor, data, descrição do serviço e, se ela usar, o CPF do pagador.
+// O NOME DO ARQUIVO leva só o número do recibo e o código do paciente (regra 6). A chamada ao Google está em GeradorRecibo.js.
+
+const FORMAS_COM_RECIBO = ['pix', 'cartao', 'dinheiro'];
+const NOME_FORMA_RECIBO = { pix: 'Pix', cartao: 'Cartão', dinheiro: 'Dinheiro' };
 
 function formatosRecibo_() {
   return typeof formatarReais !== 'undefined'
-    ? { formatarReais, cpfValido, formatarCpf }
+    ? { formatarReais, cpfValido, formatarCpf, textoParaData }
     : require('./Formatos.js');
 }
 
-// Marcadores que o modelo do Google Docs precisa ter (escritos assim, com chaves duplas).
-const MARCADORES_OBRIGATORIOS_RECIBO = [
-  'nome_profissional', 'crn', 'pagador_nome', 'valor', 'data_pagamento', 'descricao',
-];
-// Marcadores extras que o modelo pode ter; quando não se aplicam, ficam em branco.
-const MARCADORES_OPCIONAIS_RECIBO = ['numero', 'data_emissao', 'pagador_cpf_linha', 'paciente_linha'];
-
-const DESCRICAO_PADRAO_RECIBO = 'Consulta de nutrição';
-
-// "2026-09-30" -> "30/09/2026" (texto que não é data devolve vazio).
-function dataParaReciboBr(texto) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(texto || ''));
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+// Modelo padrão (um parágrafo por linha), com os campos entre chaves duplas.
+function linhasModeloRecibo() {
+  return [
+    'RECIBO Nº {{numero_recibo}}',
+    '',
+    'Recebi de {{pagador}}',
+    '{{linha_cpf}}',
+    'a quantia de {{valor}}, referente a {{descricao}}.',
+    '{{linha_paciente}}',
+    'Forma de pagamento: {{forma}}',
+    'Data do pagamento: {{data}}',
+    '',
+    '{{profissional}}',
+    'Nutricionista — {{crn}}',
+  ];
 }
 
-function semAcentoMinusculo_(texto) {
-  return String(texto || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+// "$" e "\" têm significado especial na troca de texto do Google Docs: saem antes.
+function textoSeguroParaDocs(texto) {
+  return String(texto).replace(/[$\\]/g, '').replace(/\s+/g, ' ').trim();
 }
 
-// Pagador e paciente são a mesma pessoa? Primeiro nome igual e sobrenome começando pela inicial guardada.
-function pagadorEhOPaciente(pagadorNome, paciente) {
-  if (!paciente) return false;
-  const partes = semAcentoMinusculo_(pagadorNome).split(/\s+/).filter(Boolean);
-  if (partes.length === 0) return false;
-  const primeiro = semAcentoMinusculo_(paciente.primeiro_nome);
-  const inicial = semAcentoMinusculo_(paciente.inicial_sobrenome).replace(/\./g, '').slice(0, 1);
-  if (partes[0] !== primeiro) return false;
-  return !inicial || (partes.length > 1 && partes[partes.length - 1].startsWith(inicial));
+// Só letras, números e hífen: nome de arquivo sem nome de pessoa.
+function nomeArquivoRecibo(pagamento) {
+  const parte = (v) => String(v).replace(/[^A-Za-z0-9]/g, '');
+  return `Recibo-${parte(pagamento.id)}-${parte(pagamento.codigo_paciente)}.pdf`;
 }
 
-// Nome do arquivo: só código do paciente, data e id do pagamento (regra 6). Nunca nome nem CPF.
-function nomeArquivoRecibo(pagamento, dataPagamento) {
-  const parte = (t) => String(t || '').replace(/[^A-Za-z0-9-]/g, '');
-  return `Recibo_${parte(pagamento.codigo_paciente)}_${parte(dataPagamento)}_${parte(pagamento.id)}.pdf`;
+// "2026-09-30" -> "30/09/2026".
+function dataBrasileira(texto) {
+  const d = formatosRecibo_().textoParaData(texto);
+  return d ? `${String(d.dia).padStart(2, '0')}/${String(d.mes).padStart(2, '0')}/${d.ano}` : null;
 }
 
-// Junta e confere tudo o que o recibo precisa.
-// entrada: { config, pagamento, paciente|null, consulta|null, hoje: "AAAA-MM-DD" }
-// Devolve { erros: [...] } ou { campos: { marcador: texto }, nomeArquivo }.
-function montarDadosRecibo(entrada) {
-  const { config, pagamento, paciente, consulta, hoje } = entrada;
-  const F = formatosRecibo_();
+function semAcento_(texto) {
+  return String(texto).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+// O paciente só guarda primeiro nome e inicial: considera a mesma pessoa se o pagador começa
+// com o primeiro nome e algum outro nome começa com a inicial. Na dúvida, a linha "Paciente" aparece.
+function mesmaPessoaRecibo_(nomePagador, paciente) {
+  const partes = semAcento_(nomePagador).split(' ');
+  const inicial = semAcento_(paciente.inicial_sobrenome || '').charAt(0);
+  return partes.length >= 2 && partes[0] === semAcento_(paciente.primeiro_nome)
+    && inicial !== '' && partes.slice(1).some((p) => p.charAt(0) === inicial);
+}
+
+// Devolve { erros, dados }. `erros` são mensagens em português, sem CPF nem outro dado digitado.
+// `dados.campos` é o que entra no modelo; `dados.nomeArquivo` é o nome do PDF.
+function montarDadosRecibo({ pagamento, config, paciente, consulta }) {
+  const f = formatosRecibo_();
   const erros = [];
-  const p = pagamento || {};
+  const id = pagamento && pagamento.id ? pagamento.id : '(sem id)';
+  if (!pagamento) return { erros: ['Pagamento não encontrado.'], dados: null };
 
-  if (String(p.status) !== 'pago') {
-    erros.push('Só se gera recibo de pagamento marcado como "pago". Marque como pago antes.');
+  if (pagamento.link_recibo) {
+    erros.push(`O pagamento ${id} já tem recibo. Para gerar de novo, apague o link na coluna link_recibo.`);
+    return { erros, dados: null, jaTem: true };
   }
-  if (!config.nome_profissional) erros.push('Preencha "nome_profissional" na aba Configurações: ele aparece no recibo.');
-  if (!config.crn) erros.push('Preencha "crn" na aba Configurações: ele aparece no recibo.');
-  if (!String(p.pagador_nome || '').trim()) erros.push('Preencha o nome de quem pagou (coluna pagador_nome) na aba Pagamentos.');
-  if (!Number.isSafeInteger(p.valor_centavos) || p.valor_centavos <= 0) {
-    erros.push('O valor deste pagamento está vazio ou inválido (coluna valor_centavos, em centavos).');
+  if (pagamento.status !== 'pago') erros.push(`O pagamento ${id} não está pago. Só se emite recibo de pagamento recebido.`);
+  else if (!FORMAS_COM_RECIBO.includes(pagamento.forma)) erros.push(`O pagamento ${id} é ${pagamento.forma || 'sem forma'}: recibo só para Pix, cartão ou dinheiro.`);
+  if (!Number.isSafeInteger(pagamento.valor_centavos) || pagamento.valor_centavos <= 0) erros.push(`O valor do pagamento ${id} precisa ser maior que zero.`);
+  const nomePagador = textoSeguroParaDocs(pagamento.pagador_nome || '');
+  if (nomePagador === '') erros.push(`Preencha "pagador_nome" no pagamento ${id} (quem pagou).`);
+  const data = dataBrasileira(pagamento.data_pagamento);
+  if (!data) erros.push(`Preencha "data_pagamento" no pagamento ${id} no formato AAAA-MM-DD.`);
+  const cpfBruto = String(pagamento.pagador_cpf || '').trim();
+  if (cpfBruto !== '' && !f.cpfValido(cpfBruto)) {
+    erros.push(`O CPF do pagador no pagamento ${id} não é válido. Confira os 11 números (zero à esquerda incluído) ou deixe em branco.`);
   }
-  const dataPagamento = dataParaReciboBr(p.data_pagamento);
-  if (!dataPagamento) erros.push('Preencha a data do pagamento (coluna data_pagamento, no formato 2026-09-30).');
+  for (const chave of ['nome_profissional', 'crn', 'id_modelo_recibo', 'id_pasta_recibos']) {
+    if (!config || !config[chave]) erros.push(`Preencha "${chave}" na aba Configurações.`);
+  }
+  if (erros.length > 0) return { erros, dados: null };
 
-  const cpf = String(p.pagador_cpf || '').trim();
-  if (cpf && !F.cpfValido(cpf)) erros.push('O CPF do pagador (coluna pagador_cpf) não é válido. Corrija ou deixe em branco.');
-
-  if (erros.length > 0) return { erros };
-
-  const dataConsulta = consulta ? dataParaReciboBr(consulta.data) : '';
+  const nomePaciente = paciente ? textoSeguroParaDocs(`${paciente.primeiro_nome} ${paciente.inicial_sobrenome}`) : '';
+  const mesmoNome = paciente ? mesmaPessoaRecibo_(nomePagador, paciente) : false;
+  const dataConsulta = consulta ? dataBrasileira(consulta.data) : null;
   return {
-    campos: {
-      nome_profissional: config.nome_profissional,
-      crn: config.crn,
-      pagador_nome: String(p.pagador_nome).trim(),
-      pagador_cpf_linha: cpf ? `CPF: ${F.formatarCpf(cpf)}` : '',
-      paciente_linha: !pagadorEhOPaciente(p.pagador_nome, paciente) && paciente
-        ? `Paciente: ${[paciente.primeiro_nome, paciente.inicial_sobrenome].filter(Boolean).join(' ')}` : '',
-      valor: F.formatarReais(p.valor_centavos),
-      data_pagamento: dataPagamento,
-      descricao: dataConsulta ? `${DESCRICAO_PADRAO_RECIBO} realizada em ${dataConsulta}` : DESCRICAO_PADRAO_RECIBO,
-      numero: String(p.id || ''),
-      data_emissao: dataParaReciboBr(hoje),
+    erros: [],
+    dados: {
+      nomeArquivo: nomeArquivoRecibo(pagamento),
+      campos: {
+        numero_recibo: pagamento.id,
+        pagador: nomePagador,
+        linha_cpf: cpfBruto ? `CPF: ${f.formatarCpf(cpfBruto)}` : '',
+        valor: f.formatarReais(pagamento.valor_centavos),
+        descricao: dataConsulta ? `consulta de nutrição realizada em ${dataConsulta}` : 'consulta de nutrição',
+        linha_paciente: nomePaciente && !mesmoNome ? `Paciente: ${nomePaciente}` : '',
+        forma: NOME_FORMA_RECIBO[pagamento.forma],
+        data,
+        profissional: textoSeguroParaDocs(config.nome_profissional),
+        crn: textoSeguroParaDocs(config.crn),
+      },
     },
-    nomeArquivo: nomeArquivoRecibo(p, String(p.data_pagamento)),
   };
 }
 
-// Obrigatórios que o texto do modelo não traz. Devolve a lista dos que faltam.
-function marcadoresFaltandoNoModelo(textoModelo) {
-  return MARCADORES_OBRIGATORIOS_RECIBO.filter((m) => !String(textoModelo).includes(`{{${m}}}`));
-}
-
-function textoErrosRecibo(erros) {
-  return `Não foi possível gerar o recibo:\n- ${erros.join('\n- ')}`;
+// Nomes dos campos que ainda aparecem no texto depois da troca (modelo dela com campo desconhecido).
+function camposSobrando(texto) {
+  return [...new Set(String(texto).match(/\{\{[^{}]*\}\}/g) || [])];
 }
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    MARCADORES_OBRIGATORIOS_RECIBO, MARCADORES_OPCIONAIS_RECIBO, dataParaReciboBr,
-    pagadorEhOPaciente, nomeArquivoRecibo, montarDadosRecibo, marcadoresFaltandoNoModelo, textoErrosRecibo,
+    FORMAS_COM_RECIBO, linhasModeloRecibo, textoSeguroParaDocs, nomeArquivoRecibo, dataBrasileira,
+    montarDadosRecibo, camposSobrando,
   };
 }
