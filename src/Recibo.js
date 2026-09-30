@@ -115,8 +115,20 @@ function camposSobrando(texto) {
   return [...new Set(String(texto).match(/\{\{[^{}]*\}\}/g) || [])];
 }
 
+// Campos que o modelo precisa ter (R09). linha_cpf e linha_paciente só são exigidos quando têm conteúdo neste recibo.
+const CAMPOS_OBRIGATORIOS_RECIBO = ['numero_recibo', 'pagador', 'valor', 'descricao', 'forma', 'data', 'profissional', 'crn'];
+const CAMPOS_CONDICIONAIS_RECIBO = ['linha_cpf', 'linha_paciente'];
+
+// Nomes dos campos que faltam no texto do modelo (antes da troca). `campos` é dados.campos.
+function camposFaltandoNoModelo(textoModelo, campos) {
+  const texto = String(textoModelo);
+  const exigidos = CAMPOS_OBRIGATORIOS_RECIBO.concat(CAMPOS_CONDICIONAIS_RECIBO.filter((c) => campos[c] !== undefined && campos[c] !== ''));
+  return exigidos.filter((c) => !texto.includes(`{{${c}}}`));
+}
+
 if (typeof module !== 'undefined') {
   module.exports = {
+    CAMPOS_OBRIGATORIOS_RECIBO, CAMPOS_CONDICIONAIS_RECIBO, camposFaltandoNoModelo,
     FORMAS_COM_RECIBO, linhasModeloRecibo, textoSeguroParaDocs, nomeArquivoRecibo, dataBrasileira,
     montarDadosRecibo, camposSobrando,
   };

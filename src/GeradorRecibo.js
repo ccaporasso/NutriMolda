@@ -33,6 +33,11 @@ function gerarRecibo(numeroLinha) {
     const idModelo = validarIdDrive_(config.id_modelo_recibo, 'id_modelo_recibo');
     copia = driveCopiar(idModelo, `rascunho-${nomeArquivoRecibo(pagamento).replace('.pdf', '')}`, idPasta);
     const documento = DocumentApp.openById(copia);
+    const faltando = camposFaltandoNoModelo(textoDoDocumento_(documento), dados.campos);
+    if (faltando.length > 0) {
+      throw erroDeUso_(`O modelo do recibo não tem o(s) campo(s) obrigatório(s): ${faltando.map((c) => `{{${c}}}`).join(', ')}. `
+        + 'Nada foi gerado. Corrija o modelo (ou crie outro em Configuração > Criar modelo e pasta de recibos, com o id em branco) e tente de novo.');
+    }
     for (const [campo, valor] of Object.entries(dados.campos)) {
       const padrao = escaparPadrao_(`{{${campo}}}`);
       documento.getBody().replaceText(padrao, valor);

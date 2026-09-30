@@ -10,7 +10,7 @@ const pg = (id, nome, cpf, valor, forma, data, status = 'pago') => ({
 });
 const dados = [
   pg('PG000001', 'Maria Souza Teste', '52998224725', 15000, 'pix', '2026-09-05'),
-  pg('PG000002', 'maria souza teste', '', 10000, 'cartao', '2026-09-20'), // mesmo nome sem CPF: junta com a Maria
+  pg('PG000002', 'maria souza teste', '', 10000, 'cartao', '2026-09-20'), // mesmo nome sem CPF: NÃO junta com a Maria (R10)
   pg('PG000003', 'João Teste', '', 15000, 'dinheiro', '2026-09-30'),
   pg('PG000004', '=SOMA(1)', '', 5000, 'pix', '2026-09-01'),
   pg('PG000005', 'Ana Teste', '', 0, 'pacote', '2026-09-10'),
@@ -29,12 +29,13 @@ test('interpretarMes aceita AAAA-MM, MM/AAAA e vazio; recusa o resto', () => {
   assert.equal(R.interpretarMes('setembro', hoje), null);
 });
 
-test('totais batem com a soma feita à mão (R$ 450,00 em 4 recebimentos, 3 pagadores)', () => {
+test('totais batem com a soma feita à mão (R$ 450,00 em 4 recebimentos, 4 linhas de pagador)', () => {
   const r = R.consolidarRecebimentos(dados, '2026-09');
   assert.equal(r.totalCentavos, 15000 + 10000 + 15000 + 5000);
   assert.equal(r.quantidade, 4);
   assert.deepEqual(r.pagadores.map((g) => [g.nome, g.quantidade, g.totalCentavos]).sort(),
-    [['=SOMA(1)', 1, 5000], ['João Teste', 1, 15000], ['Maria Souza Teste', 2, 25000]].sort());
+    [['=SOMA(1)', 1, 5000], ['João Teste', 1, 15000], ['Maria Souza Teste', 1, 15000], ['maria souza teste', 1, 10000]].sort());
+  assert.match(r.avisos.join('\n'), /mesmo nome de outro pagador que tem CPF/);
   assert.deepEqual(r.porForma, { pix: 20000, cartao: 10000, dinheiro: 15000 });
   assert.equal(R.verificarTotais(r), true);
 });
@@ -74,7 +75,8 @@ test('CPF inválido é tratado como sem CPF e o número digitado nunca aparece e
 test('CSV: separador ponto e vírgula, vírgula decimal, CPF formatado, fórmula neutralizada', () => {
   const csv = R.montarCsvRelatorio(R.consolidarRecebimentos(dados, '2026-09'));
   assert.ok(csv.startsWith('﻿pagador;cpf;quantidade;total_reais\r\n'));
-  assert.match(csv, /Maria Souza Teste;529\.982\.247-25;2;250,00\r\n/);
+  assert.match(csv, /Maria Souza Teste;529\.982\.247-25;1;150,00\r\n/);
+  assert.match(csv, /maria souza teste;;1;100,00\r\n/);
   assert.match(csv, /João Teste;;1;150,00\r\n/);
   assert.match(csv, /\r\n =SOMA\(1\);;1;50,00\r\n/);
   assert.match(csv, /TOTAL;;4;450,00\r\n$/);
@@ -146,4 +148,15 @@ test('Google simulado: mês inválido mostra mensagem e não gera nada', () => {
   amb.rodar('gerarRelatorioDoMes()');
   assert.match(amb.alertas.at(-1), /Mês inválido/);
   assert.equal(amb.abas.has('Relatório 2026-09'), false);
+});
+
+test('R10: pagamento sem CPF de homônimo não é atribuído ao CPF de outra pessoa', () => {
+  const base = { status: 'pago', forma: 'pix', data_pagamento: '2026-09-30', pagador_nome: 'Pagador Ficticio' };
+  const r = R.consolidarRecebimentos([
+    { ...base, id: 'PG000001', pagador_cpf: '52998224725', valor_centavos: 15000 },
+    { ...base, id: 'PG000002', pagador_cpf: '', valor_centavos: 10000 },
+  ], '2026-09');
+  assert.equal(r.pagadores.find((g) => g.cpf === '52998224725').totalCentavos, 15000);
+  assert.equal(r.pagadores.find((g) => !g.cpf).totalCentavos, 10000);
+  assert.equal(r.totalCentavos, 25000);
 });

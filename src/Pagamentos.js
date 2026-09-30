@@ -35,13 +35,24 @@ function planejarAReceber({ consultas, pagamentos, config }) {
   const preco = precoPagamentos_();
   const idsComPagamento = new Set(pagamentos.map((p) => String(p.id_evento)).filter((x) => x !== ''));
   let numero = proximoNumeroPagamento(pagamentos);
-  const contagens = { jaTinham: 0, semPaciente: 0, semTipo: 0, semPreco: 0, canceladasComCobranca: 0 };
+  const contagens = { jaTinham: 0, semPaciente: 0, semTipo: 0, semPreco: 0, canceladasComCobranca: 0, semIdEvento: 0, idRepetido: 0, pagamentoSemConsulta: 0 };
+  const linhasSemId = [];
+  const linhasRepetidas = [];
+  const idsDeConsultas = new Set(consultas.map((c) => String(c.id_evento === undefined || c.id_evento === null ? '' : c.id_evento).trim()).filter((x) => x !== ''));
+  contagens.pagamentoSemConsulta = pagamentos.filter((p) => String(p.id_evento).trim() !== '' && !idsDeConsultas.has(String(p.id_evento).trim())).length;
+  const idsJaVistos = new Set();
   const semPrecoPorTipo = new Set();
   const novos = [];
 
   const ordenadas = consultas.slice().sort((a, b) => (`${a.data}${a.hora}`).localeCompare(`${b.data}${b.hora}`));
   for (const c of ordenadas) {
-    const id = String(c.id_evento);
+    const id = String(c.id_evento === undefined || c.id_evento === null ? '' : c.id_evento).trim();
+    if (id === '') { // sem id_evento não há como ligar a cobrança à consulta: recusa em vez de cobrar de novo a cada execução
+      if (c.status !== 'cancelada') { contagens.semIdEvento++; linhasSemId.push(c.linha); }
+      continue;
+    }
+    if (idsJaVistos.has(id)) { contagens.idRepetido++; linhasRepetidas.push(c.linha); continue; }
+    idsJaVistos.add(id);
     if (c.status === 'cancelada') {
       const aberto = pagamentos.some((p) => String(p.id_evento) === id && p.status === 'a_receber');
       if (aberto) contagens.canceladasComCobranca++;
@@ -65,6 +76,17 @@ function planejarAReceber({ consultas, pagamentos, config }) {
   }
 
   const avisos = [];
+  const listaLinhas = (l) => l.filter((n) => n !== undefined).join(', ');
+  if (contagens.semIdEvento > 0) {
+    avisos.push(`${contagens.semIdEvento} consulta(s) sem "id_evento" não geraram cobrança${linhasSemId.some((n) => n !== undefined) ? ` (linha(s) ${listaLinhas(linhasSemId)} da aba Consultas)` : ''}. `
+      + 'Rode "Sincronizar agenda" ou apague a linha incompleta e gere de novo.');
+  }
+  if (contagens.idRepetido > 0) {
+    avisos.push(`${contagens.idRepetido} consulta(s) repetem um "id_evento" que já aparece acima${linhasRepetidas.some((n) => n !== undefined) ? ` (linha(s) ${listaLinhas(linhasRepetidas)} da aba Consultas)` : ''} e não geraram cobrança. Apague a linha repetida.`);
+  }
+  if (contagens.pagamentoSemConsulta > 0) {
+    avisos.push(`${contagens.pagamentoSemConsulta} pagamento(s) estão ligados a um "id_evento" que não existe na aba Consultas. Confira a aba Pagamentos.`);
+  }
   if (contagens.semPaciente > 0) {
     avisos.push(`${contagens.semPaciente} consulta(s) sem paciente identificado não geraram cobrança. Preencha "codigo_paciente" na aba Consultas e gere de novo.`);
   }

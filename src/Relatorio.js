@@ -59,24 +59,16 @@ function consolidarRecebimentos(pagamentos, mes) {
     incluidos.push(p);
   }
 
-  // Nome sem CPF junta ao CPF quando o mesmo nome só aparece com um CPF.
-  const cpfPorNome = new Map();
-  for (const p of incluidos) {
-    const cpf = f.apenasDigitos(p.pagador_cpf);
-    if (f.cpfValido(cpf) && chaveNome_(p.pagador_nome)) {
-      if (!cpfPorNome.has(chaveNome_(p.pagador_nome))) cpfPorNome.set(chaveNome_(p.pagador_nome), new Set());
-      cpfPorNome.get(chaveNome_(p.pagador_nome)).add(cpf);
-    }
-  }
+  // CPF nunca é deduzido pelo nome (R10): dois pagadores podem ter o mesmo nome. Sem CPF, o grupo é por nome
+  // e o relatório avisa quando esse nome também aparece com CPF, para ela confirmar e preencher.
   const grupos = new Map();
   for (const p of incluidos) {
     let cpf = f.apenasDigitos(p.pagador_cpf);
     if (cpf !== '' && !f.cpfValido(cpf)) { cpfInvalido++; cpf = ''; }
     const nomeChave = chaveNome_(p.pagador_nome);
-    if (cpf === '' && cpfPorNome.has(nomeChave) && cpfPorNome.get(nomeChave).size === 1) cpf = [...cpfPorNome.get(nomeChave)][0];
     const chave = cpf ? `C:${cpf}` : `N:${nomeChave}`;
     if (!grupos.has(chave)) {
-      grupos.set(chave, { nome: String(p.pagador_nome || '').trim() || SEM_NOME, cpf, quantidade: 0, totalCentavos: 0 });
+      grupos.set(chave, { nome: String(p.pagador_nome || '').trim() || SEM_NOME, cpf, nomeChave, quantidade: 0, totalCentavos: 0 });
     }
     const g = grupos.get(chave);
     g.quantidade++;
@@ -90,6 +82,9 @@ function consolidarRecebimentos(pagamentos, mes) {
 
   const semCpf = pagadores.filter((g) => !g.cpf).length;
   if (semCpf > 0) avisos.push(`${semCpf} pagador(es) sem CPF válido. Para o carnê-leão o contador costuma precisar do CPF de quem pagou: preencha "pagador_cpf" na aba Pagamentos e gere de novo.`);
+  const nomesComCpf = new Set([...grupos.values()].filter((g) => g.cpf && g.nomeChave).map((g) => g.nomeChave));
+  const homonimos = [...grupos.values()].filter((g) => !g.cpf && g.nomeChave && nomesComCpf.has(g.nomeChave)).length;
+  if (homonimos > 0) avisos.push(`${homonimos} pagador(es) sem CPF têm o mesmo nome de outro pagador que tem CPF. O kit não junta pelo nome: se for a mesma pessoa, preencha "pagador_cpf" na aba Pagamentos.`);
   if (cpfInvalido > 0) avisos.push(`${cpfInvalido} pagamento(s) com CPF inválido (o número digitado não foi repetido aqui). Confira os 11 números.`);
   if (pagadores.some((g) => g.nome === SEM_NOME)) avisos.push('Há pagamento sem "pagador_nome". Preencha na aba Pagamentos.');
   if (fora.pacote > 0) avisos.push(`${fora.pacote} consulta(s) de pacote ficaram fora dos valores (o dinheiro entra na venda do pacote, não na consulta).`);
