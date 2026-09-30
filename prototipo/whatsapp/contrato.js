@@ -50,6 +50,8 @@ const CONFIG_TESTE = Object.freeze({
   antecedenciaMin: 120,
   opcoesPorVez: 4,
   validadeMaximaDias: 365,
+  // Limite de frequência por paciente (proteção contra repetição/abuso). Valores de teste.
+  limiteEventos: Object.freeze({ max: 30, janelaMs: 60000 }),
 });
 
 const RE_ID = /^[A-Za-z0-9_.:-]{1,64}$/;

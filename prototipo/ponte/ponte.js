@@ -11,7 +11,7 @@ const { situacaoLiberacao } = require('../whatsapp/nucleo.js');
 
 const DIARIO = 'diario.jsonl';
 
-function criarPonte({ pasta, segredoApp, mapaNumeros, nucleo, confiavel, repos, relogio, transporte, maxTentativas = 5, gravar: gravarExterno }) {
+function criarPonte({ pasta, segredoApp, segredosApp, mapaNumeros, nucleo, confiavel, repos, relogio, transporte, maxTentativas = 5, gravar: gravarExterno }) {
   fs.mkdirSync(pasta, { recursive: true, mode: 0o700 });
   const arquivo = path.join(pasta, DIARIO);
 
@@ -42,7 +42,7 @@ function criarPonte({ pasta, segredoApp, mapaNumeros, nucleo, confiavel, repos, 
 
   // 1) Recebimento. Devolve o status HTTP que o servidor real responderia à Meta.
   function receber(corpoBruto, cabecalhoAssinatura) {
-    if (!verificarAssinatura(corpoBruto, cabecalhoAssinatura, segredoApp)) return { status: 401 }; // antes de ler o conteúdo
+    if (!verificarAssinatura(corpoBruto, cabecalhoAssinatura, segredosApp || segredoApp)) return { status: 401 }; // antes de ler o conteúdo
     if (Buffer.byteLength(corpoBruto) > LIMITES.maxCorpoBytes) return { status: 413 };
     let obj; try { obj = JSON.parse(corpoBruto); } catch (e) { return { status: 400 }; }
     const n = normalizarWebhook(obj, mapaNumeros);

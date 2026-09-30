@@ -134,6 +134,13 @@ function criarNucleo({ verificar, repos, relogio, config = C.CONFIG_TESTE, regis
       if (sit !== 'ativa') { log('evento_paciente', { resultado: 'sem_efeito', codigo: sit, paciente: paciente.codigo }); return semEfeito('sem_liberacao'); }
 
       const chave = evento.chaveIdempotencia || evento.eventoId;
+      // Limite de frequência: só para evento novo (repetição de um já processado não conta), sem resposta ao excesso
+      // e nunca para PARAR (a saída do paciente sempre funciona).
+      const lim = config.limiteEventos;
+      if (lim && evento.comando !== 'parar' && !(await repos.operacoes.obter(cons, chave)) && (await repos.operacoes.contarRecentes(cons, paciente.codigo, agora - lim.janelaMs)) >= lim.max) {
+        log('evento_paciente', { resultado: 'sem_efeito', codigo: 'limite_de_frequencia', paciente: paciente.codigo });
+        return semEfeito('limite_de_frequencia');
+      }
       const imp = C.impressao({ cons, evento: evento.eventoId, paciente: paciente.codigo, comando: evento.comando, parametros });
       const { criada, registro } = await repos.operacoes.iniciar(cons, chave, imp, agora);
       if (!criada) {

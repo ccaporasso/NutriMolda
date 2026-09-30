@@ -14,11 +14,17 @@ const COMANDOS_BOTAO = ['menu', 'parar', 'ver_horarios', 'falar_com_nutricionist
 
 // X-Hub-Signature-256 = "sha256=" + HMAC-SHA256(segredo do app, corpo BRUTO). Conferir antes de ler o conteúdo.
 function verificarAssinatura(corpoBruto, cabecalho, segredo) {
-  if (typeof segredo !== 'string' || !segredo || (typeof corpoBruto !== 'string' && !Buffer.isBuffer(corpoBruto))) return false;
+  // `segredo` pode ser uma lista (rotação: o novo e o anterior valem juntos até o anterior ser retirado).
+  const segredos = (Array.isArray(segredo) ? segredo : [segredo]).filter((x) => typeof x === 'string' && x);
+  if (!segredos.length || (typeof corpoBruto !== 'string' && !Buffer.isBuffer(corpoBruto))) return false;
   if (typeof cabecalho !== 'string' || !/^sha256=[0-9a-f]{64}$/i.test(cabecalho)) return false;
-  const esperado = crypto.createHmac('sha256', segredo).update(corpoBruto).digest();
   const recebido = Buffer.from(cabecalho.slice(7), 'hex');
-  return recebido.length === esperado.length && crypto.timingSafeEqual(recebido, esperado);
+  let ok = false;
+  for (const s of segredos) { // percorre todos: o tempo não revela qual segredo casou
+    const esperado = crypto.createHmac('sha256', s).update(corpoBruto).digest();
+    if (recebido.length === esperado.length && crypto.timingSafeEqual(recebido, esperado)) ok = true;
+  }
+  return ok;
 }
 const assinar = (corpoBruto, segredo) => 'sha256=' + crypto.createHmac('sha256', segredo).update(corpoBruto).digest('hex'); // só para testes/simulador
 

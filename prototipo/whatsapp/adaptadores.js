@@ -112,6 +112,8 @@ function criarRepositorios({ latencia = false, falhas = criarFalhas() } = {}) {
       const o = ops(cons).get(chave);
       if (o) { o.estado = estado; o.resultado = resultado; }
     },
+    // Quantos eventos novos o paciente gerou desde `desde` (aproximado na simulação; produção precisa de contador atômico).
+    async contarRecentes(cons, codigo, desde) { await tocar(cons); return [...ops(cons).values()].filter((o) => o.paciente === codigo && o.criadaEm >= desde).length; },
     async listarPendentes(cons) { await tocar(cons); return [...ops(cons).values()].filter((o) => o.estado === 'pendente').map((o) => ({ ...o })); },
   };
 
