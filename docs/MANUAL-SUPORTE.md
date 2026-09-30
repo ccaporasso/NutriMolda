@@ -41,7 +41,7 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 | 4 | Consultas com `codigo_paciente` em branco ("a identificar") | E-mail ou telefone da marcação não bate com **um** paciente ativo (ou bate com dois) | Cadastrar o contato em Pacientes ou digitar o código à mão (o kit nunca troca código digitado). |
 | 5 | Recibo não sai, ou "arquivo não encontrado" | Faltam `pagador_nome` ou `data_pagamento`, CPF inválido, modelo com campo desconhecido, ou modelo/pasta **não criados pelo kit** (o escopo `drive.file` só enxerga o que o kit criou, D20) | Ler a mensagem. Se for "arquivo não encontrado": rodar **Criar modelo e pasta de recibos** em ids em branco. Se a validação mostrar que `drive.file` não basta, decidir com o Caio (D20) antes de ampliar. |
 | 6 | Não chega e-mail de alerta | `email_alertas` errado ou cota diária de e-mails do Google | O erro continua no Registro. Conferir `email_alertas`; cotas em contas gratuitas são menores. |
-| 7 | Não gera cobrança | Preço em branco ou zero (D17), consulta sem paciente, consulta `faltou` ou `cancelada` | Preencher o preço (centavos) e rodar **Gerar valores a receber**. |
+| 7 | Não gera cobrança | Preço em branco ou zero (D17), consulta sem paciente, consulta `faltou` ou `cancelada` | Usar Configuração > Definir preços das consultas (em reais) e rodar **Gerar valores a receber**. Preço abaixo de R$ 10,00 pede confirmação (quase sempre é 150 digitado no campo de centavos). |
 | 8 | "Outra operação está em andamento" | Duas ações ao mesmo tempo (menu e gatilho) | Esperar um minuto e repetir. |
 
 ## 5. Escopos de permissão (resumo; a justificativa completa está em `docs/DECISOES.md`)

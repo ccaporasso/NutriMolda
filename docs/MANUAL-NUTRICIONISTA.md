@@ -21,8 +21,8 @@ O Caio faz a instalação com você. Depois, na aba **Configurações**, preench
 |---|---|---|
 | `nome_profissional` | Seu nome, como sai no recibo | Dra. Fulana de Tal |
 | `crn` | Seu número no CRN | CRN-3 12345 |
-| `valor_primeira_consulta_centavos` | Preço da primeira consulta **em centavos** | R$ 150,00 → `15000` |
-| `valor_retorno_centavos` | Preço do retorno **em centavos** | R$ 100,00 → `10000` |
+| `valor_primeira_consulta_centavos` | Preço da primeira consulta. **Prefira o menu Configuração > Definir preços das consultas (em reais)**: você digita 150,00 e o kit grava 15000 (centavos) | R$ 150,00 → `15000` |
+| `valor_retorno_centavos` | Preço do retorno (mesmo menu) | R$ 100,00 → `10000` |
 | `chave_pix` | Sua chave Pix, exatamente como no banco | |
 | `nome_recebedor_pix` | Seu nome como no banco, até 25 letras | |
 | `cidade_recebedor_pix` | Sua cidade, até 15 letras | |

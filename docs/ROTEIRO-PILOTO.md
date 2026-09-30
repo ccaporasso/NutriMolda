@@ -99,10 +99,11 @@ Como anotar: na coluna "Resultado", escreva **OK** ou descreva o que aconteceu d
 | 6.2 | Colocar `sem-arroba` em `email_alertas` e repetir 6.1 | Janela diz que o e-mail **não** saiu; o Registro tem o aviso. Desfaça | |
 | 6.3 | Apagar o valor de `chave_pix` e usar **Sincronizar agenda** | Janela lista a chave que falta, **sem e-mail** (é problema de uso). Desfaça. *Dúvida 2 da revisão: hoje a agenda exige a configuração inteira* | |
 | 6.4 | Apagar o valor de `valor_primeira_consulta_centavos` e **Gerar valores a receber** | Aviso de que o preço da primeira consulta não está configurado; nada criado para esse tipo | |
-| 6.5 | Digitar `150` (em vez de `15000`) em `valor_primeira_consulta_centavos` e gerar valores em uma planilha **sem cobranças** | **Comportamento conhecido e em aberto (dúvida 1 da revisão):** hoje nasce cobrança de **R$ 1,50 sem aviso**. Anote o que aparece. Depois da decisão, o esperado passa a ser aviso ou recusa | |
+| 6.5 | Digitar `150` (em vez de `15000`) em `valor_primeira_consulta_centavos` e gerar valores em uma planilha **sem cobranças** | Janela "Preço muito baixo (... R$ 1,50 ...)" pedindo confirmação; ao responder Não, nenhuma cobrança nasce | |
 | 6.6 | Digitar `150,00` no mesmo campo | Recusa com mensagem citando a chave | |
 | 6.7 | Renomear a aba Pagamentos e usar qualquer item de cobrança | Mensagem "A aba Pagamentos não existe. Use Instalar/atualizar planilha"; sem e-mail. Desfaça | |
 | 6.8 | Apps Script → **Execuções**, olhar as execuções dos passos acima | Nenhuma tela de erro do Google (erros tratados aparecem como janela do kit) | |
+| 6.9 | Menu Configuração > Definir preços das consultas (em reais): digitar `180,00` na primeira consulta e deixar o retorno em branco | Aba Configurações passa a `18000` na primeira consulta; o retorno não muda. `1,50` pede confirmação; `cem` é recusado sem gravar nada | |
 
 ## 7. Privacidade (regra 6 e LGPD)
 

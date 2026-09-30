@@ -30,6 +30,7 @@ Situação: a fazer · em andamento · feita.
 | R3 | Casos de falha: cancelamentos, execuções repetidas, configuração incompleta, falha no PDF, erro no envio de alerta | Code | feita (`tests/falhas.test.js`, 26 testes); o comportamento real do Google diante de cota, permissão e erro de Drive só se vê na conta de teste |
 | R4 | Separação teste/produção: pacote de produção sem gerador de dados fictícios e sem permissões só de teste, conferido por teste automático | Code | feita (`scripts/empacotar-producao.js`, `tests/producao.test.js`, D23); falta validar o escopo `calendar.events.readonly` no Google |
 | R5 | Preparação do piloto: roteiro no Google, resultados esperados e dúvidas para a nutricionista | Ambos | feita no papel (`docs/ROTEIRO-PILOTO.md`, `docs/DUVIDAS-NUTRICIONISTA.md`); falta o Caio executar o roteiro na conta de TESTE e conversar com a nutricionista |
+| R6 | Correções da revisão automática do PR 6 (R01, R03 a R11, D17, N9-03) e integração das PRs 8, 9 e 10 | Code | feita no código (`tests/regressoes-revisao.test.js`, `tests/precos.test.js`, D25 a D28); aguarda nova revisão e a validação no Google (ver `docs/VALIDACAO-NO-GOOGLE.md`, seção "Revisão automática") |
 
 ## Fase 1 — Agenda sem código (feita à mão, com a cliente)
 
