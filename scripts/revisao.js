@@ -7,7 +7,10 @@ const { execFileSync, spawnSync } = require('node:child_process');
 
 const RAIZ = path.join(__dirname, '..');
 const PASTA_PACOTES = path.join(RAIZ, '.revisao');
-const PASTA_RESPOSTAS = path.join(RAIZ, 'docs', 'revisoes');
+// Códigos de saída de salvar/conferir: 0 liberada, 1 fora do formato, 3 formato ok mas não aprovada.
+const CODIGO_FORMATO_INVALIDO = 1;
+const CODIGO_NAO_APROVADA = 3;
+const PASTA_RESPOSTAS = process.env.REVISAO_PASTA_RESPOSTAS || path.join(RAIZ, 'docs', 'revisoes');
 const LIMITE_DIFF = 150000; // caracteres; acima disso o ChatGPT costuma cortar
 const LIMITE_TESTES = 6000;
 
@@ -357,9 +360,15 @@ function mostrarResumo(arquivo) {
     console.log('A resposta NÃO segue o formato:');
     for (const e of r.erros) console.log(`  - ${e}`);
     console.log('Peça ao ChatGPT para reenviar só no modelo do roteiro.');
-    return 1;
+    return CODIGO_FORMATO_INVALIDO;
   }
-  console.log(`Formato ok. Peça ao Claude: "corrija a revisão em ${path.relative(RAIZ, arquivo)}".`);
+  const rel = path.relative(RAIZ, arquivo);
+  if (!r.aprovada) {
+    console.log('Formato ok, mas a tarefa NÃO pode avançar: o parecer é REPROVADO. Registrar a resposta não aprova a tarefa.');
+    console.log(`Peça ao Claude: "corrija a revisão em ${rel}".`);
+    return CODIGO_NAO_APROVADA;
+  }
+  console.log(`Formato ok e tarefa liberada para a validação no Google. Se houver ressalvas, peça ao Claude: "corrija a revisão em ${rel}".`);
   return 0;
 }
 

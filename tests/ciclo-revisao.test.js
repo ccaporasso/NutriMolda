@@ -147,3 +147,33 @@ test('formato válido separa de aprovação técnica: REPROVADO é válido mas n
   assert.equal(x.aprovada, false);
   assert.equal(r.lerResposta(RESPOSTA_OK).aprovada, true);
 });
+
+// Testes de ponta a ponta: rodam o script de verdade e conferem o código de saída.
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
+const SCRIPT = path.join(__dirname, '..', 'scripts', 'revisao.js');
+
+function rodar(args, pasta, entrada) {
+  return spawnSync(process.execPath, [SCRIPT, ...args], {
+    encoding: 'utf8', input: entrada, env: { ...process.env, REVISAO_PASTA_RESPOSTAS: pasta },
+  });
+}
+
+test('conferir e salvar: código 0 aprovada, 3 reprovada válida, 1 fora do formato', () => {
+  const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'revisao-'));
+  const reprovada = RESPOSTA_OK.replace('APROVADO COM RESSALVAS', 'REPROVADO').replace('[MÉDIA]', '[ALTA]');
+  try {
+    assert.equal(rodar(['salvar', 'T05'], pasta, RESPOSTA_OK).status, 0);
+    assert.equal(rodar(['conferir', 'T05'], pasta).status, 0);
+    assert.equal(rodar(['salvar', 'T06'], pasta, reprovada).status, 3);
+    assert.equal(rodar(['conferir', 'T06'], pasta).status, 3);
+    assert.equal(rodar(['salvar', 'T07'], pasta, 'Ficou ótimo!').status, 1);
+    assert.equal(rodar(['conferir', 'T07'], pasta).status, 1);
+    const naoAprovado = rodar(['conferir', 'T08'], pasta);
+    assert.equal(naoAprovado.status, 1); // sem resposta salva: erro
+  } finally {
+    fs.rmSync(pasta, { recursive: true, force: true });
+  }
+});
