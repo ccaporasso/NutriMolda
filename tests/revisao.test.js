@@ -12,7 +12,7 @@ const manifesto = JSON.parse(ler('src', 'appsscript.json'));
 
 const todoSrc = arquivosDe('src', '.js').map((a) => ler(a)).join('\n');
 const rotulosDoMenu = [...todoSrc.matchAll(/\.addItem\('([^']*)'/g)].map((m) => m[1]);
-const DOCS_DE_USO = ['docs/MANUAL-NUTRICIONISTA.md', 'docs/MANUAL-SUPORTE.md', 'docs/VALIDACAO-NO-GOOGLE.md', 'docs/PRIMEIROS-PASSOS.md', 'README.md'];
+const DOCS_DE_USO = ['docs/MANUAL-NUTRICIONISTA.md', 'docs/MANUAL-SUPORTE.md', 'docs/VALIDACAO-NO-GOOGLE.md', 'docs/PRIMEIROS-PASSOS.md', 'docs/ROTEIRO-PILOTO.md', 'docs/DUVIDAS-NUTRICIONISTA.md', 'README.md'];
 
 test('todo item de menu citado nos manuais existe com esse nome exato', () => {
   assert.ok(rotulosDoMenu.length >= 16);
@@ -108,4 +108,28 @@ test('tabela de tarefas: toda tarefa T00 a T11 tem situação e está no CHANGEL
 test('validação no Google: toda tarefa com chamada ao Google tem uma seção em VALIDACAO-NO-GOOGLE.md', () => {
   const v = ler('docs', 'VALIDACAO-NO-GOOGLE.md');
   for (const t of ['T05', 'T07', 'T08', 'T09', 'T10']) assert.match(v, new RegExp(`^## ${t} `, 'm'), `falta a seção ${t}`);
+});
+
+test('roteiro do piloto: os números esperados são os que o fluxo simulado calcula, e cada passo tem resultado esperado', () => {
+  const roteiro = ler('docs', 'ROTEIRO-PILOTO.md');
+  // Mesmos números somados à mão em tests/integracao.test.js (8 cobranças = 6 x 150 + 2 x 100; 3 pagos de 150).
+  assert.match(roteiro, /6 x R\$ 150,00 \+ 2 x R\$ 100,00 = \*\*R\$ 1\.100,00\*\*/);
+  assert.match(roteiro, /3 pagos de R\$ 150,00 = \*\*R\$ 450,00\*\*/);
+  assert.match(roteiro, /Pacientes de teste novos: 6\. Eventos criados: 9/);
+  const passos = roteiro.split('\n').filter((l) => /^\| \d+\.\d+ \|/.test(l));
+  assert.ok(passos.length >= 55, `poucos passos no roteiro: ${passos.length}`);
+  for (const l of passos) {
+    const colunas = l.split('|').map((c) => c.trim());
+    assert.ok(colunas[2] && colunas[3], `passo sem ação ou sem resultado esperado: ${l.slice(0, 60)}`);
+  }
+  const ids = passos.map((l) => l.split('|')[1].trim());
+  assert.equal(new Set(ids).size, ids.length, 'número de passo repetido no roteiro');
+});
+
+test('dúvidas para a nutricionista: linguagem de consultório, sem dado real e com resposta em branco', () => {
+  const d = ler('docs', 'DUVIDAS-NUTRICIONISTA.md');
+  const perguntas = d.split('\n').filter((l) => /^\| \d+ \|/.test(l));
+  assert.ok(perguntas.length >= 25);
+  for (const l of perguntas) assert.equal(l.split('|').length, 7, `linha de pergunta com colunas erradas: ${l.slice(0, 50)}`);
+  assert.doesNotMatch(d, /clasp|Apps Script|escopo|vm\.|node --test/i);
 });
