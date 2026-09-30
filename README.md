@@ -2,7 +2,9 @@
 
 Solução para consultórios de nutrição que roda **dentro da conta Google de cada nutricionista**: Agenda, Planilhas, Formulários e Apps Script. Não existe servidor próprio.
 
-**Estado:** em construção. Fase 2a (base e financeiro). **Somente dados fictícios.**
+**Estado:** base e financeiro testados nos cenários descritos em [Resultados no Google](docs/RESULTADOS-GOOGLE-2026-09-30.md). **Somente dados fictícios; sem liberação para clientes.**
+
+**Direção aprovada para o MVP:** a nutricionista usará uma interface gráfica própria; Planilhas, Agenda e Drive ficarão por trás dela. Essa interface ainda não foi implementada. O uso atual pelos menus da planilha é o caminho técnico validado. Consulte [MVP: interface sobre a base Google](docs/MVP-INTERFACE-GOOGLE.md) e [Tarefas](docs/TAREFAS.md).
 
 ## Estrutura
 
