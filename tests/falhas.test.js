@@ -52,7 +52,7 @@ test('cancelamento: agenda que volta vazia não cancela nada e avisa', () => {
   assert.match(c.ultimoAlerta(), /voltou sem nenhum evento/);
 });
 
-test('cancelamento: evento cancelado que volta à agenda reativa a consulta, sem duplicar', () => {
+test('cancelamento: evento cancelado que volta à agenda NÃO reativa a consulta sozinho (D19), sem duplicar', () => {
   const c = criarConsultorio();
   c.rodar('sincronizarAgenda()');
   const original = c.eventos[0];
@@ -60,8 +60,9 @@ test('cancelamento: evento cancelado que volta à agenda reativa a consulta, sem
   c.rodar('sincronizarAgenda()');
   assert.equal(c.linhas('Consultas').find((l) => l[0] === original.id)[5], 'cancelada');
   c.eventos[0] = original;
-  c.rodar('sincronizarAgenda()');
-  assert.equal(c.linhas('Consultas').find((l) => l[0] === original.id)[5], 'marcada');
+  c.rodar('sincronizarAgendaPeloMenu()');
+  assert.equal(c.linhas('Consultas').find((l) => l[0] === original.id)[5], 'cancelada');
+  assert.match(c.ultimoAlerta(), /ainda têm o evento na agenda e ficaram canceladas/);
   assert.equal(c.linhas('Consultas').length, 9);
 });
 
@@ -129,9 +130,13 @@ test('configuração incompleta: cita a chave que falta, não grava nada e não 
 test('configuração incompleta: no gatilho automático a falha vai ao Registro e ao e-mail, sem o valor digitado', () => {
   const c = criarConsultorio({ configuracoes: comConfig({ chave_pix: '' }) });
   c.rodar('sincronizarAgendaAutomatica()');
-  assert.match(c.registroTexto(), /Falha no módulo sincronizacao/);
+  assert.match(c.registroTexto(), /configuração está em branco ou inválida/);
+  assert.doesNotMatch(c.registroTexto(), /teste@exemplo/);
   assert.equal(c.amb.emails.length, 1);
   assert.equal(c.linhas('Consultas').length, 0);
+  // M4: na hora seguinte a causa continua no Registro, mas o e-mail não se repete no mesmo dia
+  c.rodar('sincronizarAgendaAutomatica()');
+  assert.equal(c.amb.emails.length, 1);
 });
 
 test('preços em zero: nenhuma cobrança nasce, os dois avisos aparecem, e a consulta não é perdida', () => {

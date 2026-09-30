@@ -136,6 +136,11 @@ test('paciente a identificar: depois de ela preencher o código, a próxima cobr
   c.definir('Consultas', semCodigo, 'codigo_paciente', 'P9001');
   c.rodar('sincronizarAgenda()'); // não sobrescreve o código dela
   assert.equal(c.celula('Consultas', semCodigo, 'codigo_paciente'), 'P9001');
+  // A1: consulta 'primeira' de paciente que já tem consulta anterior não é cobrada; ela corrige o tipo e gera de novo.
+  c.rodar('gerarAReceberPeloMenu()');
+  assert.equal(c.linhas('Pagamentos').length, 8);
+  assert.match(c.ultimoAlerta(), /como "primeira", mas o paciente já tem consulta anterior/);
+  c.definir('Consultas', semCodigo, 'tipo', 'retorno');
   c.rodar('gerarAReceber()');
   assert.equal(c.linhas('Pagamentos').length, 9);
   c.rodar('gerarAReceber()');

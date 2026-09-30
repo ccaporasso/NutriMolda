@@ -32,6 +32,9 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 2. **Preços:** Configuração > Definir preços das consultas (em reais): `180,00` grava `18000`; `1,50` pede confirmação.
 3. **Cabeçalho:** trocar duas colunas de lugar em Pagamentos e usar qualquer item do menu: mensagem de cabeçalho diferente, nada gravado.
 4. **Pacote:** com `inicio` preenchido em Pacotes, marcar consulta de pacote: pagamento vira pago/pacote e `usadas` sobe uma vez.
+5b. **Recibo, cifrão:** no PDF gerado, conferir que aparece "R$ 150,00" e "R$ 1.234,56" com o cifrão (o kit escapa `$` na troca do Docs; só o Google confirma).
+5c. **Grade cheia (M3):** numa cópia de teste, deixar Consultas só com poucas linhas vazias no fim da grade e sincronizar: deve ampliar a grade e gravar sem erro de coordenadas, com data/hora como texto.
+5d. **Fuso da planilha (B2 da revisão Opus):** Arquivo > Configurações deve estar em "(GMT-03:00) São Paulo".
 5. **Recibo:** apagar `{{valor}}` do modelo e gerar: mensagem de campo obrigatório, nenhum PDF na pasta, nenhum `rascunho-` fora da lixeira.
 6. **Gerador de teste:** na primeira vez para a agenda, a pergunta "Esta agenda é só de TESTE?" aparece; Não interrompe sem escrever nada.
 7. **Pacotes:** com dois pacotes do mesmo paciente (início 01/09 e 15/09), a consulta de pacote usa só o de 15/09 e o pagamento fica com `pacote_inicio` 2026-09-15. Renovar no mesmo dia (linha nova com início de hoje) não muda o pacote antigo.

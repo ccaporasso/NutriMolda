@@ -12,7 +12,7 @@ Perguntas para conversar com ela **antes** de instalar qualquer coisa na conta d
 | 2 | Como o título do evento aparece? Dá para começar sempre com "Consulta"? | O kit só considera evento cujo título **começa** com um prefixo | Define o `prefixo_evento_consulta` | |
 | 3 | O e-mail ou o telefone do paciente aparece no evento (convidado ou descrição)? | É assim que o kit reconhece o paciente. Sem isso, a consulta fica "a identificar" e ela digita o código | Quantas linhas ela terá de completar à mão | |
 | 4 | A agenda das consultas é só das consultas, ou mistura compromissos pessoais? | Evento sem o prefixo é ignorado, mas ela precisa saber disso | Confirma o prefixo e o `calendario_id` | |
-| 5 | Quando um paciente cancela, ela apaga o evento na agenda? | O kit só marca `cancelada` quando o evento some ou é cancelado **na agenda**. Cancelar só na planilha não vale (dúvida 5 da revisão) | Ajuste no manual ou na regra de reativação | |
+| 5 | Quando um paciente cancela, ela apaga o evento na agenda? | O kit só marca `cancelada` quando o evento some ou é cancelado **na agenda**. Cancelar só na planilha não vale (dúvida 5 da revisão) | Decidido (D30): cancelada à mão não volta sozinha; cancelar de vez é apagar o evento | |
 | 6 | O paciente costuma remarcar? Como? | Remarcar na agenda muda data e hora na planilha; remarcar por fora, não | Orientação de rotina | |
 
 ## B. Valores, cobrança e pagamento

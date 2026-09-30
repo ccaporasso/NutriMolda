@@ -26,6 +26,11 @@ function registrar(modulo, nivel, mensagem) {
 // Registra o erro e avisa por e-mail. Devolve { registrado, emailEnviado }.
 function registrarErro(modulo, erro) {
   const registrado = registrar(modulo, 'erro', descreverFalha(modulo, erro));
+  return { registrado, emailEnviado: avisarPorEmail_(modulo) };
+}
+
+// Manda o e-mail de alerta (sem dado de paciente). Devolve true se enviou.
+function avisarPorEmail_(modulo) {
   let emailEnviado = false;
   try {
     const para = lerEmailAlertas();
@@ -36,7 +41,7 @@ function registrarErro(modulo, erro) {
   } catch (e) {
     registrar('alertas', 'aviso', `E-mail de alerta não enviado (tipo ${tipoDeErro(e)}).`);
   }
-  return { registrado, emailEnviado };
+  return emailEnviado;
 }
 
 // Item do menu: força um erro inventado para conferir o Registro e o e-mail.

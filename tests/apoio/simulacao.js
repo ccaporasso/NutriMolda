@@ -14,7 +14,9 @@ function criarAba(nome, cabecalho) {
     getName: () => nome,
     getLastRow: () => linhas.length,
     getLastColumn: () => linhas.reduce((m, l) => Math.max(m, l.length), 0),
-    getMaxRows: () => 1000,
+    maxLinhas: 1000,
+    getMaxRows: () => aba.maxLinhas,
+    insertRowsAfter(depois, quantas) { aba.maxLinhas += quantas; },
     getMaxColumns: () => 26,
     setFrozenRows() {},
     appendRow(l) { linhas.push(l.slice()); },
@@ -24,6 +26,7 @@ function criarAba(nome, cabecalho) {
         getValues: () => Array.from({ length: nl }, (_, i) => Array.from({ length: nc },
           (__, j) => (linhas[linha - 1 + i] && linhas[linha - 1 + i][coluna - 1 + j] !== undefined ? linhas[linha - 1 + i][coluna - 1 + j] : ''))),
         setValues(v) {
+          if (linha + nl - 1 > aba.maxLinhas) throw new Error('The coordinates of the range are outside the dimensions of the sheet.');
           v.forEach((l, i) => l.forEach((x, j) => {
             while (linhas.length < linha + i) linhas.push([]);
             linhas[linha - 1 + i][coluna - 1 + j] = x;

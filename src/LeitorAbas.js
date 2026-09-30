@@ -41,8 +41,21 @@ function lerAbaComoObjetos(nomeAba) {
 
 function adicionarLinhas(nomeAba, linhas) {
   if (linhas.length === 0) return;
-  const { folha } = abrirFolhaConferida_(nomeAba);
+  const { aba, folha } = abrirFolhaConferida_(nomeAba);
+  garantirEspacoNaFolha_(folha, aba, linhas.length);
   folha.getRange(folha.getLastRow() + 1, 1, linhas.length, linhas[0].length).setValues(linhas);
+}
+
+// A grade do Planilhas tem tamanho fixo (1000 linhas numa aba nova): gravar além dela falha. Aumenta a grade antes de
+// gravar e refaz o formato texto e as listas nas linhas novas (M3).
+function garantirEspacoNaFolha_(folha, aba, quantas) {
+  const faltam = folha.getLastRow() + quantas - folha.getMaxRows();
+  if (faltam <= 0) return;
+  const antes = folha.getMaxRows();
+  const acrescentar = faltam + 500;
+  folha.insertRowsAfter(antes, acrescentar);
+  for (const coluna of colunasDeTexto(aba)) folha.getRange(antes + 1, coluna, acrescentar, 1).setNumberFormat('@');
+  aplicarValidacoes_(folha, aba);
 }
 
 function gravarLinha(nomeAba, numeroLinha, valores) {

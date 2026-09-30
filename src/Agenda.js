@@ -101,6 +101,8 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
   const avisos = [];
   let ignorados = 0;
   let canceladas = 0;
+  let canceladasComEventoNaAgenda = 0;
+  const recemIdentificados = new Set(); // linhas sem paciente que a agenda acabou de identificar (A1)
 
   const cancelar = (c) => {
     if (c.status !== 'marcada') return; // realizada e faltou nunca são desfeitas pela agenda
@@ -131,8 +133,9 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
     const codigoAgenda = identificarPacienteAgenda(ev, pacientes);
     const base = atualizacoes.get(id) || atual;
     const novo = { ...base, data: local.data, hora: local.hora };
-    if (!novo.codigo_paciente && codigoAgenda) novo.codigo_paciente = codigoAgenda;
-    if (novo.status === 'cancelada') novo.status = 'marcada'; // evento voltou para a agenda
+    if (!novo.codigo_paciente && codigoAgenda) { novo.codigo_paciente = codigoAgenda; recemIdentificados.add(id); }
+    // Consulta cancelada por ela (lista suspensa) com o evento ainda na agenda continua cancelada (D19): só avisa.
+    if (novo.status === 'cancelada') canceladasComEventoNaAgenda++;
     if (novo.data !== atual.data || novo.hora !== atual.hora
       || novo.codigo_paciente !== atual.codigo_paciente || novo.status !== atual.status) {
       novo.atualizado_em = agoraTexto;
@@ -163,6 +166,18 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
     historico.get(codigo).push(data + hora);
   };
   for (const c of finais) if (c.status !== 'cancelada') registrarHistorico(c.codigo_paciente, String(c.data), String(c.hora));
+
+  // A1: paciente identificado só agora. O tipo nasceu 'primeira' por falta de histórico; recalcula pela mesma regra da inserção.
+  for (const id of recemIdentificados) {
+    const c = atualizacoes.get(id);
+    if (!c || c.tipo !== 'primeira') continue;
+    const anteriores = (historico.get(c.codigo_paciente) || []).filter((x) => x < String(c.data) + String(c.hora));
+    if (anteriores.length > 0) c.tipo = 'retorno';
+  }
+  if (canceladasComEventoNaAgenda > 0) {
+    avisos.push(`${canceladasComEventoNaAgenda} consulta(s) marcada(s) como cancelada(s) na planilha ainda têm o evento na agenda e ficaram canceladas. `
+      + 'Para cancelar de vez, apague o evento na agenda; para voltar a cobrar, mude o status para marcada.');
+  }
 
   // Mesmo id em outra agenda: cobrança e recibo ligam pela única chave `id_evento`, então duas linhas com o mesmo id
   // se confundiriam. Não importa o evento e não mexe na linha antiga (R04d).

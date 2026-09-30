@@ -43,7 +43,8 @@ Menu **Sincronizar agenda**. As consultas aparecem na aba **Consultas**. Pode cl
 
 - Só entram eventos cujo título **começa** com o prefixo (por exemplo, "Consulta — Ana S.").
 - Se uma consulta ficar com `codigo_paciente` **em branco**, o kit não achou o paciente pelo e-mail ou telefone. Cadastre o paciente na aba **Pacientes** (com o mesmo e-mail ou telefone da marcação) e sincronize de novo, ou digite o código (P0001…) na linha.
-- Consulta apagada ou cancelada na agenda vira `cancelada`.
+- Consulta apagada ou cancelada na agenda vira `cancelada`. Para cancelar de vez, apague o evento na agenda: mudar o status só na planilha não desmarca o evento, e o kit avisa. Uma consulta `cancelada` nunca volta sozinha para `marcada`; se o evento voltou e você quer cobrar, mude o status à mão.
+- Se o paciente foi identificado depois (você cadastrou o e-mail ou digitou o código), o kit ajusta o tipo para `retorno` quando já há consulta anterior. "Gerar valores a receber" não cobra como `primeira` quem já tem consulta anterior: avisa a linha, e você confere a coluna `tipo`.
 
 ### 2. Gerar os valores a receber
 Menu **Gerar valores a receber**. Cada consulta marcada ou realizada ganha uma linha em **Pagamentos** com o status `a_receber`.

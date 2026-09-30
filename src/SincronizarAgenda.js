@@ -97,7 +97,7 @@ function sincronizarAgenda() {
     }
     if (plano.inserir.length > 0) {
       const novas = plano.inserir.map((l) => l.concat([origemAtual]));
-      folha.getRange(folha.getLastRow() + 1, 1, novas.length, novas[0].length).setValues(novas);
+      adicionarLinhas('Consultas', novas);
     }
     PropertiesService.getDocumentProperties().setProperty(CHAVE_ORIGEM_AGENDA, String(cfg.calendario_id));
     registrar('sincronizacao', 'info', `Sincronização: ${plano.inserir.length} nova(s), ${plano.atualizar.length} atualizada(s), `
@@ -130,6 +130,16 @@ function sincronizarAgendaAutomatica() {
   try {
     sincronizarAgenda();
   } catch (e) {
-    registrarErro('sincronizacao', e);
+    if (!e || e.name !== 'ErroDeUso') { registrarErro('sincronizacao', e); return; }
+    // Problema que ela mesma corrige: o Registro diz a causa (texto fixo) e o e-mail sai no máximo uma vez por dia por causa.
+    const causa = causaDeUso(e);
+    registrar('sincronizacao', causa === 'trava' ? 'info' : 'erro', CAUSAS_DE_USO[causa]);
+    if (causa === 'trava') return;
+    const propriedades = PropertiesService.getDocumentProperties();
+    const chave = `alerta_sincronizacao_${causa}`;
+    const hoje = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd');
+    if (propriedades.getProperty(chave) === hoje) return;
+    propriedades.setProperty(chave, hoje);
+    avisarPorEmail_('sincronizacao');
   }
 }

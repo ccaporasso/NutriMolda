@@ -155,10 +155,20 @@ test('agenda que volta vazia não cancela nada e avisa', () => {
   assert.match(p.avisos[0], /calendario_id/);
 });
 
-test('evento cancelado que voltou para a agenda reativa a consulta', () => {
+test('M1: consulta cancelada à mão com o evento ainda na agenda continua cancelada e gera aviso', () => {
   const existentes = [{ linha: 2, id_evento: 'v1', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'cancelada', atualizado_em: '' }];
   const p = plano([evento('v1', 'Consulta', '2026-10-10', '09:00')], existentes);
-  assert.equal(p.atualizar[0].valores[5], 'marcada');
+  assert.equal(p.atualizar.length, 0);
+  assert.match(p.avisos.join(' '), /ficaram canceladas/);
+});
+
+test('A1: paciente identificado só depois (e-mail cadastrado) vira retorno, não fica como primeira', () => {
+  const email = { description: 'ana.teste@exemplo.invalid' };
+  const antiga = { linha: 2, id_evento: 'a1', data: '2026-09-01', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'realizada', atualizado_em: '' };
+  const semPaciente = { linha: 3, id_evento: 'a2', data: '2026-10-05', hora: '10:00', tipo: 'primeira', codigo_paciente: '', status: 'marcada', atualizado_em: '' };
+  const p = plano([evento('a1', 'Consulta', '2026-09-01', '09:00', email), evento('a2', 'Consulta', '2026-10-05', '10:00', email)], [antiga, semPaciente]);
+  const nova = p.atualizar.find((x) => x.linha === 3);
+  assert.deepEqual([nova.valores[3], nova.valores[4]], ['retorno', 'P9001']);
 });
 
 test('R05: consulta cancelada nesta execução não faz a nova virar retorno', () => {
@@ -178,9 +188,8 @@ test('R05: consulta remarcada para depois da nova não conta como anterior', () 
 
 test('R05: consulta anterior válida continua fazendo a nova ser retorno; reativação conta', () => {
   const email = { description: 'ana.teste@exemplo.invalid' };
-  const antiga = { linha: 2, id_evento: 'antigo', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'cancelada', atualizado_em: '' };
+  const antiga = { linha: 2, id_evento: 'antigo', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '' };
   const p = plano([evento('antigo', 'Consulta', '2026-10-10', '09:00', email), evento('novo', 'Consulta', '2026-10-20', '09:00', email)], [antiga]);
-  assert.equal(p.atualizar[0].valores[5], 'marcada');
   assert.equal(p.inserir[0][3], 'retorno');
 });
 

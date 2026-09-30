@@ -64,7 +64,12 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
       if (falhas.abrirDocumento) throw new Error('Documento indisponível');
       const arq = existente(id);
       const corpo = {
-        replaceText(padrao, valor) { arq.texto = arq.texto.replace(new RegExp(padrao, 'g'), valor); return corpo; },
+        replaceText(padrao, valor) {
+          // Como o Docs: "\\$" e "\\\\" viram $ e \; "$" sem escape seria referência de grupo (aqui vira nada).
+          (arq.trocas = arq.trocas || []).push(valor);
+          const final = String(valor).replace(/\\(.)|\$\d?/g, (m, c) => (c === undefined ? '' : c));
+          arq.texto = arq.texto.replace(new RegExp(padrao, 'g'), () => final); return corpo;
+        },
         getText: () => arq.texto,
       };
       return {

@@ -81,8 +81,23 @@ function descreverFalha(modulo, erro) {
   return `Falha no módulo ${moduloConhecido(modulo)} (tipo ${tipoDeErro(erro)})`;
 }
 
+// Causas de um ErroDeUso na sincronização automática. Textos fixos do kit, sem dado de paciente (M4).
+const CAUSAS_DE_USO = {
+  trava: 'Sincronização automática adiada: outra operação estava em andamento.',
+  cabecalho: 'Sincronização automática parou: o cabeçalho de uma aba foi alterado ou falta coluna nova. Rode "Instalar/atualizar planilha" e confira os cabeçalhos.',
+  configuracao: 'Sincronização automática parou: alguma configuração está em branco ou inválida. Abra a aba Configurações ou rode "Sincronizar agenda" no menu para ver o detalhe.',
+};
+
+function causaDeUso(erro) {
+  const m = String((erro && erro.message) || '');
+  if (/Outra (sincronização|operação) está em andamento/.test(m)) return 'trava';
+  if (/cabeçalho|coluna\(s\) nova|versão anterior/i.test(m)) return 'cabecalho';
+  return 'configuracao';
+}
+
 if (typeof module !== 'undefined') {
   module.exports = {
+    CAUSAS_DE_USO, causaDeUso,
     MAX_MENSAGEM, TEXTO_OCULTO, mascararDadosPessoais, montarLinhaRegistro, montarEmailAlerta,
     MODULOS_CONHECIDOS, TIPOS_ERRO_CONHECIDOS, moduloConhecido, tipoDeErro, descreverFalha,
   };

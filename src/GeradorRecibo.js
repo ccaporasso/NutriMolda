@@ -7,6 +7,11 @@ function escaparPadrao_(texto) {
   return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Na troca do Docs, "$" e "\" do texto novo têm significado especial: escapa os dois com "\".
+function escaparTroca_(texto) {
+  return String(texto).replace(/[\\$]/g, '\\$&');
+}
+
 function textoDoDocumento_(documento) {
   const partes = [documento.getBody().getText()];
   for (const parte of [documento.getHeader(), documento.getFooter()]) if (parte) partes.push(parte.getText());
@@ -40,9 +45,10 @@ function gerarRecibo(numeroLinha) {
     }
     for (const [campo, valor] of Object.entries(dados.campos)) {
       const padrao = escaparPadrao_(`{{${campo}}}`);
-      documento.getBody().replaceText(padrao, valor);
-      if (documento.getHeader()) documento.getHeader().replaceText(padrao, valor);
-      if (documento.getFooter()) documento.getFooter().replaceText(padrao, valor);
+      const troca = escaparTroca_(valor); // "R$" do valor não pode virar referência de grupo na troca do Docs (M2)
+      documento.getBody().replaceText(padrao, troca);
+      if (documento.getHeader()) documento.getHeader().replaceText(padrao, troca);
+      if (documento.getFooter()) documento.getFooter().replaceText(padrao, troca);
     }
     const sobrando = camposSobrando(textoDoDocumento_(documento));
     if (sobrando.length > 0) {

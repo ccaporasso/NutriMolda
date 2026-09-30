@@ -31,11 +31,19 @@ function linhaPagamento(p) {
 // consultas: objetos de Consultas. pagamentos: objetos de Pagamentos. config: resultado de lerConfiguracoes().
 // Devolve { novos, avisos, contagens }. Não cria nada por conta própria e não repete cobrança
 // (uma consulta = um pagamento, achado pelo id_evento).
+// Há consulta anterior (não cancelada) do mesmo paciente? Usada para não cobrar retorno como primeira consulta.
+function temConsultaAnterior_(consultas, c) {
+  const chave = `${c.data}${c.hora}`;
+  return consultas.some((o) => o !== c && String(o.codigo_paciente) === String(c.codigo_paciente) && o.status !== 'cancelada'
+    && `${o.data}${o.hora}` < chave);
+}
+
 function planejarAReceber({ consultas, pagamentos, config }) {
   const preco = precoPagamentos_();
   const idsComPagamento = new Set(pagamentos.map((p) => String(p.id_evento)).filter((x) => x !== ''));
   let numero = proximoNumeroPagamento(pagamentos);
-  const contagens = { jaTinham: 0, semPaciente: 0, semTipo: 0, semPreco: 0, canceladasComCobranca: 0, semIdEvento: 0, idRepetido: 0, pagamentoSemConsulta: 0 };
+  const contagens = { jaTinham: 0, semPaciente: 0, semTipo: 0, semPreco: 0, canceladasComCobranca: 0, semIdEvento: 0, idRepetido: 0, pagamentoSemConsulta: 0, primeiraComHistorico: 0 };
+  const linhasPrimeiraComHistorico = [];
   const linhasSemId = [];
   const linhasRepetidas = [];
   const idsDeConsultas = new Set(consultas.map((c) => String(c.id_evento === undefined || c.id_evento === null ? '' : c.id_evento).trim()).filter((x) => x !== ''));
@@ -61,6 +69,7 @@ function planejarAReceber({ consultas, pagamentos, config }) {
     if (!STATUS_QUE_GERAM_COBRANCA.includes(c.status)) continue; // faltou: decisão dela, não do kit
     if (idsComPagamento.has(id)) { contagens.jaTinham++; continue; }
     if (!c.codigo_paciente) { contagens.semPaciente++; continue; }
+    if (c.tipo === 'primeira' && temConsultaAnterior_(ordenadas, c)) { contagens.primeiraComHistorico++; linhasPrimeiraComHistorico.push(c.linha); continue; }
     let valor;
     try {
       valor = preco(config, c.tipo);
@@ -86,6 +95,10 @@ function planejarAReceber({ consultas, pagamentos, config }) {
   }
   if (contagens.pagamentoSemConsulta > 0) {
     avisos.push(`${contagens.pagamentoSemConsulta} pagamento(s) estão ligados a um "id_evento" que não existe na aba Consultas. Confira a aba Pagamentos.`);
+  }
+  if (contagens.primeiraComHistorico > 0) {
+    avisos.push(`${contagens.primeiraComHistorico} consulta(s) estão como "primeira", mas o paciente já tem consulta anterior${linhasPrimeiraComHistorico.some((n) => n !== undefined) ? ` (linha(s) ${listaLinhas(linhasPrimeiraComHistorico)} da aba Consultas)` : ''}. `
+      + 'Nenhuma cobrança foi criada para elas. Confira a coluna "tipo": se for retorno, troque para retorno e gere de novo.');
   }
   if (contagens.semPaciente > 0) {
     avisos.push(`${contagens.semPaciente} consulta(s) sem paciente identificado não geraram cobrança. Preencha "codigo_paciente" na aba Consultas e gere de novo.`);
