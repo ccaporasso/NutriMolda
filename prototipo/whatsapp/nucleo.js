@@ -3,6 +3,7 @@
 // interface local. Não chama rede: só os adaptadores recebidos (simulados). Não interpreta webhook bruto da Meta.
 const C = require('./contrato.js');
 const { ErroNucleo, FalhaExterna } = C;
+const { calcularAtencao } = require('./atencao.js');
 
 const COMANDOS_PACIENTE = ['menu', 'parar', 'ver_horarios', 'falar_com_nutricionista', 'escolher_horario', 'confirmar', 'texto_livre'];
 const PARAMETROS_PERMITIDOS = ['opcaoId', 'versao'];
@@ -252,6 +253,23 @@ function criarNucleo({ verificar, repos, relogio, config = C.CONFIG_TESTE, regis
     });
   }
 
+  // ---- Painel de atenção (D39): sinais factuais com data; só a profissional do consultório ----
+  function listarAtencao(ctx, pedido) {
+    return executar('profissional_atencao', async () => {
+      const cons = exigirContexto(ctx, 'profissional', pedido && pedido.consultorioId);
+      const agora = relogio.agora();
+      const consultas = await repos.agenda.listarConsultas(cons);
+      const dados = [];
+      for (const p of await repos.cadastro.listarPacientes(cons)) {
+        const lib = await repos.cadastro.obterLiberacao(cons, p.codigo);
+        if (!lib) continue;
+        dados.push({ codigo: p.codigo, nome: p.nome, liberacao: situacaoLiberacao(lib, agora), concedidaEm: lib.concedidaEm, validaAte: lib.validaAte, conversa: await repos.conversas.obter(cons, p.codigo), consultas: consultas.filter((c) => c.pacienteCodigo === p.codigo) });
+      }
+      const regras = { ...config.atencao, ...(pedido.regras || {}) };
+      return { ok: true, regras, pacientes: calcularAtencao({ pacientes: dados, agora, regras }) };
+    });
+  }
+
   // ---- Consultas: detalhes só para quem tem direito ----
   const visaoConsulta = (c) => ({ id: c.id, pacienteCodigo: c.pacienteCodigo, origemAgenda: c.origemAgenda, inicio: c.inicio, fim: c.fim, status: c.status });
 
@@ -299,7 +317,7 @@ function criarNucleo({ verificar, repos, relogio, config = C.CONFIG_TESTE, regis
 
   return {
     processarEventoPaciente, cadastrarPaciente, liberarPaciente, revogarLiberacao, pausarAutomacao, retomarAtendimento,
-    listarPacientes, listarConsultas, detalharConsulta, reconciliarPendentes, despachar: (ctx, p) => executar('despachar', async () => ({ ok: true, enviados: await despachar(exigirContexto(ctx, 'sistema', p && p.consultorioId)) })),
+    listarPacientes, listarAtencao, listarConsultas, detalharConsulta, reconciliarPendentes, despachar: (ctx, p) => executar('despachar', async () => ({ ok: true, enviados: await despachar(exigirContexto(ctx, 'sistema', p && p.consultorioId)) })),
   };
 }
 

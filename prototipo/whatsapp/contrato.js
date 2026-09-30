@@ -52,6 +52,8 @@ const CONFIG_TESTE = Object.freeze({
   validadeMaximaDias: 365,
   // Limite de frequência por paciente (proteção contra repetição/abuso). Valores de teste.
   limiteEventos: Object.freeze({ max: 30, janelaMs: 60000 }),
+  // Regras do painel "precisam de atenção" (D39): sinais factuais, limites configuráveis e de TESTE, não da cliente.
+  atencao: Object.freeze({ diasSemRetorno: 14, diasSemResposta: 2, diasAvisoValidade: 7 }),
 });
 
 const RE_ID = /^[A-Za-z0-9_.:-]{1,64}$/;
