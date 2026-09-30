@@ -68,6 +68,34 @@ function montarPixDoPagamento(pagamento, config) {
   }
 }
 
+// Consultas já pagas por pacote (pago + forma pacote) de cada pacote, contadas a partir do `inicio` dele e até o
+// `inicio` do pacote seguinte do mesmo paciente. Serve para reconciliar `usadas` depois de uma falha entre as duas
+// gravações (R11): o pagamento é gravado primeiro, então nunca falta uma consulta contada a mais, só a menos.
+function consumidasPorPacote(pacotes, pagamentos) {
+  const inicios = (codigo) => pacotes.filter((x) => String(x.codigo_paciente) === codigo).map((x) => String(x.inicio || '')).sort();
+  return pacotes.map((p) => {
+    const codigo = String(p.codigo_paciente);
+    const inicio = String(p.inicio || '');
+    const proximo = inicios(codigo).find((i) => i > inicio) || null;
+    return pagamentos.filter((g) => String(g.codigo_paciente) === codigo && g.status === 'pago' && g.forma === 'pacote'
+      && String(g.data_pagamento || '') >= inicio && (proximo === null || String(g.data_pagamento || '') < proximo)).length;
+  });
+}
+
+// Devolve { pacotes, corrigidos } com `usadas` nunca menor que o número de consultas pagas por pacote.
+// `corrigidos` são os pacotes cuja coluna `usadas` precisa ser regravada.
+function reconciliarPacotes(pacotes, pagamentos) {
+  const consumidas = consumidasPorPacote(pacotes, pagamentos);
+  const corrigidos = [];
+  const resultado = pacotes.map((p, i) => {
+    if (!Number.isSafeInteger(p.usadas) || consumidas[i] <= p.usadas) return p;
+    const novo = { ...p, usadas: consumidas[i] };
+    corrigidos.push(novo);
+    return novo;
+  });
+  return { pacotes: resultado, corrigidos };
+}
+
 function linhaPacoteAtualizada(p) {
   return [p.codigo_paciente, p.total_consultas, p.usadas, p.valor_centavos, p.inicio || ''];
 }
@@ -75,6 +103,6 @@ function linhaPacoteAtualizada(p) {
 if (typeof module !== 'undefined') {
   module.exports = {
     aplicarPagamentoRecebido, aplicarCortesia, aplicarPacote, aplicarStatusConsulta, montarPixDoPagamento,
-    linhaPacoteAtualizada,
+    linhaPacoteAtualizada, consumidasPorPacote, reconciliarPacotes,
   };
 }

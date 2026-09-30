@@ -40,16 +40,19 @@ function hojeTexto_() {
 
 // Aplica `acao(linhaObjeto)` a cada linha selecionada. `acao` devolve { ok, motivo, gravar }.
 // Devolve { feitos, motivos }. Linhas que falham não impedem as outras.
-function aplicarNasLinhas_(nomeAba, acao) {
+// `preparar`, se houver, roda DENTRO da trava, depois de a seleção ser lida, e o que devolve chega à `acao` como 2º argumento:
+// assim nada lido antes da trava (como o saldo de um pacote) é usado depois de outra execução ter mudado a planilha.
+function aplicarNasLinhas_(nomeAba, acao, preparar) {
   return comTrava_(() => {
     const linhas = linhasSelecionadas(nomeAba, MAX_LINHAS_POR_ACAO);
     const objetos = lerAbaComoObjetos(nomeAba);
+    const contexto = preparar ? preparar() : undefined;
     let feitos = 0;
     const motivos = [];
     for (const numero of linhas) {
       const alvo = objetos.find((o) => o.linha === numero);
       if (!alvo) { motivos.push(`Linha ${numero}: está vazia.`); continue; }
-      const r = acao(alvo);
+      const r = acao(alvo, contexto);
       if (r.ok) { r.gravar(); feitos++; } else motivos.push(`Linha ${numero}: ${r.motivo}`);
     }
     return { feitos, motivos };
@@ -92,21 +95,27 @@ function marcarCortesia() {
   });
 }
 
+// Gravação em duas etapas, nesta ordem: 1) o pagamento vira pago/pacote; 2) `usadas` sobe. Se a 2ª falhar, a próxima
+// ação reconcilia `usadas` pelos pagamentos já feitos (reconciliarPacotes); se a 1ª falhar, nada foi consumido.
 function marcarConsultaDePacote() {
   executarNoMenu_('pagamentos', () => {
     const hoje = hojeTexto_();
-    const pacotes = lerAbaComoObjetos('Pacotes');
-    const r = aplicarNasLinhas_('Pagamentos', (p) => {
-      const a = aplicarPacote(p, pacotes, hoje);
+    const r = aplicarNasLinhas_('Pagamentos', (p, ctx) => {
+      const a = aplicarPacote(p, ctx.pacotes, hoje);
       if (a.ok) {
-        const indice = pacotes.findIndex((x) => x.linha === a.pacote.linha);
+        const indice = ctx.pacotes.findIndex((x) => x.linha === a.pacote.linha);
         a.gravar = () => {
-          gravarCelula('Pacotes', a.pacote.linha, 'usadas', a.pacote.usadas);
           gravarLinha('Pagamentos', p.linha, linhaPagamento(a.pagamento));
-          pacotes[indice] = a.pacote; // a próxima linha da seleção já enxerga o pacote atualizado
+          gravarCelula('Pacotes', a.pacote.linha, 'usadas', a.pacote.usadas);
+          ctx.pacotes[indice] = a.pacote; // a próxima linha da seleção já enxerga o pacote atualizado
         };
       }
       return a;
+    }, () => {
+      const lidos = lerAbaComoObjetos('Pacotes');
+      const { pacotes, corrigidos } = reconciliarPacotes(lidos, lerAbaComoObjetos('Pagamentos'));
+      for (const c of corrigidos) gravarCelula('Pacotes', c.linha, 'usadas', c.usadas);
+      return { pacotes };
     });
     mostrarResultado_('Consulta de pacote', r);
   });
