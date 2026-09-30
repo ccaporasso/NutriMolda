@@ -3,9 +3,23 @@
 
 const DESCRICAO_PROTECAO = 'Kit do Consultório: cabeçalho';
 
+// Item do menu: erro inesperado vai ao Registro e ao e-mail, com mensagem clara na tela (B6).
 function instalarPlanilha() {
+  executarNoMenu_('instalador', instalarPlanilha_);
+}
+
+// Fuso do kit (D13). As datas digitadas em células de data (Pacotes.inicio, Despesas.data) são lidas no fuso de
+// São Paulo; se a planilha estiver em outro fuso, a data volta um dia (B2). Ajusta uma vez; devolve true se ajustou.
+function ajustarFusoDaPlanilha_(planilha) {
+  if (planilha.getSpreadsheetTimeZone() === 'America/Sao_Paulo') return false;
+  planilha.setSpreadsheetTimeZone('America/Sao_Paulo');
+  return true;
+}
+
+function instalarPlanilha_() {
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
   const plano = planejarInstalacao(lerEstadoAtual_(planilha));
+  const fusoAjustado = ajustarFusoDaPlanilha_(planilha);
 
   for (const nome of plano.criarAbas) planilha.insertSheet(nome);
   for (const aba of ABAS) {
@@ -31,7 +45,8 @@ function instalarPlanilha() {
   const padrao = planilha.getSheets().find((f) => /^(Página ?1|Sheet ?1|Hoja ?1)$/.test(f.getName()));
   if (padrao && planilha.getSheets().length > 1 && padrao.getLastRow() === 0) planilha.deleteSheet(padrao);
 
-  const resumo = `Abas criadas: ${plano.criarAbas.length}. Chaves de configuração novas: ${plano.chavesNovas.length}.`;
+  const resumo = `Abas criadas: ${plano.criarAbas.length}. Chaves de configuração novas: ${plano.chavesNovas.length}.`
+    + (fusoAjustado ? ' O fuso horário da planilha foi ajustado para São Paulo.' : '');
   SpreadsheetApp.getUi().alert([resumo].concat(plano.avisos).join('\n'));
 }
 

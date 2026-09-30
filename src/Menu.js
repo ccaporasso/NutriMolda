@@ -54,10 +54,22 @@ function aplicarNasLinhas_(nomeAba, acao, preparar) {
       const alvo = objetos.find((o) => o.linha === numero);
       if (!alvo) { motivos.push(`Linha ${numero}: está vazia.`); continue; }
       const r = acao(alvo, contexto);
-      if (r.ok) { r.gravar(); feitos++; } else motivos.push(`Linha ${numero}: ${r.motivo}`);
+      if (!r.ok) { motivos.push(`Linha ${numero}: ${r.motivo}`); continue; }
+      try {
+        r.gravar();
+        feitos++;
+      } catch (e) {
+        if (!e || e.name !== 'ErroDeUso') throw e;
+        motivos.push(`Linha ${numero}: ${e.message}`); // a linha mudou no meio (B1): as outras seguem
+      }
     }
     return { feitos, motivos };
   });
+}
+
+// Identidade de uma linha de Pacotes: paciente e início (D26).
+function chavePacote_(p) {
+  return { codigo_paciente: p.codigo_paciente, inicio: p.inicio };
 }
 
 function mostrarResultado_(titulo, r, extra) {
@@ -107,7 +119,7 @@ function marcarConsultaDePacote() {
         const indice = ctx.pacotes.findIndex((x) => x.linha === a.pacote.linha);
         a.gravar = () => {
           gravarLinha('Pagamentos', p.linha, linhaPagamento(a.pagamento));
-          gravarCelula('Pacotes', a.pacote.linha, 'usadas', a.pacote.usadas);
+          gravarCelula('Pacotes', a.pacote.linha, 'usadas', a.pacote.usadas, chavePacote_(a.pacote));
           ctx.pacotes[indice] = a.pacote; // a próxima linha da seleção já enxerga o pacote atualizado
         };
       }
@@ -115,7 +127,7 @@ function marcarConsultaDePacote() {
     }, () => {
       const lidos = lerAbaComoObjetos('Pacotes');
       const { pacotes, corrigidos } = reconciliarPacotes(lidos, lerAbaComoObjetos('Pagamentos'));
-      for (const c of corrigidos) gravarCelula('Pacotes', c.linha, 'usadas', c.usadas);
+      for (const c of corrigidos) gravarCelula('Pacotes', c.linha, 'usadas', c.usadas, chavePacote_(c));
       return { pacotes };
     });
     mostrarResultado_('Consulta de pacote', r);
@@ -143,8 +155,8 @@ function marcarStatusDaConsulta_(novoStatus) {
       const a = aplicarStatusConsulta(c, novoStatus);
       if (a.ok) {
         a.gravar = () => {
-          gravarCelula('Consultas', c.linha, 'status', novoStatus);
-          gravarCelula('Consultas', c.linha, 'atualizado_em', agoraTexto_());
+          gravarCelula('Consultas', c.linha, 'status', novoStatus, { id_evento: c.id_evento });
+          gravarCelula('Consultas', c.linha, 'atualizado_em', agoraTexto_(), { id_evento: c.id_evento });
         };
         if (novoStatus === 'faltou' && pagamentos.some((p) => String(p.id_evento) === String(c.id_evento) && p.status === 'a_receber')) {
           avisoCobranca = 'Há valor a receber ligado a uma consulta que faltou. Decida na aba Pagamentos: cobrar ou marcar como cortesia.';

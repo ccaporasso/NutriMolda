@@ -46,13 +46,18 @@ function consolidarRecebimentos(pagamentos, mes) {
   const avisos = [];
   const incluidos = [];
   const fora = { cortesia: 0, pacote: 0, semDataValida: 0, outroMes: 0, aReceber: 0 };
+  let formaDesconhecida = 0;
   let cpfInvalido = 0;
 
   for (const p of pagamentos) {
     if (p.status === 'cortesia' || p.forma === 'cortesia') { fora.cortesia++; continue; }
     if (p.status !== 'pago') { fora.aReceber++; continue; }
     if (p.forma === 'pacote') { fora.pacote++; continue; }
-    if (!FORMAS_RECEBIMENTO.includes(p.forma || '')) continue;
+    if (!FORMAS_RECEBIMENTO.includes(p.forma || '')) { // nunca some em silêncio do carnê-leão (B3)
+      formaDesconhecida++;
+      avisos.push(`O pagamento ${p.id} está pago, mas com forma de pagamento desconhecida. Não entrou no relatório: use pix, cartao ou dinheiro na coluna forma.`);
+      continue;
+    }
     if (!f.textoParaData(p.data_pagamento)) { fora.semDataValida++; avisos.push(`O pagamento ${p.id} está pago, mas sem data_pagamento válida (AAAA-MM-DD). Não entrou no relatório.`); continue; }
     if (!String(p.data_pagamento).startsWith(`${mes}-`)) { fora.outroMes++; continue; }
     if (!Number.isSafeInteger(p.valor_centavos) || p.valor_centavos <= 0) { avisos.push(`O pagamento ${p.id} está pago com valor inválido. Não entrou no relatório.`); continue; }
@@ -89,7 +94,7 @@ function consolidarRecebimentos(pagamentos, mes) {
   if (pagadores.some((g) => g.nome === SEM_NOME)) avisos.push('Há pagamento sem "pagador_nome". Preencha na aba Pagamentos.');
   if (fora.pacote > 0) avisos.push(`${fora.pacote} consulta(s) de pacote ficaram fora dos valores (o dinheiro entra na venda do pacote, não na consulta).`);
 
-  const resultado = { mes, pagadores, totalCentavos, quantidade: incluidos.length, porForma, fora, avisos, valoresConferidos: incluidos.map((p) => p.valor_centavos) };
+  const resultado = { mes, pagadores, totalCentavos, quantidade: incluidos.length, porForma, fora, formaDesconhecida, avisos, valoresConferidos: incluidos.map((p) => p.valor_centavos) };
   verificarTotais(resultado);
   return resultado;
 }

@@ -29,9 +29,10 @@ function linhasModeloRecibo() {
   ];
 }
 
-// "$" e "\" têm significado especial na troca de texto do Google Docs: saem antes.
+// Texto digitado que vai para o recibo: sem "$" e "\" (cuidado herdado da troca por expressão regular do Docs) e sem
+// chaves, para um nome nunca parecer um campo {{...}} do modelo. A troca em si é literal (GeradorRecibo.js).
 function textoSeguroParaDocs(texto) {
-  return String(texto).replace(/[$\\]/g, '').replace(/\s+/g, ' ').trim();
+  return String(texto).replace(/[$\\{}]/g, '').replace(/\s+/g, ' ').trim();
 }
 
 // Só letras, números e hífen: nome de arquivo sem nome de pessoa.

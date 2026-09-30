@@ -38,12 +38,16 @@ function temConsultaAnterior_(consultas, c) {
     && `${o.data}${o.hora}` < chave);
 }
 
-function planejarAReceber({ consultas, pagamentos, config }) {
+// `primeirasAprovadas`: ids de evento que ela confirmou, no menu, que são mesmo primeira consulta apesar do histórico
+// (paciente que faltou na primeira ou voltou depois de muito tempo). Sem isso, a guarda A1 não teria saída.
+function planejarAReceber({ consultas, pagamentos, config, primeirasAprovadas = [] }) {
+  const aprovadas = new Set(primeirasAprovadas.map(String));
   const preco = precoPagamentos_();
   const idsComPagamento = new Set(pagamentos.map((p) => String(p.id_evento)).filter((x) => x !== ''));
   let numero = proximoNumeroPagamento(pagamentos);
   const contagens = { jaTinham: 0, semPaciente: 0, semTipo: 0, semPreco: 0, canceladasComCobranca: 0, semIdEvento: 0, idRepetido: 0, pagamentoSemConsulta: 0, primeiraComHistorico: 0 };
   const linhasPrimeiraComHistorico = [];
+  const idsPrimeiraComHistorico = [];
   const linhasSemId = [];
   const linhasRepetidas = [];
   const idsDeConsultas = new Set(consultas.map((c) => String(c.id_evento === undefined || c.id_evento === null ? '' : c.id_evento).trim()).filter((x) => x !== ''));
@@ -69,7 +73,9 @@ function planejarAReceber({ consultas, pagamentos, config }) {
     if (!STATUS_QUE_GERAM_COBRANCA.includes(c.status)) continue; // faltou: decisão dela, não do kit
     if (idsComPagamento.has(id)) { contagens.jaTinham++; continue; }
     if (!c.codigo_paciente) { contagens.semPaciente++; continue; }
-    if (c.tipo === 'primeira' && temConsultaAnterior_(ordenadas, c)) { contagens.primeiraComHistorico++; linhasPrimeiraComHistorico.push(c.linha); continue; }
+    if (c.tipo === 'primeira' && !aprovadas.has(id) && temConsultaAnterior_(ordenadas, c)) {
+      contagens.primeiraComHistorico++; linhasPrimeiraComHistorico.push(c.linha); idsPrimeiraComHistorico.push(id); continue;
+    }
     let valor;
     try {
       valor = preco(config, c.tipo);
@@ -112,7 +118,7 @@ function planejarAReceber({ consultas, pagamentos, config }) {
   if (contagens.canceladasComCobranca > 0) {
     avisos.push(`${contagens.canceladasComCobranca} consulta(s) cancelada(s) ainda têm valor a receber. Revise na aba Pagamentos (marque como cortesia se não for cobrar).`);
   }
-  return { novos, avisos, contagens };
+  return { novos, avisos, contagens, idsPrimeiraComHistorico, linhasPrimeiraComHistorico };
 }
 
 function resumirAReceber(plano) {

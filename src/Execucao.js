@@ -16,6 +16,20 @@ function executarNoMenu_(modulo, funcao) {
   }
 }
 
+// Itens de menu que precisam deixar o erro seguir (os do gerador de TESTE, cujas recusas os testes conferem pela exceção):
+// erro inesperado vai ao Registro e ao e-mail (fluxo 7) e depois segue adiante; problema de uso não gera e-mail (B6).
+// O registro nunca esconde o erro original.
+function comRegistroDeFalha_(modulo, funcao) {
+  try {
+    return funcao();
+  } catch (e) {
+    if (!e || e.name !== 'ErroDeUso') {
+      try { registrarErro(modulo, e); } catch (falhaDoRegistro) { /* segue com o erro original */ }
+    }
+    throw e;
+  }
+}
+
 // Trava para operações que gravam na planilha: duas ao mesmo tempo (menu e gatilho) não se atropelam.
 function comTrava_(funcao) {
   const trava = LockService.getScriptLock();

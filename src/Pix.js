@@ -32,6 +32,26 @@ function normalizarTextoPix(texto) {
     .replace(/[^\x20-\x7E]/g, '').toUpperCase().trim();
 }
 
+function cpfValidoPix_(texto) {
+  return typeof cpfValido !== 'undefined' ? cpfValido(texto) : require('./Formatos.js').cpfValido(texto);
+}
+
+// Formato da chave (B5): e-mail, CPF ou CNPJ só com números, telefone com +55 ou chave aleatória. Nada é "consertado"
+// (D18): chave fora do formato é recusada com a explicação. Devolve '' se está certa. A mensagem nunca repete a chave.
+function problemaNaChavePix(chave) {
+  const c = String(chave).trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)) return '';
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c)) return '';
+  if (/^\+55\d{10,11}$/.test(c) || /^\d{14}$/.test(c)) return '';
+  if (/^\d{11}$/.test(c)) {
+    return cpfValidoPix_(c) ? '' : 'A chave Pix tem 11 números, mas não é um CPF válido. Se for telefone, escreva +55, o DDD e o número (por exemplo +5511900000000). Confira "chave_pix" na aba Configurações.';
+  }
+  if (/^[\d\s().+\/-]+$/.test(c)) {
+    return 'A chave Pix tem pontos, traços, espaços ou parênteses. CPF ou CNPJ: só os números. Telefone: +55, DDD e número, sem espaços. Confira "chave_pix" na aba Configurações.';
+  }
+  return 'A chave Pix não parece e-mail, CPF, CNPJ, telefone (+55...) nem chave aleatória. Confira "chave_pix" na aba Configurações.';
+}
+
 // Devolve o texto do Pix copia e cola. Valor em centavos (inteiro maior que zero).
 function gerarPixCopiaECola({ chave, nome, cidade, valorCentavos, idTransacao }) {
   if (typeof chave !== 'string' || chave.trim() === '') {
@@ -41,6 +61,8 @@ function gerarPixCopiaECola({ chave, nome, cidade, valorCentavos, idTransacao })
   if (chaveLimpa.length > LIMITE_CHAVE_PIX || /[^\x20-\x7E]/.test(chaveLimpa)) {
     throw new Error('A chave Pix está inválida. Confira "chave_pix" na aba Configurações.');
   }
+  const problemaChave = problemaNaChavePix(chaveLimpa);
+  if (problemaChave) throw new Error(problemaChave);
   const nomeNorm = typeof nome === 'string' ? normalizarTextoPix(nome) : '';
   if (nomeNorm === '') throw new Error('Falta o nome do recebedor. Preencha "nome_recebedor_pix" na aba Configurações.');
   if (nomeNorm.length > LIMITE_NOME_PIX) {
@@ -79,5 +101,5 @@ function gerarPixCopiaECola({ chave, nome, cidade, valorCentavos, idTransacao })
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { calcularCrc16, montarCampo, normalizarTextoPix, gerarPixCopiaECola };
+  module.exports = { calcularCrc16, montarCampo, normalizarTextoPix, problemaNaChavePix, gerarPixCopiaECola };
 }

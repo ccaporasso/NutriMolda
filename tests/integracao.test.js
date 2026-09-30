@@ -136,15 +136,31 @@ test('paciente a identificar: depois de ela preencher o código, a próxima cobr
   c.definir('Consultas', semCodigo, 'codigo_paciente', 'P9001');
   c.rodar('sincronizarAgenda()'); // não sobrescreve o código dela
   assert.equal(c.celula('Consultas', semCodigo, 'codigo_paciente'), 'P9001');
-  // A1: consulta 'primeira' de paciente que já tem consulta anterior não é cobrada; ela corrige o tipo e gera de novo.
+  // A1: consulta 'primeira' de paciente que já tem consulta anterior só é cobrada como primeira se ela confirmar.
+  const alerta = c.amb.ui.alert;
+  c.amb.ui.alert = (...a) => { alerta(...a); return a[2] === 'YES_NO' ? 'NO' : 'OK'; }; // ela responde Não
   c.rodar('gerarAReceberPeloMenu()');
+  c.amb.ui.alert = alerta;
   assert.equal(c.linhas('Pagamentos').length, 8);
+  assert.ok(c.amb.alertas.some((t) => /Primeira consulta ou retorno\?.*linha\(s\) \d+/.test(t)));
   assert.match(c.ultimoAlerta(), /como "primeira", mas o paciente já tem consulta anterior/);
   c.definir('Consultas', semCodigo, 'tipo', 'retorno');
   c.rodar('gerarAReceber()');
   assert.equal(c.linhas('Pagamentos').length, 9);
   c.rodar('gerarAReceber()');
   assert.equal(c.linhas('Pagamentos').length, 9);
+});
+
+test('A1: ela confirma que é mesmo primeira consulta (Sim) e a cobrança sai com o preço da primeira', () => {
+  const c = fluxoAteOPagamento();
+  const semCodigo = c.linhaOnde('Consultas', 'codigo_paciente', '');
+  c.definir('Consultas', semCodigo, 'codigo_paciente', 'P9001');
+  const id = c.celula('Consultas', semCodigo, 'id_evento');
+  c.rodar('gerarAReceberPeloMenu()'); // o simulador responde Sim
+  const linha = c.linhaOnde('Pagamentos', 'id_evento', id);
+  assert.equal(c.celula('Pagamentos', linha, 'valor_centavos'), 15000);
+  c.rodar('gerarAReceberPeloMenu()');
+  assert.equal(c.linhas('Pagamentos').filter((l) => l[1] === id).length, 1); // não duplica
 });
 
 test('privacidade: Registro, e-mails de alerta e nomes de arquivo não têm nome, e-mail nem CPF', () => {

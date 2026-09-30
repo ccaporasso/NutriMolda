@@ -13,6 +13,8 @@ const INICIO_URL_FORMULARIO = 'https://docs.google.com/forms/';
 const ABA_RESPOSTAS = { nome: 'Respostas', cabecalho: ['data_hora', 'codigo_paciente', 'resposta', 'nota'] };
 
 // Link do formulário com o código já preenchido (padrão "pp_url" do Google Formulários).
+// PENDENTE P11: o código P0001 é sequencial e não prova quem responde (trocar para P0002 responderia por outro paciente).
+// Antes de instalar a T20, decidir entre token aleatório por paciente ou login Google no formulário.
 // idCampoCodigo é o "entry.NNN" do campo do código, que só se descobre no formulário real (PENDENTE P8).
 function montarLinkFormulario({ urlBase, idCampoCodigo, codigo }) {
   if (typeof urlBase !== 'string' || !urlBase.startsWith(INICIO_URL_FORMULARIO)) {

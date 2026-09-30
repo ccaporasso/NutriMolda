@@ -31,7 +31,7 @@ function calendarioDeTeste_() {
   const cfg = lerConfiguracoes().config;
   const id = cfg.calendario_id;
   const validacao = validarAgendaDeTeste(id);
-  if (!validacao.ok) throw new Error(validacao.erro);
+  if (!validacao.ok) throw erroDeUso_(validacao.erro);
   confirmarAgendaDeTeste_(id);
   return { id, prefixo: cfg.prefixo_evento_consulta || 'Consulta' };
 }
@@ -41,15 +41,23 @@ function confirmar_(texto) {
   return ui.alert('Dados de TESTE', texto, ui.ButtonSet.OK_CANCEL) === ui.Button.OK;
 }
 
+// Itens do menu de teste: erro inesperado vai ao Registro e ao e-mail; a gravação roda com a trava, para não se
+// cruzar com a sincronização automática, que grava pelo número da linha (B6).
 function criarDadosDeTeste() {
-  const { id, prefixo } = calendarioDeTeste_();
-  if (!confirmar_('Vai criar pacientes e eventos INVENTADOS na agenda de teste. Continuar?')) return;
+  comRegistroDeFalha_('teste', () => {
+    const { id, prefixo } = calendarioDeTeste_();
+    if (!confirmar_('Vai criar pacientes e eventos INVENTADOS na agenda de teste. Continuar?')) return;
+    comTrava_(() => criarDadosDeTesteNaAgenda_(id, prefixo));
+  });
+}
+
+function criarDadosDeTesteNaAgenda_(id, prefixo) {
 
   // Tudo é conferido ANTES de escrever qualquer coisa (R03h): pacientes com código já usado e eventos com id já ocupado.
   const existentes = lerAbaComoObjetos('Pacientes');
   const colisoes = codigosEmColisao(existentes);
   if (colisoes.length > 0) {
-    throw new Error(`Os códigos ${colisoes.join(', ')} já existem na aba Pacientes com outros dados. `
+    throw erroDeUso_(`Os códigos ${colisoes.join(', ')} já existem na aba Pacientes com outros dados. `
       + 'O gerador não mistura dados de teste com esses: nada foi criado. Use outros códigos ou apague essas linhas à mão.');
   }
   const propriedades = PropertiesService.getDocumentProperties();
@@ -77,7 +85,7 @@ function criarDadosDeTeste() {
     plano.push({ e, existente });
   }
   if (alheios > 0) {
-    throw new Error(`${alheios} evento(s) já ocupam os ids que o gerador usaria nesta agenda e não há prova de que foram criados por ele. `
+    throw erroDeUso_(`${alheios} evento(s) já ocupam os ids que o gerador usaria nesta agenda e não há prova de que foram criados por ele. `
       + 'Nada foi criado. Use uma agenda de teste nova, vazia.');
   }
 
@@ -104,9 +112,15 @@ function criarDadosDeTeste() {
 }
 
 function apagarDadosDeTeste() {
-  const { id } = calendarioDeTeste_();
-  if (!confirmar_('Vai apagar só os pacientes de teste gerados pelo kit (P9001 a P9006) e as consultas e pagamentos que o kit comprova serem de teste. '
-    + 'Pacotes e linhas sem comprovação de origem ficam. Também apaga os eventos de teste da agenda de teste. Dados reais não são tocados. Continuar?')) return;
+  comRegistroDeFalha_('teste', () => {
+    const { id } = calendarioDeTeste_();
+    if (!confirmar_('Vai apagar só os pacientes de teste gerados pelo kit (P9001 a P9006) e as consultas e pagamentos que o kit comprova serem de teste. '
+      + 'Pacotes e linhas sem comprovação de origem ficam. Também apaga os eventos de teste da agenda de teste. Dados reais não são tocados. Continuar?')) return;
+    comTrava_(() => apagarDadosDeTesteDaAgenda_(id));
+  });
+}
+
+function apagarDadosDeTesteDaAgenda_(id) {
 
   const consultas = lerAbaComoObjetos('Consultas').map((c) => ({ ...c, origem: String(c.agenda_origem || '') }));
   const origemTeste = marcaDaAgenda(id);

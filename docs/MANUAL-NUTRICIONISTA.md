@@ -23,7 +23,7 @@ O Caio faz a instalação com você. Depois, na aba **Configurações**, preench
 | `crn` | Seu número no CRN | CRN-3 12345 |
 | `valor_primeira_consulta_centavos` | Preço da primeira consulta. **Prefira o menu Configuração > Definir preços das consultas (em reais)**: você digita 150,00 e o kit grava 15000 (centavos) | R$ 150,00 → `15000` |
 | `valor_retorno_centavos` | Preço do retorno (mesmo menu) | R$ 100,00 → `10000` |
-| `chave_pix` | Sua chave Pix, exatamente como no banco | |
+| `chave_pix` | Sua chave Pix, exatamente como no banco: e-mail; CPF ou CNPJ só com números; telefone com +55 e DDD, sem espaços (+5511900000000); ou a chave aleatória | |
 | `nome_recebedor_pix` | Seu nome como no banco, até 25 letras | |
 | `cidade_recebedor_pix` | Sua cidade, até 15 letras | |
 | `email_alertas` | E-mail que recebe os avisos de falha | |
@@ -44,7 +44,7 @@ Menu **Sincronizar agenda**. As consultas aparecem na aba **Consultas**. Pode cl
 - Só entram eventos cujo título **começa** com o prefixo (por exemplo, "Consulta — Ana S.").
 - Se uma consulta ficar com `codigo_paciente` **em branco**, o kit não achou o paciente pelo e-mail ou telefone. Cadastre o paciente na aba **Pacientes** (com o mesmo e-mail ou telefone da marcação) e sincronize de novo, ou digite o código (P0001…) na linha.
 - Consulta apagada ou cancelada na agenda vira `cancelada`. Para cancelar de vez, apague o evento na agenda: mudar o status só na planilha não desmarca o evento, e o kit avisa. Uma consulta `cancelada` nunca volta sozinha para `marcada`; se o evento voltou e você quer cobrar, mude o status à mão.
-- Se o paciente foi identificado depois (você cadastrou o e-mail ou digitou o código), o kit ajusta o tipo para `retorno` quando já há consulta anterior. "Gerar valores a receber" não cobra como `primeira` quem já tem consulta anterior: avisa a linha, e você confere a coluna `tipo`.
+- Se o paciente foi identificado depois (você cadastrou o e-mail ou digitou o código), o kit ajusta o tipo para `retorno` quando já há consulta anterior. "Gerar valores a receber" pergunta antes de cobrar como `primeira` quem já tem consulta anterior: responda **Sim** se for mesmo primeira consulta (por exemplo, o paciente faltou na primeira ou voltou depois de muito tempo); **Não** deixa sem cobrança, e você troca o `tipo` para `retorno` e gera de novo.
 
 ### 2. Gerar os valores a receber
 Menu **Gerar valores a receber**. Cada consulta marcada ou realizada ganha uma linha em **Pagamentos** com o status `a_receber`.

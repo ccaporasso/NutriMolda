@@ -85,6 +85,7 @@ function descreverFalha(modulo, erro) {
 const CAUSAS_DE_USO = {
   trava: 'Sincronização automática adiada: outra operação estava em andamento.',
   cabecalho: 'Sincronização automática parou: o cabeçalho de uma aba foi alterado ou falta coluna nova. Rode "Instalar/atualizar planilha" e confira os cabeçalhos.',
+  aba: 'Sincronização automática parou: falta uma aba do kit. Rode "Instalar/atualizar planilha".',
   configuracao: 'Sincronização automática parou: alguma configuração está em branco ou inválida. Abra a aba Configurações ou rode "Sincronizar agenda" no menu para ver o detalhe.',
 };
 
@@ -92,6 +93,7 @@ function causaDeUso(erro) {
   const m = String((erro && erro.message) || '');
   if (/Outra (sincronização|operação) está em andamento/.test(m)) return 'trava';
   if (/cabeçalho|coluna\(s\) nova|versão anterior/i.test(m)) return 'cabecalho';
+  if (/A aba "[^"]*" não existe/.test(m)) return 'aba';
   return 'configuracao';
 }
 

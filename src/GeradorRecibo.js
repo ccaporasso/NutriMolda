@@ -7,9 +7,27 @@ function escaparPadrao_(texto) {
   return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Na troca do Docs, "$" e "\" do texto novo têm significado especial: escapa os dois com "\".
-function escaparTroca_(texto) {
-  return String(texto).replace(/[\\$]/g, '\\$&');
+// Troca literal de um campo (M2): acha o campo e apaga/insere o texto, sem passar o valor pela troca por expressão
+// regular do Docs (replaceText), em que "$" e "\" do texto novo poderiam ter significado especial ("R$ 150,00").
+// `limite` evita laço sem fim se o valor trouxer o próprio campo (os valores já saem sem chaves; ver textoSeguroParaDocs).
+function trocarCampoLiteral_(secao, padrao, valor, limite = 50) {
+  for (let i = 0, achado = secao.findText(padrao); achado && i < limite; i++, achado = secao.findText(padrao)) {
+    const texto = achado.getElement().asText();
+    const inicio = achado.getStartOffset();
+    texto.deleteText(inicio, achado.getEndOffsetInclusive());
+    if (String(valor) !== '') texto.insertText(inicio, String(valor));
+  }
+}
+
+// Manda a cópia de trabalho para a lixeira sem nunca lançar erro por cima do resultado (B4). Devolve true se conseguiu.
+function descartarCopiaDoRecibo_(idCopia) {
+  try {
+    driveMandarParaLixeira(idCopia);
+    return true;
+  } catch (e) {
+    registrar('recibo', 'aviso', `A cópia de trabalho do recibo não foi para a lixeira (tipo ${tipoDeErro(e)}). Apague à mão o arquivo "rascunho-" da pasta de recibos.`);
+    return false;
+  }
 }
 
 function textoDoDocumento_(documento) {
@@ -18,11 +36,13 @@ function textoDoDocumento_(documento) {
   return partes.join('\n');
 }
 
-// Gera o recibo do pagamento na linha indicada. Devolve { link } ou { jaTinha: true }.
+// Gera o recibo do pagamento na linha indicada. Devolve { link } ou { jaTinha: true }; `rascunhoFicou` avisa que a cópia
+// de trabalho (com nome e CPF) não foi para a lixeira.
 function gerarRecibo(numeroLinha) {
   const trava = LockService.getScriptLock();
   if (!trava.tryLock(30000)) throw erroDeUso_('Outra operação está em andamento. Tente de novo em um minuto.');
   let copia = null;
+  let resultado = null;
   try {
     const config = lerConfiguracoes().config;
     const pagamento = lerAbaComoObjetos('Pagamentos').find((p) => p.linha === numeroLinha);
@@ -45,10 +65,9 @@ function gerarRecibo(numeroLinha) {
     }
     for (const [campo, valor] of Object.entries(dados.campos)) {
       const padrao = escaparPadrao_(`{{${campo}}}`);
-      const troca = escaparTroca_(valor); // "R$" do valor não pode virar referência de grupo na troca do Docs (M2)
-      documento.getBody().replaceText(padrao, troca);
-      if (documento.getHeader()) documento.getHeader().replaceText(padrao, troca);
-      if (documento.getFooter()) documento.getFooter().replaceText(padrao, troca);
+      for (const secao of [documento.getBody(), documento.getHeader(), documento.getFooter()]) {
+        if (secao) trocarCampoLiteral_(secao, padrao, valor);
+      }
     }
     const sobrando = camposSobrando(textoDoDocumento_(documento));
     if (sobrando.length > 0) {
@@ -59,11 +78,13 @@ function gerarRecibo(numeroLinha) {
     // O PDF sai do próprio Docs (escopo documents); só a gravação na pasta passa pelo Drive.
     const pdf = DocumentApp.openById(copia).getAs('application/pdf').setName(dados.nomeArquivo);
     const link = driveCriarArquivo(idPasta, dados.nomeArquivo, 'application/pdf', pdf).url;
-    gravarCelula('Pagamentos', numeroLinha, 'link_recibo', link);
+    gravarCelula('Pagamentos', numeroLinha, 'link_recibo', link, { id: pagamento.id });
     registrar('recibo', 'info', `Recibo gerado para o pagamento ${pagamento.id}.`);
-    return { link };
+    resultado = { link };
+    return resultado;
   } finally {
-    if (copia) driveMandarParaLixeira(copia); // a cópia de trabalho nunca fica no Drive
+    // A cópia de trabalho nunca fica no Drive. Falha ao descartá-la não apaga o sucesso nem prende a trava (B4).
+    if (copia && !descartarCopiaDoRecibo_(copia) && resultado) resultado.rascunhoFicou = true;
     trava.releaseLock();
   }
 }
@@ -75,7 +96,8 @@ function gerarReciboDaLinhaSelecionada() {
     const r = gerarRecibo(linha);
     SpreadsheetApp.getUi().alert(r.jaTinha
       ? 'Este pagamento já tem recibo (veja a coluna link_recibo). Nada foi gerado de novo.'
-      : `Recibo gerado. O link está na coluna link_recibo:\n${r.link}`);
+      : `Recibo gerado. O link está na coluna link_recibo:\n${r.link}`
+        + (r.rascunhoFicou ? '\n\nA cópia de trabalho ("rascunho-...") não foi para a lixeira: ela tem nome e CPF. Apague à mão na pasta de recibos.' : ''));
   });
 }
 

@@ -63,12 +63,18 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
     openById: (id) => {
       if (falhas.abrirDocumento) throw new Error('Documento indisponível');
       const arq = existente(id);
+      // Como o Docs: findText acha o campo; deleteText/insertText mexem no texto de forma literal (M2).
+      // replaceText trata o texto novo como troca por expressão regular ("$" especial): o kit não pode usá-lo.
+      const textoDoArquivo = {
+        deleteText(ini, fim) { arq.texto = arq.texto.slice(0, ini) + arq.texto.slice(fim + 1); return textoDoArquivo; },
+        insertText(ini, t) { arq.texto = arq.texto.slice(0, ini) + t + arq.texto.slice(ini); return textoDoArquivo; },
+      };
       const corpo = {
-        replaceText(padrao, valor) {
-          // Como o Docs: "\\$" e "\\\\" viram $ e \; "$" sem escape seria referência de grupo (aqui vira nada).
-          (arq.trocas = arq.trocas || []).push(valor);
-          const final = String(valor).replace(/\\(.)|\$\d?/g, (m, c) => (c === undefined ? '' : c));
-          arq.texto = arq.texto.replace(new RegExp(padrao, 'g'), () => final); return corpo;
+        replaceText() { throw new Error('replaceText não deve ser usado: o valor "R$" viraria referência de grupo.'); },
+        findText(padrao) {
+          const m = new RegExp(padrao).exec(arq.texto);
+          if (!m) return null;
+          return { getElement: () => ({ asText: () => textoDoArquivo }), getStartOffset: () => m.index, getEndOffsetInclusive: () => m.index + m[0].length - 1 };
         },
         getText: () => arq.texto,
       };

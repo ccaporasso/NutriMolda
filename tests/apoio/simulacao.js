@@ -81,6 +81,9 @@ function criarAmbiente(opcoes = {}) {
   };
   const selecao = opcoes.selecao || { aba: null, linhas: [] };
   const planilha = {
+    fuso: opcoes.fuso || 'America/Sao_Paulo',
+    getSpreadsheetTimeZone: () => planilha.fuso,
+    setSpreadsheetTimeZone(f) { planilha.fuso = f; },
     getSheetByName: (n) => abas.get(n) || null,
     getActiveSheet: () => abas.get(selecao.aba),
     getActiveRangeList: () => ({ getRanges: () => selecao.linhas.map((l) => ({ getRow: () => l, getNumRows: () => 1 })) }),
@@ -123,7 +126,7 @@ function criarAmbiente(opcoes = {}) {
     PropertiesService: { getDocumentProperties: () => ({ getProperty: (k) => (propriedades.has(k) ? propriedades.get(k) : null), setProperty: (k, v) => { propriedades.set(k, String(v)); } }) },
     ...(opcoes.google || {}),
   };
-  const ambiente = { propriedades, apagados, selecao, abas, alertas, emails, arquivos, contexto, ui, relogio, menu: null, sequencia: () => ++seq };
+  const ambiente = { planilha, propriedades, apagados, selecao, abas, alertas, emails, arquivos, contexto, ui, relogio, menu: null, sequencia: () => ++seq };
   vm.createContext(contexto);
   ambiente.carregar = (...nomes) => {
     for (const n of nomes) vm.runInContext(fs.readFileSync(path.join(raiz, n), 'utf8'), contexto, { filename: n });

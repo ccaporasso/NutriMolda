@@ -58,13 +58,30 @@ function garantirEspacoNaFolha_(folha, aba, quantas) {
   aplicarValidacoes_(folha, aba);
 }
 
-function gravarLinha(nomeAba, numeroLinha, valores) {
-  const { folha } = abrirFolhaConferida_(nomeAba);
+// Logo antes de gravar por número de linha, confere que a linha ainda é a mesma que foi lida (B1): enquanto o kit
+// trabalha, ela pode ter ordenado, apagado ou inserido linhas. `esperado` = { coluna: valor lido antes }.
+function conferirLinha_(aba, folha, numeroLinha, esperado) {
+  const lido = folha.getRange(numeroLinha, 1, 1, aba.cabecalho.length).getValues()[0];
+  for (const [coluna, valor] of Object.entries(esperado || {})) {
+    const atual = converterCelula_(coluna, lido[aba.cabecalho.indexOf(coluna)]);
+    if (String(atual) !== String(valor === undefined || valor === null ? '' : valor)) {
+      throw erroDeUso_(`A linha ${numeroLinha} da aba "${aba.nome}" mudou enquanto o kit trabalhava (linhas ordenadas, apagadas ou inseridas?). `
+        + 'Nada foi gravado nela. Confira e tente de novo.');
+    }
+  }
+}
+
+// A primeira coluna (id, id_evento, codigo) é a chave: por padrão, ela precisa ser a mesma que vai ser regravada.
+function gravarLinha(nomeAba, numeroLinha, valores, esperado) {
+  const { aba, folha } = abrirFolhaConferida_(nomeAba);
+  conferirLinha_(aba, folha, numeroLinha, esperado || { [aba.cabecalho[0]]: valores[0] });
   folha.getRange(numeroLinha, 1, 1, valores.length).setValues([valores]);
 }
 
-function gravarCelula(nomeAba, numeroLinha, nomeColuna, valor) {
+// `esperado`: colunas que identificam a linha, com os valores lidos antes (obrigatório: sem ele não há como conferir).
+function gravarCelula(nomeAba, numeroLinha, nomeColuna, valor, esperado) {
   const { aba, folha } = abrirFolhaConferida_(nomeAba);
+  conferirLinha_(aba, folha, numeroLinha, esperado);
   folha.getRange(numeroLinha, aba.cabecalho.indexOf(nomeColuna) + 1, 1, 1).setValues([[valor]]);
 }
 
