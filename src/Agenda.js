@@ -77,14 +77,16 @@ function linhaConsulta(c) {
 // eventos: itens do Google Agenda (v3), inclusive os cancelados.
 // existentes: linhas atuais de Consultas como objetos, cada uma com `linha` (número na planilha).
 // pacientes: { codigo, email, telefone, ativo }.
-// Devolve { inserir, atualizar, canceladas, aIdentificar, ignorados, avisos }; não muda nada por conta própria.
-function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, janela, agoraTexto }) {
+// agendaMudou: true se o "calendario_id" não é mais o da última sincronização (nada é inferido por ausência).
+// Devolve { inserir, atualizar, canceladas, aIdentificar, ignorados, avisos, ausentes }; não muda nada por conta própria.
+// `ausentes` são consultas marcadas que não vieram na leitura: ausência NÃO cancela (pode ser remarcação para
+// depois da janela). Quem chama confere cada uma na agenda e repete o plano com o evento devolvido.
+function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, janela, agoraTexto, agendaMudou }) {
   const f = formatosAgenda_();
   const porId = new Map();
   for (const c of existentes) if (c.id_evento) porId.set(String(c.id_evento), c);
   const vistos = new Set();
   const atualizacoes = new Map(); // id_evento -> linha final
-  const novos = [];
   const avisos = [];
   let ignorados = 0;
   let canceladas = 0;
@@ -95,7 +97,7 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
     canceladas++;
   };
 
-  // Datas do evento ordenadas: a primeira consulta do paciente vem antes do retorno.
+  // 1) Estado final dos eventos que já têm linha: cancelamento, remarcação, reativação, código do paciente.
   const validos = [];
   for (const ev of eventos) {
     if (!ev || !ev.id) { ignorados++; continue; }
@@ -111,55 +113,62 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
   }
   validos.sort((a, b) => (a.local.data + a.local.hora).localeCompare(b.local.data + b.local.hora));
 
+  const novosEventos = [];
+  for (const { ev, id, local } of validos) {
+    const atual = porId.get(id);
+    if (!atual) { novosEventos.push({ ev, id, local }); continue; }
+    const codigoAgenda = identificarPacienteAgenda(ev, pacientes);
+    const base = atualizacoes.get(id) || atual;
+    const novo = { ...base, data: local.data, hora: local.hora };
+    if (!novo.codigo_paciente && codigoAgenda) novo.codigo_paciente = codigoAgenda;
+    if (novo.status === 'cancelada') novo.status = 'marcada'; // evento voltou para a agenda
+    if (novo.data !== atual.data || novo.hora !== atual.hora
+      || novo.codigo_paciente !== atual.codigo_paciente || novo.status !== atual.status) {
+      novo.atualizado_em = agoraTexto;
+      atualizacoes.set(id, novo);
+    }
+  }
+
+  // 2) Marcada, dentro do período e ausente da leitura: não cancela. Só devolve a lista para conferência.
+  // Agenda que voltou vazia ou trocada não é conferida: é mais provável erro de configuração.
+  const emJanela = existentes.filter((c) => c.status === 'marcada' && c.id_evento && !vistos.has(String(c.id_evento))
+    && String(c.data) >= janela.verificarDe && String(c.data) <= janela.verificarAte);
+  let ausentes = [];
+  if (emJanela.length > 0 && eventos.length === 0) {
+    avisos.push(`A agenda voltou sem nenhum evento. Por segurança, nenhuma das ${emJanela.length} consultas marcadas foi cancelada. Confira o "calendario_id" na aba Configurações.`);
+  } else if (emJanela.length > 0 && agendaMudou) {
+    avisos.push(`O "calendario_id" mudou desde a última sincronização. Por segurança, nenhuma das ${emJanela.length} consultas marcadas foi cancelada por ausência na agenda nova.`);
+  } else {
+    ausentes = emJanela.map((c) => String(c.id_evento));
+  }
+
+  // 3) Só agora as consultas novas: a cronologia usa o estado final (sem canceladas, com as datas remarcadas).
+  const finais = existentes.map((c) => atualizacoes.get(String(c.id_evento)) || c);
   const historico = new Map(); // codigo -> [data+hora] de consultas não canceladas
   const registrarHistorico = (codigo, data, hora) => {
     if (!codigo) return;
     if (!historico.has(codigo)) historico.set(codigo, []);
     historico.get(codigo).push(data + hora);
   };
-  for (const c of existentes) if (c.status !== 'cancelada') registrarHistorico(c.codigo_paciente, String(c.data), String(c.hora));
+  for (const c of finais) if (c.status !== 'cancelada') registrarHistorico(c.codigo_paciente, String(c.data), String(c.hora));
 
-  for (const { ev, id, local } of validos) {
+  const novos = [];
+  for (const { ev, id, local } of novosEventos) {
     const codigoAgenda = identificarPacienteAgenda(ev, pacientes);
-    const atual = porId.get(id);
-    if (atual) {
-      const novo = { ...atual };
-      novo.data = local.data;
-      novo.hora = local.hora;
-      if (!novo.codigo_paciente && codigoAgenda) novo.codigo_paciente = codigoAgenda;
-      if (novo.status === 'cancelada') novo.status = 'marcada'; // evento voltou para a agenda
-      if (novo.data !== atual.data || novo.hora !== atual.hora
-        || novo.codigo_paciente !== atual.codigo_paciente || novo.status !== atual.status) {
-        novo.atualizado_em = agoraTexto;
-        atualizacoes.set(id, novo);
-      }
-    } else {
-      const anteriores = (historico.get(codigoAgenda) || []).filter((x) => x < local.data + local.hora);
-      novos.push({
-        id_evento: id, data: local.data, hora: local.hora,
-        tipo: codigoAgenda && anteriores.length > 0 ? 'retorno' : 'primeira',
-        codigo_paciente: codigoAgenda || '', status: 'marcada', atualizado_em: agoraTexto,
-      });
-      registrarHistorico(codigoAgenda, local.data, local.hora);
-    }
-  }
-
-  // Marcada, dentro do período e ausente da agenda = apagada lá. Agenda que voltou vazia
-  // não cancela nada: é mais provável ser erro de leitura do que o consultório vazio.
-  const emJanela = existentes.filter((c) => c.status === 'marcada' && c.id_evento && !vistos.has(String(c.id_evento))
-    && String(c.data) >= janela.verificarDe && String(c.data) <= janela.verificarAte);
-  if (eventos.length === 0 && emJanela.length > 0) {
-    avisos.push(`A agenda voltou sem nenhum evento. Por segurança, nenhuma das ${emJanela.length} consultas marcadas foi cancelada. Confira o "calendario_id" na aba Configurações.`);
-  } else {
-    for (const c of emJanela) cancelar(c);
+    const anteriores = (historico.get(codigoAgenda) || []).filter((x) => x < local.data + local.hora);
+    novos.push({
+      id_evento: id, data: local.data, hora: local.hora,
+      tipo: codigoAgenda && anteriores.length > 0 ? 'retorno' : 'primeira',
+      codigo_paciente: codigoAgenda || '', status: 'marcada', atualizado_em: agoraTexto,
+    });
+    registrarHistorico(codigoAgenda, local.data, local.hora);
   }
 
   const atualizar = [...atualizacoes.values()].map((c) => ({ linha: c.linha, valores: linhaConsulta(c) }));
-  const finais = existentes.map((c) => atualizacoes.get(String(c.id_evento)) || c).concat(novos);
-  const aIdentificar = finais
+  const aIdentificar = finais.concat(novos)
     .filter((c) => !c.codigo_paciente && c.status !== 'cancelada')
     .map((c) => ({ id_evento: c.id_evento, data: c.data, hora: c.hora }));
-  return { inserir: novos.map(linhaConsulta), atualizar, canceladas, aIdentificar, ignorados, avisos };
+  return { inserir: novos.map(linhaConsulta), atualizar, canceladas, aIdentificar, ignorados, avisos, ausentes };
 }
 
 // Texto para a nutricionista, sem nome nem dado de saúde.

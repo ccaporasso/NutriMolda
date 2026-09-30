@@ -103,6 +103,19 @@ function planejarInstalacao(existente) {
   return plano;
 }
 
+// Confere o cabeçalho lido (largura completa do esquema) com o esperado, coluna a coluna, em ordem.
+// Devolve a mensagem para a nutricionista, ou '' se está certo. Colunas a mais, à direita, são permitidas.
+function divergenciaDeCabecalho(aba, lido) {
+  const atual = (lido || []).map((c) => String(c === undefined || c === null ? '' : c).trim());
+  for (let i = 0; i < aba.cabecalho.length; i++) {
+    if (atual[i] !== aba.cabecalho[i]) {
+      return `A aba "${aba.nome}" está com o cabeçalho diferente do esperado (coluna ${i + 1} deveria ser "${aba.cabecalho[i]}"). `
+        + 'Nada foi lido nem gravado. Não mude a ordem nem o nome das colunas; peça ajuda ao suporte.';
+    }
+  }
+  return '';
+}
+
 // Colunas (1 = A) que recebem lista suspensa, com os valores permitidos.
 function colunasComValidacao(aba) {
   return Object.entries(aba.validacoes).map(([coluna, lista]) => ({
@@ -119,5 +132,5 @@ function colunasDeTexto(aba) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { colunasDeTexto, LISTAS, CONFIGURACOES_INICIAIS, ABAS, planejarInstalacao, colunasComValidacao };
+  module.exports = { colunasDeTexto, LISTAS, CONFIGURACOES_INICIAIS, ABAS, planejarInstalacao, colunasComValidacao, divergenciaDeCabecalho };
 }

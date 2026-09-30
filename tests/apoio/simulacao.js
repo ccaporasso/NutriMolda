@@ -86,6 +86,8 @@ function criarAmbiente(opcoes = {}) {
     deleteSheet: (a) => abas.delete(a.nome),
     setActiveSheet() {},
   };
+  const propriedades = new Map();
+  const apagados = new Set(); // ids de eventos apagados que a agenda ainda devolve como cancelados
   const relogio = { agora: FIXO };
   class DataFixa extends Date {
     constructor(...a) { if (a.length === 0) super(relogio.agora); else super(...a); }
@@ -102,10 +104,22 @@ function criarAmbiente(opcoes = {}) {
     LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) },
     MailApp: { sendEmail: (...a) => emails.push(a) },
     ScriptApp: { triggers: [], getProjectTriggers() { return this.triggers; }, newTrigger(f) { const t = { f, getHandlerFunction: () => f }; const b = { timeBased: () => b, everyHours: () => b, create: () => { this.triggers.push(t); return t; } }; return b; } },
-    Calendar: { Events: { list: () => ({ items: opcoes.eventos || [] }) } },
+    Calendar: {
+      Events: {
+        list: () => ({ items: opcoes.eventos || [] }),
+        // Evento apagado e já sumido da agenda: a API responde "Not Found".
+        get: (cal, id) => {
+          const e = (opcoes.eventos || []).find((x) => x.id === id);
+          if (!e && apagados.has(id)) return { id, status: 'cancelled' }; // a agenda ainda guarda o evento apagado
+          if (!e) throw new Error('API call to calendar.events.get failed with error: Not Found');
+          return e;
+        },
+      },
+    },
+    PropertiesService: { getDocumentProperties: () => ({ getProperty: (k) => (propriedades.has(k) ? propriedades.get(k) : null), setProperty: (k, v) => { propriedades.set(k, String(v)); } }) },
     ...(opcoes.google || {}),
   };
-  const ambiente = { selecao, abas, alertas, emails, arquivos, contexto, ui, relogio, menu: null, sequencia: () => ++seq };
+  const ambiente = { propriedades, apagados, selecao, abas, alertas, emails, arquivos, contexto, ui, relogio, menu: null, sequencia: () => ++seq };
   vm.createContext(contexto);
   ambiente.carregar = (...nomes) => {
     for (const n of nomes) vm.runInContext(fs.readFileSync(path.join(raiz, n), 'utf8'), contexto, { filename: n });

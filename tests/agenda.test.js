@@ -110,15 +110,37 @@ test('cancelamento: evento cancelado na agenda vira cancelada; realizada não é
   assert.deepEqual(p.atualizar.map((a) => [a.linha, a.valores[5]]), [[2, 'cancelada']]);
 });
 
-test('cancelamento: consulta marcada que sumiu da agenda dentro do período vira cancelada', () => {
+test('ausência na leitura não cancela: o plano só lista as consultas marcadas a conferir', () => {
   const existentes = [
     { linha: 2, id_evento: 's1', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '' },
     { linha: 3, id_evento: 's2', data: '2027-03-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9002', status: 'marcada', atualizado_em: '' },
     { linha: 4, id_evento: 's3', data: '2026-10-12', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9003', status: 'marcada', atualizado_em: '' },
   ];
   const p = plano([evento('s3', 'Consulta', '2026-10-12', '09:00')], existentes);
-  assert.deepEqual(p.atualizar.map((a) => a.linha), [2]); // s2 está fora do período; s3 continua na agenda
-  assert.equal(p.canceladas, 1);
+  assert.deepEqual(p.ausentes, ['s1']); // s2 está fora do período; s3 continua na agenda
+  assert.equal(p.canceladas, 0);
+  assert.deepEqual(p.atualizar, []);
+});
+
+test('R04: consulta remarcada para depois da janela não é cancelada por sumir da leitura', () => {
+  const existentes = [{ linha: 2, id_evento: 'r1', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '' }];
+  const p = plano([evento('outro', 'Compromisso', '2026-10-02', '09:00')], existentes);
+  assert.equal(p.canceladas, 0);
+  // A conferência individual devolve o evento remarcado para 01/02/2027: a linha só muda de data.
+  const conferido = plano([evento('outro', 'Compromisso', '2026-10-02', '09:00'), evento('r1', 'Consulta', '2027-02-01', '09:00')], existentes);
+  assert.equal(conferido.canceladas, 0);
+  assert.deepEqual(conferido.atualizar.map((a) => [a.valores[1], a.valores[5]]), [['2027-02-01', 'marcada']]);
+});
+
+test('calendario_id trocado: nada é conferido nem cancelado por ausência', () => {
+  const existentes = [{ linha: 2, id_evento: 'a1', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '' }];
+  const p = A.planejarSincronizacaoAgenda({
+    eventos: [evento('n1', 'Consulta', '2026-10-12', '09:00')], existentes, pacientes: D.PACIENTES_TESTE.map((x) => ({ ...x })),
+    prefixo: 'Consulta', janela, agoraTexto: '2026-09-30 12:00:00', agendaMudou: true,
+  });
+  assert.deepEqual(p.ausentes, []);
+  assert.equal(p.canceladas, 0);
+  assert.match(p.avisos[0], /calendario_id/);
 });
 
 test('agenda que volta vazia não cancela nada e avisa', () => {
@@ -135,6 +157,29 @@ test('evento cancelado que voltou para a agenda reativa a consulta', () => {
   assert.equal(p.atualizar[0].valores[5], 'marcada');
 });
 
+test('R05: consulta cancelada nesta execução não faz a nova virar retorno', () => {
+  const antiga = { linha: 2, id_evento: 'antigo', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '' };
+  const novo = evento('novo', 'Consulta', '2026-10-20', '09:00', { description: 'ana.teste@exemplo.invalid' });
+  const p = plano([{ id: 'antigo', status: 'cancelled' }, novo], [antiga]);
+  assert.equal(p.inserir[0][3], 'primeira');
+});
+
+test('R05: consulta remarcada para depois da nova não conta como anterior', () => {
+  const antiga = { linha: 2, id_evento: 'antigo', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'marcada', atualizado_em: '' };
+  const email = { description: 'ana.teste@exemplo.invalid' };
+  const p = plano([evento('antigo', 'Consulta', '2026-11-10', '09:00', email), evento('novo', 'Consulta', '2026-10-20', '09:00', email)], [antiga]);
+  assert.equal(p.inserir[0][3], 'primeira');
+  assert.deepEqual(p.atualizar.map((a) => a.valores[1]), ['2026-11-10']);
+});
+
+test('R05: consulta anterior válida continua fazendo a nova ser retorno; reativação conta', () => {
+  const email = { description: 'ana.teste@exemplo.invalid' };
+  const antiga = { linha: 2, id_evento: 'antigo', data: '2026-10-10', hora: '09:00', tipo: 'primeira', codigo_paciente: 'P9001', status: 'cancelada', atualizado_em: '' };
+  const p = plano([evento('antigo', 'Consulta', '2026-10-10', '09:00', email), evento('novo', 'Consulta', '2026-10-20', '09:00', email)], [antiga]);
+  assert.equal(p.atualizar[0].valores[5], 'marcada');
+  assert.equal(p.inserir[0][3], 'retorno');
+});
+
 // ---------- camada do Google (Google simulado) ----------
 
 const CONFIG = [
@@ -147,7 +192,7 @@ const CONFIG = [
 function ambienteSync(eventos) {
   const amb = criarAmbiente({ configuracoes: CONFIG, eventos });
   for (const p of D.PACIENTES_TESTE) amb.abas.get('Pacientes').linhas.push(D.linhaPaciente(p));
-  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Agenda.js', 'SincronizarAgenda.js');
+  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js', 'LeitorAbas.js', 'Agenda.js', 'SincronizarAgenda.js');
   return amb;
 }
 

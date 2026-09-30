@@ -12,11 +12,20 @@ function converterCelula_(coluna, valor) {
   return valor === undefined || valor === null ? '' : valor;
 }
 
-// Devolve [{ linha, <coluna>: valor, ... }] sem as linhas totalmente vazias.
-function lerAbaComoObjetos(nomeAba) {
+// Abre a aba do esquema e confere o cabeçalho antes de qualquer leitura ou gravação (R07).
+function abrirFolhaConferida_(nomeAba) {
   const aba = ABAS.find((a) => a.nome === nomeAba);
   const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nomeAba);
   if (!aba || !folha) throw erroDeUso_(`A aba "${nomeAba}" não existe. Use o menu Kit do Consultório > Instalar/atualizar planilha.`);
+  const lido = folha.getLastRow() >= 1 ? folha.getRange(1, 1, 1, aba.cabecalho.length).getValues()[0] : [];
+  const problema = divergenciaDeCabecalho(aba, lido);
+  if (problema) throw erroDeUso_(problema);
+  return { aba, folha };
+}
+
+// Devolve [{ linha, <coluna>: valor, ... }] sem as linhas totalmente vazias.
+function lerAbaComoObjetos(nomeAba) {
+  const { aba, folha } = abrirFolhaConferida_(nomeAba);
   if (folha.getLastRow() < 2) return [];
   const valores = folha.getRange(2, 1, folha.getLastRow() - 1, aba.cabecalho.length).getValues();
   const objetos = [];
@@ -31,18 +40,17 @@ function lerAbaComoObjetos(nomeAba) {
 
 function adicionarLinhas(nomeAba, linhas) {
   if (linhas.length === 0) return;
-  const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nomeAba);
+  const { folha } = abrirFolhaConferida_(nomeAba);
   folha.getRange(folha.getLastRow() + 1, 1, linhas.length, linhas[0].length).setValues(linhas);
 }
 
 function gravarLinha(nomeAba, numeroLinha, valores) {
-  const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nomeAba);
+  const { folha } = abrirFolhaConferida_(nomeAba);
   folha.getRange(numeroLinha, 1, 1, valores.length).setValues([valores]);
 }
 
 function gravarCelula(nomeAba, numeroLinha, nomeColuna, valor) {
-  const aba = ABAS.find((a) => a.nome === nomeAba);
-  const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nomeAba);
+  const { aba, folha } = abrirFolhaConferida_(nomeAba);
   folha.getRange(numeroLinha, aba.cabecalho.indexOf(nomeColuna) + 1, 1, 1).setValues([[valor]]);
 }
 

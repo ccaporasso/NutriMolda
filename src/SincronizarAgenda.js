@@ -13,31 +13,20 @@ function hojeSaoPaulo_() {
   };
 }
 
-// Data e hora chegam como Date quando o Planilhas converteu a célula; volta para texto.
-function celulaParaTexto_(valor, formato) {
-  if (Object.prototype.toString.call(valor) === '[object Date]') return Utilities.formatDate(valor, FUSO_KIT, formato);
-  return valor === undefined || valor === null ? '' : String(valor);
-}
+const CHAVE_ORIGEM_AGENDA = 'calendario_da_ultima_sincronizacao';
+const MAX_CONFERENCIAS_AGENDA = 40; // consultas ausentes conferidas uma a uma por execução
 
-function lerConsultasExistentes_(folha) {
-  if (folha.getLastRow() < 2) return [];
-  const valores = folha.getRange(2, 1, folha.getLastRow() - 1, 7).getValues();
-  return valores.map((l, i) => ({
-    linha: i + 2,
-    id_evento: String(l[0]),
-    data: celulaParaTexto_(l[1], 'yyyy-MM-dd'),
-    hora: celulaParaTexto_(l[2], 'HH:mm'),
-    tipo: String(l[3]),
-    codigo_paciente: String(l[4]),
-    status: String(l[5]),
-    atualizado_em: celulaParaTexto_(l[6], 'yyyy-MM-dd HH:mm:ss'),
+// Consultas como objetos (já com data e hora em texto). Cabeçalho conferido em lerAbaComoObjetos.
+function lerConsultasExistentes_() {
+  return lerAbaComoObjetos('Consultas').map((c) => ({
+    linha: c.linha, id_evento: String(c.id_evento), data: String(c.data), hora: String(c.hora), tipo: String(c.tipo),
+    codigo_paciente: String(c.codigo_paciente), status: String(c.status), atualizado_em: String(c.atualizado_em),
   })).filter((c) => c.id_evento !== '');
 }
 
-function lerPacientesParaAgenda_(folha) {
-  if (folha.getLastRow() < 2) return [];
-  return folha.getRange(2, 1, folha.getLastRow() - 1, 8).getValues().map((l) => ({
-    codigo: String(l[0]), telefone: String(l[3]), email: String(l[4]), ativo: l[7] !== false,
+function lerPacientesParaAgenda_() {
+  return lerAbaComoObjetos('Pacientes').map((p) => ({
+    codigo: String(p.codigo), telefone: String(p.telefone), email: String(p.email), ativo: p.ativo !== false,
   })).filter((p) => p.codigo !== '');
 }
 
@@ -55,31 +44,56 @@ function buscarEventosDaAgenda_(calendarioId, janela) {
   return itens;
 }
 
+// A agenda mudou desde a última sincronização? Só compara com o que ficou guardado; a primeira vez não conta.
+function agendaMudou_(calendarioId) {
+  const guardado = PropertiesService.getDocumentProperties().getProperty(CHAVE_ORIGEM_AGENDA);
+  return guardado !== null && guardado !== undefined && guardado !== calendarioId;
+}
+
+// Confere, uma a uma, as consultas que não vieram na leitura. Só um evento devolvido pela agenda
+// (mesmo que apagado ou remarcado) vale como resposta: erro de acesso ou "não achei" não cancela nada (R04).
+function conferirAusentes_(calendarioId, ids) {
+  const respostas = [];
+  for (const id of ids.slice(0, MAX_CONFERENCIAS_AGENDA)) {
+    try {
+      const ev = Calendar.Events.get(calendarioId, id);
+      if (ev && ev.id) respostas.push(ev);
+    } catch (e) {
+      // sem resposta da agenda: a consulta continua marcada e entra no aviso
+    }
+  }
+  return { respostas };
+}
+
 // Devolve o plano aplicado. Lança erro em português se as Configurações estiverem erradas.
 function sincronizarAgenda() {
   const trava = LockService.getScriptLock();
   if (!trava.tryLock(30000)) throw erroDeUso_('Outra sincronização está em andamento. Tente de novo em um minuto.');
   try {
     const cfg = lerConfiguracoes().config;
-    const planilha = SpreadsheetApp.getActiveSpreadsheet();
-    const folha = planilha.getSheetByName('Consultas');
-    const folhaPacientes = planilha.getSheetByName('Pacientes');
-    if (!folha || !folhaPacientes) throw new Error('Faltam abas. Use o menu Kit do Consultório > Instalar/atualizar planilha.');
-
     const janela = calcularJanelaAgenda(hojeSaoPaulo_());
-    const plano = planejarSincronizacaoAgenda({
-      eventos: buscarEventosDaAgenda_(cfg.calendario_id, janela),
-      existentes: lerConsultasExistentes_(folha),
-      pacientes: lerPacientesParaAgenda_(folhaPacientes),
-      prefixo: cfg.prefixo_evento_consulta,
-      janela,
-      agoraTexto: agoraTexto_(),
-    });
+    const existentes = lerConsultasExistentes_();
+    const pacientes = lerPacientesParaAgenda_();
+    const mudou = agendaMudou_(cfg.calendario_id);
+    const eventos = buscarEventosDaAgenda_(cfg.calendario_id, janela);
+    const entrada = { existentes, pacientes, prefixo: cfg.prefixo_evento_consulta, janela, agoraTexto: agoraTexto_(), agendaMudou: mudou };
 
+    let plano = planejarSincronizacaoAgenda({ ...entrada, eventos });
+    if (plano.ausentes.length > 0) {
+      const { respostas } = conferirAusentes_(cfg.calendario_id, plano.ausentes);
+      plano = planejarSincronizacaoAgenda({ ...entrada, eventos: eventos.concat(respostas) });
+      if (plano.ausentes.length > 0) {
+        plano.avisos.push(`${plano.ausentes.length} consulta(s) marcada(s) não apareceram na leitura da agenda e não foi possível confirmar se foram apagadas. `
+          + 'Nada foi cancelado por isso; confira na aba Consultas e na agenda.');
+      }
+    }
+
+    const folha = abrirFolhaConferida_('Consultas').folha;
     for (const a of plano.atualizar) folha.getRange(a.linha, 1, 1, a.valores.length).setValues([a.valores]);
     if (plano.inserir.length > 0) {
       folha.getRange(folha.getLastRow() + 1, 1, plano.inserir.length, plano.inserir[0].length).setValues(plano.inserir);
     }
+    PropertiesService.getDocumentProperties().setProperty(CHAVE_ORIGEM_AGENDA, String(cfg.calendario_id));
     registrar('sincronizacao', 'info', `Sincronização: ${plano.inserir.length} nova(s), ${plano.atualizar.length} atualizada(s), `
       + `${plano.canceladas} cancelada(s), ${plano.aIdentificar.length} a identificar.`);
     return plano;

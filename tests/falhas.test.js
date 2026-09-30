@@ -33,7 +33,7 @@ test('cancelamento: evento apagado da agenda vira cancelada; fora do período e 
   c.amb.abas.get('Consultas').linhas.push(['muitolonge', '2027-03-01', '09:00', 'primeira', 'P9001', 'marcada', '']); // depois de 90 dias
   c.amb.abas.get('Consultas').linhas.push(['muitoantiga', '2026-08-01', '09:00', 'primeira', 'P9001', 'marcada', '']); // antes de 30 dias
 
-  for (const id of [p9002[0], p9003[0]]) c.eventos.splice(c.eventos.findIndex((e) => e.id === id), 1);
+  for (const id of [p9002[0], p9003[0]]) { c.eventos.splice(c.eventos.findIndex((e) => e.id === id), 1); c.amb.apagados.add(id); }
   c.rodar('sincronizarAgenda()');
   const status = (id) => c.linhas('Consultas').find((l) => l[0] === id)[5];
   assert.equal(status(p9002[0]), 'cancelada');
