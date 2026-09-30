@@ -8,6 +8,7 @@ Solução para consultórios de nutrição que roda **dentro da conta Google de 
 
 - `src/` — código do Apps Script (JavaScript V8).
 - `tests/` — testes da lógica pura, rodados com `node --test`, sem dependências.
+- `scripts/` — ferramentas de apoio (ciclo de revisão com o ChatGPT: `docs/CICLO-REVISAO.md`).
 - `docs/` — especificação, tarefas, decisões, segurança e manutenção.
 
 ## Manuais

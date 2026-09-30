@@ -13,3 +13,6 @@ Thumbs.db
 .vscode/
 .idea/
 node_modules/
+
+# Pacotes de revisão (gerados por scripts/revisao.js; copiam trechos do código)
+.revisao/
