@@ -73,7 +73,9 @@ test('o código usa cada serviço do Google só com o escopo declarado (nada de 
 test('regra 2 e 3: nada de servidor próprio, web app ou WhatsApp não oficial no código', () => {
   assert.equal(manifesto.webapp, undefined);
   assert.equal(manifesto.executionApi, undefined);
-  assert.doesNotMatch(todoSrc, /doGet|doPost|HtmlService|ContentService|UrlFetchApp|whatsapp-web|wa\.me|api\.whatsapp/i);
+  assert.doesNotMatch(todoSrc, /doGet|doPost|HtmlService|ContentService|UrlFetchApp|whatsapp-web|api\.whatsapp|baileys|puppeteer/i);
+  // O link wa.me (clique dela, sem envio automático) só pode existir na biblioteca de frases (T23).
+  for (const a of arquivosDe('src', '.js')) if (a !== path.join('src', 'Frases.js')) assert.doesNotMatch(ler(a), /wa\.me/, `${a} usa wa.me`);
 });
 
 test('regra 4: sem IA no código', () => {

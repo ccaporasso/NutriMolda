@@ -41,13 +41,13 @@ Situação: a fazer · em andamento · feita.
 
 ## Fase 2b — Acompanhamento e fila de ajustes (esqueleto agora, detalhes com a cliente)
 
-| # | Tarefa | Dono |
-|---|---|---|
-| T20 | Formulário da pergunta semanal com código pré-preenchido e aba Respostas | Code |
-| T21 | Painel de presença: "ainda não" duas vezes, silêncio, nota escrita, retorno sem data | Code |
-| T22 | Fila de ajustes com aprovação em um ou dois toques | Code |
-| T23 | Biblioteca de frases e geração de links wa.me com texto pronto | Code |
-| T24 | Os três modos de acompanhamento e o limite de mensagens por modo | Code |
+| # | Tarefa | Dono | Situação do esqueleto |
+|---|---|---|---|
+| T20 | Formulário da pergunta semanal com código pré-preenchido e aba Respostas | Code | esqueleto feito (`src/Respostas.js`, lógica pura); nada criado no Google; pendências P1, P2, P8 |
+| T21 | Painel de presença: "ainda não" duas vezes, silêncio, nota escrita, retorno sem data | Code | a fazer |
+| T22 | Fila de ajustes com aprovação em um ou dois toques | Code | a fazer |
+| T23 | Biblioteca de frases e geração de links wa.me com texto pronto | Code | a fazer |
+| T24 | Os três modos de acompanhamento e o limite de mensagens por modo | Code | a fazer |
 
 **Espera pela cliente:** frases, tabela de substituições, regras de modo e textos finais.
 
