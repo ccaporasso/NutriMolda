@@ -7,6 +7,9 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Kit do Consultório')
     .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
+    .addSeparator()
+    .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')
+    .addItem('TESTE: apagar dados fictícios', 'apagarDadosDeTeste')
     .addToUi();
 }
 

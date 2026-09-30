@@ -30,12 +30,12 @@ Declarados em `src/appsscript.json`. Cada tarefa que precisar de um escopo novo 
 | Escopo | Para quê | Desde |
 |---|---|---|
 | `spreadsheets.currentonly` | Ler e escrever **só** a planilha à qual o script está ligado (abas, cabeçalhos, validações, menu). Não dá acesso a outras planilhas do Drive. | T00 |
+| `calendar.events` | Criar e apagar os eventos FICTÍCIOS de teste (T04), via Serviço Avançado Calendar, só na agenda secundária indicada em `calendario_id` (a trava recusa `primary`). Não permite criar nem apagar agendas. Cobre também a leitura de eventos da T05, que por isso não precisa de `calendar.readonly`. | T04 |
 
 Previstos, ainda **não** declarados (entram só na tarefa que os usar):
 
 | Escopo | Tarefa | Para quê |
 |---|---|---|
-| `calendar.readonly` | T05 | Ler as consultas da agenda, sem alterar nada |
 | `script.send_mail` | T03 | Enviar o e-mail de alerta de falha |
 | `documents` e `drive.file` | T09 | Copiar o modelo do recibo e salvar o PDF na pasta dela |
 | `script.scriptapp` | T05 | Criar o gatilho automático de sincronização |
