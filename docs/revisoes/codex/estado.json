@@ -12,18 +12,30 @@
     },
     {
       "pr": 8,
-      "sha": "aad1296a1b32d4618083cec9d3576a83d5b7cb7d",
+      "sha": "df096f40173bab751d2f471fe52d537b5c49bab6",
       "status": "REPROVADO",
-      "report": "docs/revisoes/codex/PR8-aad1296.md",
+      "report": "docs/revisoes/codex/PR8-df096f4.md",
       "resolved": [
-        "R02"
+        "R02",
+        "N8-02",
+        "N8-03",
+        "N8-04"
       ]
     },
     {
       "pr": 9,
-      "sha": "9e99aab08475a27f9caa86b5fac3b11b10d27cea",
+      "sha": "d7d0f08a002455391b85e47fd6bd066bd486f073",
       "status": "REPROVADO",
-      "report": "docs/revisoes/codex/PR9-9e99aab.md"
+      "report": "docs/revisoes/codex/PR9-d7d0f08.md",
+      "resolved": [
+        "N9-01",
+        "N9-02"
+      ]
     }
-  ]
+  ],
+  "automation": {
+    "title": "Revisar NutriMolda no GitHub",
+    "trigger": "commit updates in PR6,PR8,PR9",
+    "enabled": true
+  }
 }
