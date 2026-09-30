@@ -113,7 +113,9 @@ test('cabeçalho estranho em Configurações: não acrescenta chaves', () => {
 
 test('CPF, telefone e códigos ficam como texto', () => {
   const pag = ABAS.find((a) => a.nome === 'Pagamentos');
-  assert.deepEqual(colunasDeTexto(pag), [1, 2, 3, 5]);
+  assert.deepEqual(colunasDeTexto(pag), [1, 2, 3, 5, 9]); // 9 = data_pagamento (texto AAAA-MM-DD)
+  const con = ABAS.find((a) => a.nome === 'Consultas');
+  assert.deepEqual(colunasDeTexto(con), [1, 2, 3, 5, 7]); // data, hora e atualizado_em como texto
   const pac = ABAS.find((a) => a.nome === 'Pacientes');
   assert.deepEqual(colunasDeTexto(pac), [1, 4]);
 });

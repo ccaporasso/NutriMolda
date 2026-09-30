@@ -47,12 +47,15 @@ const ABAS = [
     nome: 'Consultas',
     cabecalho: ['id_evento', 'data', 'hora', 'tipo', 'codigo_paciente', 'status', 'atualizado_em'],
     validacoes: { tipo: 'tipo_consulta', status: 'status_consulta' },
+    // Data e hora guardadas como texto (2026-09-30 e 09:00): o Planilhas não converte em outro fuso (T05).
+    textoExtra: ['data', 'hora', 'atualizado_em'],
   },
   {
     nome: 'Pagamentos',
     cabecalho: ['id', 'id_evento', 'codigo_paciente', 'pagador_nome', 'pagador_cpf',
       'valor_centavos', 'forma', 'status', 'data_pagamento', 'link_recibo'],
     validacoes: { forma: 'forma_pagamento', status: 'status_pagamento' },
+    textoExtra: ['data_pagamento'], // texto AAAA-MM-DD (T07/T08)
   },
   {
     nome: 'Pacotes',
@@ -111,7 +114,7 @@ function colunasComValidacao(aba) {
 // Posições (1 = A) das colunas de texto de uma aba.
 function colunasDeTexto(aba) {
   return aba.cabecalho
-    .map((nome, i) => (COLUNAS_TEXTO.includes(nome) ? i + 1 : 0))
+    .map((nome, i) => (COLUNAS_TEXTO.includes(nome) || (aba.textoExtra || []).includes(nome) ? i + 1 : 0))
     .filter((n) => n > 0);
 }
 

@@ -22,6 +22,7 @@ Registro das decisões tomadas até 29/09/2026. Mudar qualquer uma exige uma nov
 | D16 | `.clasp.json` fica fora do Git; o repositório traz só `.clasp.json.exemplo` (29/09/2026) | O ID do projeto é um identificador real (ver `SEGURANCA-LGPD.md`); cada pessoa aponta para o próprio projeto de teste |
 | D17 | Nenhuma cobrança nasce de preço não validado: preço ausente ou zero só gera aviso na configuração, mas `precoParaCobranca` (`src/Configuracoes.js`) bloqueia a cobrança. Cortesia é escolha explícita, nunca um preço zero. A aba guarda centavos inteiros; na interface final (T08) ela digita R$ 150,00 e o sistema converte para 15000 (29/09/2026) | Configuração incompleta não pode virar cobrança de R$ 0,00 por acidente; "150,00" no campo em centavos seria ambíguo |
 | D18 | A coluna `valor` da aba Configurações é gravada como texto puro pelo instalador. Campo textual (principalmente `chave_pix`) que chegar como número, data ou verdadeiro/falso é rejeitado. Valor já alterado pelo Planilhas nunca é consertado sozinho: nada de completar zeros nem multiplicar preços; a nutricionista confere e digita de novo (29/09/2026) | O Planilhas converte sozinho o que parece número ou data (CPF e telefone perdem zeros à esquerda). Não dá para saber o valor original, e uma chave Pix "consertada" errada faria o paciente pagar à pessoa errada |
+| D19 | Sincronização da agenda (T05): a lista "a identificar" são as linhas de Consultas com `codigo_paciente` vazio (sem aba nova). Paciente só é reconhecido por e-mail ou telefone que bata com **um único** paciente ativo; na dúvida, fica em branco. Código, tipo e status que ela ajustou à mão nunca são sobrescritos (só data e hora acompanham a agenda). Consulta "marcada" que some da agenda vira `cancelada` só dentro de 30 dias atrás até 90 à frente, e nunca se a agenda voltar vazia (30/09/2026) | Evita cancelar consulta por engano (erro de leitura, evento remarcado para longe) e evita atribuir consulta ao paciente errado |
 
 ## Escopos de permissão
 
@@ -32,10 +33,10 @@ Declarados em `src/appsscript.json`. Cada tarefa que precisar de um escopo novo 
 | `spreadsheets.currentonly` | Ler e escrever **só** a planilha à qual o script está ligado (abas, cabeçalhos, validações, menu). Não dá acesso a outras planilhas do Drive. | T00 |
 | `script.send_mail` | Enviar o e-mail de alerta de falha para `email_alertas`. Só envia; não lê nem apaga e-mails. O e-mail traz apenas o módulo e o horário, nunca dado de paciente. | T03 |
 | `calendar.events` | Criar e apagar os eventos FICTÍCIOS de teste (T04), via Serviço Avançado Calendar, só na agenda secundária indicada em `calendario_id` (a trava recusa `primary`). Não permite criar nem apagar agendas. Cobre também a leitura de eventos da T05, que por isso não precisa de `calendar.readonly`. | T04 |
+| `script.scriptapp` | Criar o gatilho de hora em hora da sincronização da agenda, uma vez só (item de menu "Ativar sincronização automática"). Só cria e consulta gatilhos deste projeto. | T05 |
 
 Previstos, ainda **não** declarados (entram só na tarefa que os usar):
 
 | Escopo | Tarefa | Para quê |
 |---|---|---|
 | `documents` e `drive.file` | T09 | Copiar o modelo do recibo e salvar o PDF na pasta dela |
-| `script.scriptapp` | T05 | Criar o gatilho automático de sincronização |

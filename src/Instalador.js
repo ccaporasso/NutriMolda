@@ -7,6 +7,8 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Kit do Consultório')
     .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
+    .addItem('Sincronizar agenda', 'sincronizarAgendaPeloMenu')
+    .addItem('Ativar sincronização automática', 'ativarSincronizacaoAutomatica')
     .addItem('Testar alerta de falha', 'testarAlertaDeFalha')
     .addSeparator()
     .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')

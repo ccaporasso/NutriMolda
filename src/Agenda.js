@@ -1,0 +1,183 @@
+// Sincronização agenda -> Consultas (lógica pura, sem chamadas ao Google).
+// Fonte: docs/ESPECIFICACAO.md, fluxo 1. As chamadas ao Google estão em SincronizarAgenda.js.
+// Nada aqui grava nome, título nem descrição do evento: só id, data, hora, tipo e código.
+
+const DIAS_PASSADO_AGENDA = 30; // quanto para trás a sincronização olha
+const DIAS_BUSCA_FUTURO_AGENDA = 120; // até onde os eventos são lidos
+const DIAS_VERIFICA_FUTURO_AGENDA = 90; // até onde "sumiu da agenda" vale como cancelamento
+
+function formatosAgenda_() {
+  return typeof dataHoraLocal !== 'undefined'
+    ? { dataHoraLocal, somarDiasNaData, dataParaTexto }
+    : require('./Formatos.js');
+}
+
+// hoje = { ano, mes, dia }. Devolve os textos que a camada do Google usa.
+function calcularJanelaAgenda(hoje) {
+  const f = formatosAgenda_();
+  const de = f.dataParaTexto(f.somarDiasNaData(hoje, -DIAS_PASSADO_AGENDA));
+  const ate = f.dataParaTexto(f.somarDiasNaData(hoje, DIAS_BUSCA_FUTURO_AGENDA));
+  return {
+    timeMin: `${de}T00:00:00-03:00`,
+    timeMax: `${ate}T00:00:00-03:00`,
+    verificarDe: de,
+    verificarAte: f.dataParaTexto(f.somarDiasNaData(hoje, DIAS_VERIFICA_FUTURO_AGENDA)),
+  };
+}
+
+// Só letras e números; 55 na frente (Brasil) é ignorado.
+function normalizarTelefoneAgenda(texto) {
+  let d = String(texto === undefined || texto === null ? '' : texto).replace(/\D/g, '');
+  if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
+  return d;
+}
+
+// E-mails e telefones que aparecem na lista de convidados e na descrição do evento.
+function contatosDoEvento(evento) {
+  const emails = new Set();
+  const telefones = new Set();
+  for (const convidado of evento.attendees || []) {
+    if (convidado && typeof convidado.email === 'string') emails.add(convidado.email.trim().toLowerCase());
+  }
+  const descricao = typeof evento.description === 'string' ? evento.description : '';
+  for (const e of descricao.match(/[^\s@<>,;:()]+@[^\s@<>,;:()]+\.[^\s@<>,;:()]+/g) || []) {
+    emails.add(e.toLowerCase());
+  }
+  for (const t of descricao.match(/\+?\d[\d ().-]{8,}\d/g) || []) {
+    const n = normalizarTelefoneAgenda(t);
+    if (n.length >= 10) telefones.add(n);
+  }
+  return { emails, telefones };
+}
+
+// Devolve o código do paciente, ou null se ninguém bate ou se mais de um paciente bate.
+// Paciente marcado com ativo = false não entra.
+function identificarPacienteAgenda(evento, pacientes) {
+  const { emails, telefones } = contatosDoEvento(evento);
+  const achados = new Set();
+  for (const p of pacientes) {
+    if (p.ativo === false) continue;
+    const email = String(p.email || '').trim().toLowerCase();
+    const tel = normalizarTelefoneAgenda(p.telefone);
+    if ((email && emails.has(email)) || (tel.length >= 10 && telefones.has(tel))) achados.add(String(p.codigo));
+  }
+  return achados.size === 1 ? [...achados][0] : null;
+}
+
+function ehEventoDeConsulta(evento, prefixo) {
+  const titulo = typeof evento.summary === 'string' ? evento.summary.trim().toLowerCase() : '';
+  const p = String(prefixo || '').trim().toLowerCase();
+  return p !== '' && titulo.startsWith(p);
+}
+
+function linhaConsulta(c) {
+  return [c.id_evento, c.data, c.hora, c.tipo, c.codigo_paciente, c.status, c.atualizado_em];
+}
+
+// eventos: itens do Google Agenda (v3), inclusive os cancelados.
+// existentes: linhas atuais de Consultas como objetos, cada uma com `linha` (número na planilha).
+// pacientes: { codigo, email, telefone, ativo }.
+// Devolve { inserir, atualizar, canceladas, aIdentificar, ignorados, avisos }; não muda nada por conta própria.
+function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, janela, agoraTexto }) {
+  const f = formatosAgenda_();
+  const porId = new Map();
+  for (const c of existentes) if (c.id_evento) porId.set(String(c.id_evento), c);
+  const vistos = new Set();
+  const atualizacoes = new Map(); // id_evento -> linha final
+  const novos = [];
+  const avisos = [];
+  let ignorados = 0;
+  let canceladas = 0;
+
+  const cancelar = (c) => {
+    if (c.status !== 'marcada') return; // realizada e faltou nunca são desfeitas pela agenda
+    atualizacoes.set(String(c.id_evento), { ...c, status: 'cancelada', atualizado_em: agoraTexto });
+    canceladas++;
+  };
+
+  // Datas do evento ordenadas: a primeira consulta do paciente vem antes do retorno.
+  const validos = [];
+  for (const ev of eventos) {
+    if (!ev || !ev.id) { ignorados++; continue; }
+    const id = String(ev.id);
+    vistos.add(id);
+    if (ev.status === 'cancelled') {
+      if (porId.has(id)) cancelar(porId.get(id));
+      continue; // evento cancelado não traz título nem horário: só serve para achar a linha
+    }
+    const local = ev.start ? f.dataHoraLocal(ev.start.dateTime) : null;
+    if (!ehEventoDeConsulta(ev, prefixo) || !local) { ignorados++; continue; }
+    validos.push({ ev, id, local });
+  }
+  validos.sort((a, b) => (a.local.data + a.local.hora).localeCompare(b.local.data + b.local.hora));
+
+  const historico = new Map(); // codigo -> [data+hora] de consultas não canceladas
+  const registrarHistorico = (codigo, data, hora) => {
+    if (!codigo) return;
+    if (!historico.has(codigo)) historico.set(codigo, []);
+    historico.get(codigo).push(data + hora);
+  };
+  for (const c of existentes) if (c.status !== 'cancelada') registrarHistorico(c.codigo_paciente, String(c.data), String(c.hora));
+
+  for (const { ev, id, local } of validos) {
+    const codigoAgenda = identificarPacienteAgenda(ev, pacientes);
+    const atual = porId.get(id);
+    if (atual) {
+      const novo = { ...atual };
+      novo.data = local.data;
+      novo.hora = local.hora;
+      if (!novo.codigo_paciente && codigoAgenda) novo.codigo_paciente = codigoAgenda;
+      if (novo.status === 'cancelada') novo.status = 'marcada'; // evento voltou para a agenda
+      if (novo.data !== atual.data || novo.hora !== atual.hora
+        || novo.codigo_paciente !== atual.codigo_paciente || novo.status !== atual.status) {
+        novo.atualizado_em = agoraTexto;
+        atualizacoes.set(id, novo);
+      }
+    } else {
+      const anteriores = (historico.get(codigoAgenda) || []).filter((x) => x < local.data + local.hora);
+      novos.push({
+        id_evento: id, data: local.data, hora: local.hora,
+        tipo: codigoAgenda && anteriores.length > 0 ? 'retorno' : 'primeira',
+        codigo_paciente: codigoAgenda || '', status: 'marcada', atualizado_em: agoraTexto,
+      });
+      registrarHistorico(codigoAgenda, local.data, local.hora);
+    }
+  }
+
+  // Marcada, dentro do período e ausente da agenda = apagada lá. Agenda que voltou vazia
+  // não cancela nada: é mais provável ser erro de leitura do que o consultório vazio.
+  const emJanela = existentes.filter((c) => c.status === 'marcada' && c.id_evento && !vistos.has(String(c.id_evento))
+    && String(c.data) >= janela.verificarDe && String(c.data) <= janela.verificarAte);
+  if (eventos.length === 0 && emJanela.length > 0) {
+    avisos.push(`A agenda voltou sem nenhum evento. Por segurança, nenhuma das ${emJanela.length} consultas marcadas foi cancelada. Confira o "calendario_id" na aba Configurações.`);
+  } else {
+    for (const c of emJanela) cancelar(c);
+  }
+
+  const atualizar = [...atualizacoes.values()].map((c) => ({ linha: c.linha, valores: linhaConsulta(c) }));
+  const finais = existentes.map((c) => atualizacoes.get(String(c.id_evento)) || c).concat(novos);
+  const aIdentificar = finais
+    .filter((c) => !c.codigo_paciente && c.status !== 'cancelada')
+    .map((c) => ({ id_evento: c.id_evento, data: c.data, hora: c.hora }));
+  return { inserir: novos.map(linhaConsulta), atualizar, canceladas, aIdentificar, ignorados, avisos };
+}
+
+// Texto para a nutricionista, sem nome nem dado de saúde.
+function resumirSincronizacao(plano) {
+  const linhas = [
+    `Consultas novas: ${plano.inserir.length}. Atualizadas ou canceladas: ${plano.atualizar.length} (canceladas: ${plano.canceladas}).`,
+    `Eventos que não são consultas (ignorados): ${plano.ignorados}.`,
+  ];
+  if (plano.aIdentificar.length > 0) {
+    linhas.push(`A identificar: ${plano.aIdentificar.length} consulta(s) sem paciente conhecido. `
+      + 'Na aba Consultas, preencha "codigo_paciente" nas linhas em branco (confira o e-mail ou telefone do paciente na aba Pacientes).');
+  }
+  return linhas.concat(plano.avisos).join('\n');
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = {
+    calcularJanelaAgenda, normalizarTelefoneAgenda, contatosDoEvento, identificarPacienteAgenda,
+    ehEventoDeConsulta, linhaConsulta, planejarSincronizacaoAgenda, resumirSincronizacao,
+  };
+}
