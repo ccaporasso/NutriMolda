@@ -30,7 +30,9 @@ const CONFIGURACOES_INICIAIS = [
 // Colunas que guardam identificadores: ficam como texto para o Google não
 // tirar o zero à esquerda (CPF, telefone, códigos). `valor` é a coluna B de
 // Configurações (chave Pix, CRN, ids): entra como texto antes de qualquer conversão.
-const COLUNAS_TEXTO = ['codigo', 'codigo_paciente', 'telefone', 'pagador_cpf', 'id_evento', 'id', 'valor'];
+// `data_hora` (Registro) fica como texto para o horário gravado não ser
+// reinterpretado em outro fuso pelo Planilhas.
+const COLUNAS_TEXTO = ['codigo', 'codigo_paciente', 'telefone', 'pagador_cpf', 'id_evento', 'id', 'valor', 'data_hora'];
 
 // `validacoes`: coluna do cabeçalho -> nome da lista em LISTAS.
 const ABAS = [

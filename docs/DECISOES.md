@@ -30,12 +30,12 @@ Declarados em `src/appsscript.json`. Cada tarefa que precisar de um escopo novo 
 | Escopo | Para quê | Desde |
 |---|---|---|
 | `spreadsheets.currentonly` | Ler e escrever **só** a planilha à qual o script está ligado (abas, cabeçalhos, validações, menu). Não dá acesso a outras planilhas do Drive. | T00 |
+| `script.send_mail` | Enviar o e-mail de alerta de falha para `email_alertas`. Só envia; não lê nem apaga e-mails. O e-mail traz apenas o módulo e o horário, nunca dado de paciente. | T03 |
 
 Previstos, ainda **não** declarados (entram só na tarefa que os usar):
 
 | Escopo | Tarefa | Para quê |
 |---|---|---|
 | `calendar.readonly` | T05 | Ler as consultas da agenda, sem alterar nada |
-| `script.send_mail` | T03 | Enviar o e-mail de alerta de falha |
 | `documents` e `drive.file` | T09 | Copiar o modelo do recibo e salvar o PDF na pasta dela |
 | `script.scriptapp` | T05 | Criar o gatilho automático de sincronização |
