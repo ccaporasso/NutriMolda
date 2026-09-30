@@ -25,6 +25,7 @@ function onOpen() {
     .addItem('Relatório do mês (aba e CSV)', 'gerarRelatorioDoMes')
     .addSeparator()
     .addSubMenu(ui.createMenu('Configuração')
+      .addItem('Definir preços das consultas (em reais)', 'definirPrecosDasConsultas')
       .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
       .addItem('Criar modelo e pasta de recibos', 'criarModeloEPastaDeRecibos')
       .addItem('Ativar sincronização automática', 'ativarSincronizacaoAutomatica')

@@ -22,6 +22,9 @@ function gerarAReceber() {
 // Item do menu.
 function gerarAReceberPeloMenu() {
   executarNoMenu_('pagamentos', () => {
+    const ui = SpreadsheetApp.getUi();
+    const aviso = textoPrecoSuspeito(lerConfiguracoes().config);
+    if (aviso && ui.alert('Conferir o preço', aviso, ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
     const plano = gerarAReceber();
     SpreadsheetApp.getUi().alert('Valores a receber', resumirAReceber(plano), SpreadsheetApp.getUi().ButtonSet.OK);
   });

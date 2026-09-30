@@ -13,7 +13,7 @@ const CONFIG_COMPLETA = [
 ];
 
 const ARQUIVOS_SRC = ['Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js',
-  'LeitorAbas.js', 'Agenda.js', 'SincronizarAgenda.js', 'Pagamentos.js', 'GerarAReceber.js', 'Pix.js', 'Acoes.js', 'Recibo.js',
+  'LeitorAbas.js', 'Agenda.js', 'SincronizarAgenda.js', 'Pagamentos.js', 'GerarAReceber.js', 'Precos.js', 'Pix.js', 'Acoes.js', 'Recibo.js',
   'DriveAvancado.js', 'GeradorRecibo.js', 'Relatorio.js', 'GerarRelatorio.js', 'Instalador.js', 'Menu.js'];
 
 const HOJE = { ano: 2026, mes: 9, dia: 30 };

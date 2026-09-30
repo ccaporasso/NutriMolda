@@ -40,11 +40,28 @@ function dataHoraLocal(instanteIso) {
   };
 }
 
+const LIMITE_PRECO_CENTAVOS = 10000000;
+
 // 15000 -> "R$ 150,00"; 123456 -> "R$ 1.234,56".
 function formatarReais(centavos) {
   if (!Number.isSafeInteger(centavos) || centavos < 0) throw new Error('Valor em centavos inválido.');
   const inteiro = String(Math.floor(centavos / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   return `R$ ${inteiro},${preencher2(centavos % 100)}`;
+}
+
+// Lê um valor digitado em reais e devolve { ok: true, centavos } ou { ok: false, motivo }.
+// Aceita "150", "150,00", "150.5", "R$ 150,00" e "1.500,00". Zero, negativo, mais de duas casas e texto são recusados.
+function lerReais(texto) {
+  const bruto = String(texto === undefined || texto === null ? '' : texto).trim().replace(/^R\$\s*/i, '').replace(/\s+/g, '');
+  if (bruto === '') return { ok: false, motivo: 'Digite o valor em reais, por exemplo 150,00.' };
+  let m = /^(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d{1,2}))?$/.exec(bruto); // 1.500,00 ou 150,5
+  if (!m) m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(bruto); // 150.50 (ponto decimal)
+  if (!m) return { ok: false, motivo: 'Não entendi o valor. Use só números, com vírgula para os centavos (por exemplo 150,00).' };
+  const reais = Number(m[1].replace(/\./g, ''));
+  const centavos = reais * 100 + Number((m[2] || '').padEnd(2, '0') || 0);
+  if (!Number.isSafeInteger(centavos) || centavos <= 0) return { ok: false, motivo: 'O valor precisa ser maior que zero. Consulta gratuita é cortesia, marcada à parte.' };
+  if (centavos > LIMITE_PRECO_CENTAVOS) return { ok: false, motivo: 'O valor está alto demais (acima de R$ 100.000,00). Confira.' };
+  return { ok: true, centavos };
 }
 
 // 15000 -> "150,00" (sem símbolo, para o CSV).
@@ -78,6 +95,6 @@ function formatarCpf(texto) {
 if (typeof module !== 'undefined') {
   module.exports = {
     dataParaTexto, somarDiasNaData, textoParaData, dataHoraLocal,
-    formatarReais, formatarReaisSimples, apenasDigitos, cpfValido, formatarCpf,
+    formatarReais, formatarReaisSimples, lerReais, apenasDigitos, cpfValido, formatarCpf,
   };
 }

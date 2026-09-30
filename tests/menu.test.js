@@ -77,7 +77,7 @@ function ambienteMenu(opcoes = {}) {
   );
   amb.abas.get('Pacotes').linhas.push(['P9001', 2, 1, 50000, '2026-09-01']);
   amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js', 'LeitorAbas.js',
-    'SincronizarAgenda.js', 'Pagamentos.js', 'GerarAReceber.js', 'Pix.js', 'Acoes.js', 'Recibo.js', 'DriveAvancado.js', 'GeradorRecibo.js', 'Relatorio.js', 'GerarRelatorio.js', 'Instalador.js', 'DadosTeste.js', 'GeradorTeste.js', 'Menu.js');
+    'SincronizarAgenda.js', 'Pagamentos.js', 'GerarAReceber.js', 'Precos.js', 'Pix.js', 'Acoes.js', 'Recibo.js', 'DriveAvancado.js', 'GeradorRecibo.js', 'Relatorio.js', 'GerarRelatorio.js', 'Instalador.js', 'DadosTeste.js', 'GeradorTeste.js', 'Menu.js');
   return amb;
 }
 
