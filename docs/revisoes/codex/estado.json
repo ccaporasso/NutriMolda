@@ -10,7 +10,7 @@
       "status": "REPROVADO",
       "report": "docs/revisoes/codex/PR6-9e847b9.md",
       "report_commit": "2865bfc6a4ad8263781e019b9121f4c1ce0e6c34",
-      "published": false,
+      "published": true,
       "reviewed_on": "2026-09-30",
       "resolved": [
         "R01",
@@ -75,7 +75,8 @@
         "package_js": 28,
         "full_node_test": "TIMEOUT_25S_SUBPROCESS_CASE"
       },
-      "google_validation": "PENDENTE"
+      "google_validation": "PENDENTE",
+      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/6#issuecomment-5903973416"
     },
     {
       "pr": 8,
