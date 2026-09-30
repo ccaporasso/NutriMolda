@@ -2,30 +2,36 @@
 
 ## O que é
 
-Um conjunto de automações instalado na conta Google de cada nutricionista. Resolve três dores:
+Uma solução configurável sobre uma base comum (D41), com o **WhatsApp oficial como canal do paciente** (D34) e a interface própria da nutricionista. A base inicial fica na conta Google dela; a ponte trata os eventos com persistência e retenção a definir. O produto pretende reduzir três dificuldades (D40), benefício ainda a medir no piloto:
 
-1. **Agenda:** o paciente marca sozinho; ninguém preenche nem apaga horário à mão.
-2. **Financeiro:** cada consulta vira um valor a receber, com código Pix, recibo e relatório do carnê-leão.
-3. **Acompanhamento:** o paciente não fica sozinho entre as consultas, sem virar tarefa para ninguém (fase 2b).
+1. **Agenda pelo WhatsApp:** o paciente marca, remarca e desmarca sozinho por menus padronizados; a agenda dela se atualiza sem ela gastar tempo.
+2. **Acompanhamento padronizado:** entre as consultas, o paciente responde menus e check-ins definidos por ela, sem IA; assuntos clínicos seguem para a profissional, com automação pausada durante o atendimento humano (D38). Textos, prazos e disparos são definidos por ela (D37), em incremento posterior ao primeiro agendamento.
+3. **Pacientes que precisam de atenção:** sinais operacionais com motivo e data (D39), para orientar acompanhamento humano. Sem probabilidade ou previsão validada de abandono.
+
+Só os números que ela libera recebem os menus (D36).
+
+**Complemento** (D40), oferecido conforme a necessidade de cada nutricionista: financeiro (cada consulta vira um valor a receber, com código Pix, recibo e relatório do carnê-leão) e os demais módulos. O financeiro é a parte já validada no Google.
 
 ## Arquitetura
 
 | Peça | Ferramenta | Papel |
 |---|---|---|
-| Agenda | Google Agenda + página de agendamento | Fonte das consultas e da rotina dela |
+| WhatsApp | API oficial da Meta (Cloud API) | Canal do paciente: menus, check-ins e mensagens disparadas por ela (D34, D37) |
+| Ponte | Serviço externo mínimo, com tratamento de dados e persistência definidos antes da integração | Valida origem, registra trabalho aceito de forma durável e encaminha comandos/respostas autorizados (D35) |
+| API da base Google (chamada “cofre” no desenho) | Apps Script com autenticação entre serviços e autorização por paciente, consulta e consultório; publicação ainda pendente | Executa comandos validados na agenda e planilha configuradas no servidor (D35) |
+| Agenda | Google Agenda (e página de agendamento como alternativa) | Fonte das consultas e da rotina dela |
 | Base de dados | Planilha Google, com áreas protegidas | Pacientes, consultas, pagamentos, registros |
-| Automação | Apps Script ligado à planilha | Sincronização, financeiro, recibos, relatórios, alertas |
-| Recibos | Modelo no Google Docs → PDF no Drive dela | Documento para o paciente |
-| Paciente | Página de agendamento e, na fase 2b, Formulários | Entrada sem instalar nada |
-| WhatsApp | Recursos nativos do WhatsApp Business e links wa.me | Fase 3: provedor oficial |
+| Automação | Apps Script ligado à planilha | Sincronização, acompanhamento, relatórios, financeiro, alertas |
+| Recibos | Modelo no Google Docs → PDF no Drive dela | Documento para o paciente (complemento) |
+| Nutricionista | Interface própria (D33) e, por enquanto, menu da planilha | Liberar/revogar pacientes, acompanhar consultas e ver sinais de atenção; disparos em incremento posterior |
 
-Na implementação validada, os comandos são executados pelo menu da planilha. Não existe servidor próprio, web app público nem IA nesta versão.
+Na implementação validada até agora, os comandos são executados pelo menu da planilha, sem servidor. A ponte e a porta do cofre são as próximas peças (trilha WA de `TAREFAS.md`), detalhadas em [WHATSAPP-PONTE-COFRE.md](WHATSAPP-PONTE-COFRE.md). Não existe IA nesta versão.
 
 ### Direção do MVP aprovada em 30/09/2026 (D33)
 
 A nutricionista trabalhará em uma interface gráfica própria; Planilhas guardarão os dados, Apps Script executará as regras e Agenda/Drive continuarão como serviços de apoio. O uso cotidiano não exigirá editar a planilha ou operar seus menus. Essa camada ainda será construída, com acesso restrito e conferência de permissões no servidor. Nenhum novo escopo ou publicação foi realizado nesta consolidação.
 
-A primeira entrega prevista é listar consultas, abrir seus detalhes e gerar o Pix de uma cobrança a receber pela interface. O desenho de acesso e o funcionamento do Apps Script fora do contexto do menu precisam ser comprovados antes dessa entrega. Ver [MVP-INTERFACE-GOOGLE.md](MVP-INTERFACE-GOOGLE.md). O editor de planos alimentares e o portal do paciente pertencem a recortes posteriores, sem implementação nesta rodada.
+As trilhas compartilham contratos (D42). A prioridade é liberar paciente → agendar → visualizar consulta → encaminhar ao humano. B1 implementará primeiro o núcleo e a interface locais com adaptadores simulados; a identidade real e o acesso fora do contexto do menu continuam a provar em UI00/WA03. Pix pela interface (UI02) fica como complemento posterior. Ver [MVP-INTERFACE-GOOGLE.md](MVP-INTERFACE-GOOGLE.md) e [bloco do Claude](CLAUDE-BLOCO-1.md). O editor de planos alimentares e o portal do paciente continuam em recortes posteriores.
 
 ## Modelo de dados (abas da planilha)
 
@@ -49,6 +55,8 @@ A primeira entrega prevista é listar consultas, abrir seus detalhes e gerar o P
 
 ### Pacientes
 `codigo` (P0001) · `primeiro_nome` · `inicial_sobrenome` · `telefone` · `email` · `modo_acompanhamento` (porta_aberta, leve, proximo) · `autorizou_mensagens_em` · `ativo`
+
+Previsto para a lista de liberados (WA04, ainda não instalado): vínculo verificado entre identificador do canal e paciente, validade da liberação e data de revogação. A primeira mensagem sozinha não identifica qual cadastro deve ser vinculado; o mecanismo de verificação será definido na integração. B1 usa um vínculo fictício exato no adaptador de teste. Nenhuma coluna muda neste planejamento.
 
 ### Consultas
 `id_evento` · `data` · `hora` · `tipo` (primeira, retorno) · `codigo_paciente` · `status` (marcada, realizada, faltou, cancelada) · `atualizado_em` · `agenda_origem` (preenchida pelo kit: de qual agenda vem a linha; ela não mexe)
@@ -88,6 +96,7 @@ Precisa trazer: nome e CRN da nutricionista, nome de quem pagou (e do paciente, 
 
 ## Limites conhecidos
 
-- O Apps Script tem cotas diárias, menores em contas gratuitas: e-mails, chamadas externas e tempo de execução. Conferir na documentação do Google.
-- Planilha funciona bem para um consultório, não para milhares de linhas.
+- Cotas, identidade de execução e permissões do Apps Script precisam ser verificadas para a integração; os testes anteriores comprovam apenas os cenários registrados.
+- Preços, categorias, franquias, limites e coexistência da Meta devem ser confirmados em fonte oficial vigente e na conta de teste. Não usar o preço universal do patch como orçamento. Detalhes e fontes em [WHATSAPP-PONTE-COFRE.md](WHATSAPP-PONTE-COFRE.md).
+- A capacidade da base em planilhas depende de leituras, volume, concorrência e cotas medidos; nenhum número de pacientes está garantido por esta especificação.
 - Gatilho automático mínimo: 1 minuto.
