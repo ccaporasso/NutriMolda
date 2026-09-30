@@ -30,7 +30,9 @@ const CONFIGURACOES_INICIAIS = [
 // Colunas que guardam identificadores: ficam como texto para o Google não
 // tirar o zero à esquerda (CPF, telefone, códigos). `valor` é a coluna B de
 // Configurações (chave Pix, CRN, ids): entra como texto antes de qualquer conversão.
-const COLUNAS_TEXTO = ['codigo', 'codigo_paciente', 'telefone', 'pagador_cpf', 'id_evento', 'id', 'valor'];
+// `data_hora` (Registro) fica como texto para o horário gravado não ser
+// reinterpretado em outro fuso pelo Planilhas.
+const COLUNAS_TEXTO = ['codigo', 'codigo_paciente', 'telefone', 'pagador_cpf', 'id_evento', 'id', 'valor', 'data_hora'];
 
 // `validacoes`: coluna do cabeçalho -> nome da lista em LISTAS.
 const ABAS = [
@@ -43,14 +45,19 @@ const ABAS = [
   },
   {
     nome: 'Consultas',
-    cabecalho: ['id_evento', 'data', 'hora', 'tipo', 'codigo_paciente', 'status', 'atualizado_em'],
+    cabecalho: ['id_evento', 'data', 'hora', 'tipo', 'codigo_paciente', 'status', 'atualizado_em', 'agenda_origem'],
     validacoes: { tipo: 'tipo_consulta', status: 'status_consulta' },
+    // Data e hora guardadas como texto (2026-09-30 e 09:00): o Planilhas não converte em outro fuso (T05).
+    // `agenda_origem`: marca de qual agenda vem a linha (R04); o kit preenche, ela não mexe.
+    textoExtra: ['data', 'hora', 'atualizado_em', 'agenda_origem'],
   },
   {
     nome: 'Pagamentos',
     cabecalho: ['id', 'id_evento', 'codigo_paciente', 'pagador_nome', 'pagador_cpf',
-      'valor_centavos', 'forma', 'status', 'data_pagamento', 'link_recibo'],
+      'valor_centavos', 'forma', 'status', 'data_pagamento', 'link_recibo', 'pacote_inicio'],
     validacoes: { forma: 'forma_pagamento', status: 'status_pagamento' },
+    // `data_pagamento` texto AAAA-MM-DD (T07/T08). `pacote_inicio`: início do pacote gasto nesta consulta (o kit preenche; R11).
+    textoExtra: ['data_pagamento', 'pacote_inicio'],
   },
   {
     nome: 'Pacotes',
@@ -82,8 +89,17 @@ function planejarInstalacao(existente) {
       continue;
     }
     const atualCab = (atual.cabecalho || []).map(String);
+    if (atualCab.some((c, i) => i >= aba.cabecalho.length && c.trim() !== '')) {
+      plano.avisos.push(`A aba "${aba.nome}" tem coluna a mais no cabeçalho. Não foi alterada; use outra aba para anotações ou confira com o suporte.`);
+      continue;
+    }
     const vazio = atualCab.every((c) => c === '');
-    if (vazio) {
+    // Planilha de uma versão anterior: só faltam colunas novas no fim (células vazias). O cabeçalho é completado.
+    const semAsNovas = atualCab.slice(0, aba.cabecalho.length).map((c, i) => (c === '' ? aba.cabecalho[i] : c));
+    const faltamSoNoFim = !vazio && JSON.stringify(semAsNovas) === JSON.stringify(aba.cabecalho)
+      && atualCab.every((c, i) => c === '' || c === aba.cabecalho[i]) && atualCab.findIndex((c) => c === '') >= 0
+      && atualCab.slice(atualCab.findIndex((c) => c === '')).every((c) => c === '');
+    if (vazio || faltamSoNoFim) {
       plano.escreverCabecalho.push(aba.nome);
     } else if (JSON.stringify(atualCab.slice(0, aba.cabecalho.length)) !== JSON.stringify(aba.cabecalho)) {
       plano.avisos.push(`A aba "${aba.nome}" tem cabeçalho diferente do esperado. Não foi alterada; confira com o suporte.`);
@@ -98,6 +114,29 @@ function planejarInstalacao(existente) {
   return plano;
 }
 
+// Confere o cabeçalho lido (largura completa do esquema) com o esperado, coluna a coluna, em ordem.
+// Devolve a mensagem para a nutricionista, ou '' se está certo. Coluna a mais no cabeçalho também é recusada.
+function divergenciaDeCabecalho(aba, lido) {
+  const atual = (lido || []).map((c) => String(c === undefined || c === null ? '' : c).trim());
+  const extra = atual.findIndex((c, i) => i >= aba.cabecalho.length && c !== '');
+  if (extra >= 0) {
+    return `A aba "${aba.nome}" tem uma coluna a mais no cabeçalho (coluna ${extra + 1}). Nada foi lido nem gravado. `
+      + 'Não acrescente colunas ao cabeçalho do kit; use outra aba para anotações.';
+  }
+  for (let i = 0; i < aba.cabecalho.length; i++) {
+    if (atual[i] !== aba.cabecalho[i]) {
+      const soFaltaOFim = atual.slice(i).every((c) => c === '');
+      if (soFaltaOFim) {
+        return `A aba "${aba.nome}" é de uma versão anterior do kit e falta(m) a(s) coluna(s) nova(s) no cabeçalho (a partir da coluna ${i + 1}, "${aba.cabecalho[i]}"). `
+          + 'Nada foi lido nem gravado. Use o menu Kit do Consultório > Configuração > Instalar/atualizar planilha e tente de novo.';
+      }
+      return `A aba "${aba.nome}" está com o cabeçalho diferente do esperado (coluna ${i + 1} deveria ser "${aba.cabecalho[i]}"). `
+        + 'Nada foi lido nem gravado. Não mude a ordem nem o nome das colunas; peça ajuda ao suporte.';
+    }
+  }
+  return '';
+}
+
 // Colunas (1 = A) que recebem lista suspensa, com os valores permitidos.
 function colunasComValidacao(aba) {
   return Object.entries(aba.validacoes).map(([coluna, lista]) => ({
@@ -109,10 +148,10 @@ function colunasComValidacao(aba) {
 // Posições (1 = A) das colunas de texto de uma aba.
 function colunasDeTexto(aba) {
   return aba.cabecalho
-    .map((nome, i) => (COLUNAS_TEXTO.includes(nome) ? i + 1 : 0))
+    .map((nome, i) => (COLUNAS_TEXTO.includes(nome) || (aba.textoExtra || []).includes(nome) ? i + 1 : 0))
     .filter((n) => n > 0);
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { colunasDeTexto, LISTAS, CONFIGURACOES_INICIAIS, ABAS, planejarInstalacao, colunasComValidacao };
+  module.exports = { colunasDeTexto, LISTAS, CONFIGURACOES_INICIAIS, ABAS, planejarInstalacao, colunasComValidacao, divergenciaDeCabecalho };
 }

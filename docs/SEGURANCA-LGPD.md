@@ -9,6 +9,14 @@
 - [ ] Planilha compartilhada só com quem precisa. Nunca "qualquer pessoa com o link".
 - [ ] Verificação em dois fatores na conta Google de teste e na da cliente.
 
+## Onde o kit guarda nome e CPF
+
+- Recibo em PDF e CSV do relatório trazem nome e CPF de quem pagou (necessário para o recibo e para o carnê-leão). Ficam só na pasta do Drive da nutricionista.
+- [ ] Pasta de recibos compartilhada só com quem precisa (nunca "qualquer pessoa com o link").
+- [ ] Nome dos arquivos só com número do recibo, código do paciente ou mês (o teste automático de recibo e de relatório confere).
+- [ ] Registro e e-mails de alerta sem nome, CPF, e-mail nem texto de erro (fixo: módulo e tipo).
+- O rascunho de trabalho do recibo (`rascunho-Recibo-...`) tem nome e CPF e vai para a lixeira do Drive dela, onde o Google o guarda por 30 dias. Se ele não for para a lixeira, o kit avisa na tela e no Registro: apague à mão.
+
 ## Antes do primeiro dado real
 
 - [ ] Resposta do RH, por escrito, sobre a atividade paralela.

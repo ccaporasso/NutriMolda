@@ -57,6 +57,9 @@ function criarPlanilhaSimulada() {
   novaAba('Página1'); // aba padrão vazia que o Google cria
 
   const planilha = {
+    fuso: 'America/Sao_Paulo',
+    getSpreadsheetTimeZone: () => planilha.fuso,
+    setSpreadsheetTimeZone(f) { planilha.fuso = f; },
     getSheetByName: (n) => abas.get(n) || null,
     insertSheet: (n) => novaAba(n),
     getSheets: () => [...abas.values()],
@@ -71,12 +74,13 @@ function criarPlanilhaSimulada() {
     newDataValidation: () => construtor,
     ProtectionType: { RANGE: 'RANGE' },
   };
-  return { log, abas, SpreadsheetApp };
+  return { log, abas, SpreadsheetApp, planilha };
 }
 
 function instalar(simulada) {
   const contexto = vm.createContext({ SpreadsheetApp: simulada.SpreadsheetApp });
   vm.runInContext(src('Esquema.js'), contexto);
+  vm.runInContext(src('Execucao.js'), contexto);
   vm.runInContext(src('Instalador.js'), contexto);
   vm.runInContext('instalarPlanilha()', contexto);
 }
@@ -103,4 +107,16 @@ test('rodar o instalador duas vezes não duplica chaves e reaplica o formato de 
   assert.equal(s.abas.get('Consultas').protecoes.length, protecoesDepoisDa1);
   assert.ok(s.log.some((e) => e.op === 'formato' && e.aba === 'Configurações' && e.coluna === 2 && e.formato === '@'));
   assert.equal(s.abas.has('Página1'), false);
+});
+
+test('B2: planilha em outro fuso passa para São Paulo; a segunda instalação não mexe de novo', () => {
+  const s = criarPlanilhaSimulada();
+  s.planilha.fuso = 'Europe/Lisbon';
+  const avisos = [];
+  s.SpreadsheetApp.getUi = () => ({ alert: (t) => avisos.push(t) });
+  instalar(s);
+  assert.equal(s.planilha.fuso, 'America/Sao_Paulo');
+  assert.match(avisos[0], /fuso horário da planilha foi ajustado/);
+  instalar(s);
+  assert.doesNotMatch(avisos[1], /fuso/);
 });

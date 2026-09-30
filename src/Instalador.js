@@ -3,16 +3,23 @@
 
 const DESCRICAO_PROTECAO = 'Kit do Consultório: cabeçalho';
 
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('Kit do Consultório')
-    .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
-    .addToUi();
+// Item do menu: erro inesperado vai ao Registro e ao e-mail, com mensagem clara na tela (B6).
+function instalarPlanilha() {
+  executarNoMenu_('instalador', instalarPlanilha_);
 }
 
-function instalarPlanilha() {
+// Fuso do kit (D13). As datas digitadas em células de data (Pacotes.inicio, Despesas.data) são lidas no fuso de
+// São Paulo; se a planilha estiver em outro fuso, a data volta um dia (B2). Ajusta uma vez; devolve true se ajustou.
+function ajustarFusoDaPlanilha_(planilha) {
+  if (planilha.getSpreadsheetTimeZone() === 'America/Sao_Paulo') return false;
+  planilha.setSpreadsheetTimeZone('America/Sao_Paulo');
+  return true;
+}
+
+function instalarPlanilha_() {
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
   const plano = planejarInstalacao(lerEstadoAtual_(planilha));
+  const fusoAjustado = ajustarFusoDaPlanilha_(planilha);
 
   for (const nome of plano.criarAbas) planilha.insertSheet(nome);
   for (const aba of ABAS) {
@@ -38,7 +45,8 @@ function instalarPlanilha() {
   const padrao = planilha.getSheets().find((f) => /^(Página ?1|Sheet ?1|Hoja ?1)$/.test(f.getName()));
   if (padrao && planilha.getSheets().length > 1 && padrao.getLastRow() === 0) planilha.deleteSheet(padrao);
 
-  const resumo = `Abas criadas: ${plano.criarAbas.length}. Chaves de configuração novas: ${plano.chavesNovas.length}.`;
+  const resumo = `Abas criadas: ${plano.criarAbas.length}. Chaves de configuração novas: ${plano.chavesNovas.length}.`
+    + (fusoAjustado ? ' O fuso horário da planilha foi ajustado para São Paulo.' : '');
   SpreadsheetApp.getUi().alert([resumo].concat(plano.avisos).join('\n'));
 }
 
@@ -49,7 +57,7 @@ function lerEstadoAtual_(planilha) {
     if (!folha) continue;
     const largura = aba.cabecalho.length;
     estado[aba.nome] = {
-      cabecalho: folha.getRange(1, 1, 1, Math.min(largura, folha.getMaxColumns())).getValues()[0],
+      cabecalho: folha.getRange(1, 1, 1, Math.min(Math.max(largura, typeof folha.getLastColumn === 'function' ? folha.getLastColumn() : 0), folha.getMaxColumns())).getValues()[0],
       chaves: aba.nome === 'Configurações' && folha.getLastRow() > 1
         ? folha.getRange(2, 1, folha.getLastRow() - 1, 1).getValues().map((l) => String(l[0]))
         : [],

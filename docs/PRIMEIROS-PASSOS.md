@@ -14,6 +14,6 @@ Estes passos exigem login e autorizações suas. O Claude Code não faz.
    2. No Apps Script, vá em **Configurações do projeto** e copie o **ID do script**.
    3. Na pasta do projeto, copie `.clasp.json.exemplo` para `.clasp.json` e troque `COLE_AQUI_O_ID_DO_PROJETO_DE_TESTE` pelo ID copiado. Esse arquivo não vai para o Git.
    4. Rode `node --test` (tudo deve passar) e depois `clasp push`. Confira em `clasp --help` se o comando mudou na sua versão.
-   5. Recarregue o Apps Script no navegador: devem aparecer `Principal.gs` e, em Configurações do projeto, o fuso `(GMT-03:00) Horário de Brasília`.
+   5. Recarregue o Apps Script no navegador: devem aparecer os arquivos do kit (`Principal.gs`, `Menu.gs`, `Agenda.gs` e os demais) e, em Configurações do projeto, o fuso `(GMT-03:00) Horário de Brasília`.
 
 Se algum passo falhar, peça ajuda ao Claude Code descrevendo a mensagem de erro, sem colar senhas nem códigos de acesso.

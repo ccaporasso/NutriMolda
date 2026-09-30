@@ -102,6 +102,16 @@ test('aba existente com cabeçalho vazio recebe o cabeçalho', () => {
   assert.deepEqual(planejarInstalacao(estado).escreverCabecalho, ['Pacotes']);
 });
 
+test('planilha de versão anterior (Consultas com 7 colunas): o cabeçalho é completado, sem aviso', () => {
+  const estado = aplicar({}, planejarInstalacao({}));
+  estado.Consultas.cabecalho = estado.Consultas.cabecalho.slice(0, 7).concat(['']);
+  const plano = planejarInstalacao(estado);
+  assert.deepEqual(plano.escreverCabecalho, ['Consultas']);
+  assert.deepEqual(plano.avisos, []);
+  estado.Consultas.cabecalho[2] = 'outra'; // cabeçalho realmente diferente continua sendo aviso
+  assert.match(planejarInstalacao(estado).avisos[0], /Consultas/);
+});
+
 test('cabeçalho estranho em Configurações: não acrescenta chaves', () => {
   const estado = aplicar({}, planejarInstalacao({}));
   estado['Configurações'].cabecalho = ['x', 'y'];
@@ -113,7 +123,9 @@ test('cabeçalho estranho em Configurações: não acrescenta chaves', () => {
 
 test('CPF, telefone e códigos ficam como texto', () => {
   const pag = ABAS.find((a) => a.nome === 'Pagamentos');
-  assert.deepEqual(colunasDeTexto(pag), [1, 2, 3, 5]);
+  assert.deepEqual(colunasDeTexto(pag), [1, 2, 3, 5, 9, 11]); // 9 = data_pagamento (texto AAAA-MM-DD), 11 = pacote_inicio
+  const con = ABAS.find((a) => a.nome === 'Consultas');
+  assert.deepEqual(colunasDeTexto(con), [1, 2, 3, 5, 7, 8]); // data, hora, atualizado_em e agenda_origem como texto
   const pac = ABAS.find((a) => a.nome === 'Pacientes');
   assert.deepEqual(colunasDeTexto(pac), [1, 4]);
 });
