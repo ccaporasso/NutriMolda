@@ -6,9 +6,58 @@
   "reviews": [
     {
       "pr": 6,
-      "sha": "c160294dc79fd1c329270eee0c8aa14b003f87e6",
+      "sha": "b12b35e5f03a9a79f3fd12f4af03b6bec02d7a74",
       "status": "REPROVADO",
-      "report": "docs/revisoes/codex/PR6-c160294.md"
+      "report": "docs/revisoes/codex/PR6-b12b35e.md",
+      "report_commit": "3d432f662a3b221a90b64e1cd393b1512086ce53",
+      "published": true,
+      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/6#issuecomment-5903331192",
+      "reviewed_on": "2026-09-30",
+      "resolved": [
+        "R01",
+        "R02",
+        "R05",
+        "R06",
+        "R08",
+        "R09",
+        "R10",
+        "D17",
+        "N8-01",
+        "N8-02",
+        "N8-03",
+        "N8-04",
+        "N9-01",
+        "N9-02",
+        "N9-03"
+      ],
+      "partially_resolved": [
+        "R03",
+        "R04",
+        "R07",
+        "R11"
+      ],
+      "unresolved": [
+        "R11:identidade-do-pacote",
+        "R04:origem-da-agenda",
+        "R03:identidade-e-ambiente",
+        "R07:configuracoes-e-largura"
+      ],
+      "findings": {
+        "ALTA": 3,
+        "MÉDIA": 1,
+        "BAIXA": 0
+      },
+      "tests": {
+        "selected_cases_passed": 304,
+        "independent": {
+          "passed": 17,
+          "failed": 9
+        },
+        "cli_checks_passed": 7,
+        "package_js": 28,
+        "full_node_test": "TIMEOUT_15S_SUBPROCESS_CASE"
+      },
+      "google_validation": "PENDENTE"
     },
     {
       "pr": 8,
@@ -24,6 +73,41 @@
     },
     {
       "pr": 9,
+      "sha": "2dd59b4322c112522f634c7e5777a1554819b98d",
+      "status": "APROVADO",
+      "scope": "ferramenta-de-revisao; nao-aprova-lote-PR6",
+      "report": "docs/revisoes/codex/PR9-2dd59b4.md",
+      "report_commit": "3d432f662a3b221a90b64e1cd393b1512086ce53",
+      "published": true,
+      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/9#issuecomment-5903359677",
+      "reviewed_on": "2026-09-30",
+      "resolved": [
+        "N9-01",
+        "N9-02",
+        "N9-03"
+      ],
+      "tests": {
+        "selected_cases_passed": 179,
+        "independent_cases_passed": 2,
+        "cli_checks_passed": 7,
+        "full_node_test": "TIMEOUT_15S_SUBPROCESS_CASE"
+      }
+    }
+  ],
+  "automation": {
+    "title": "Revisar NutriMolda no GitHub",
+    "trigger": "commit updates in PR6,PR8,PR9",
+    "enabled": true
+  },
+  "history": [
+    {
+      "pr": 6,
+      "sha": "c160294dc79fd1c329270eee0c8aa14b003f87e6",
+      "status": "REPROVADO",
+      "report": "docs/revisoes/codex/PR6-c160294.md"
+    },
+    {
+      "pr": 9,
       "sha": "d7d0f08a002455391b85e47fd6bd066bd486f073",
       "status": "REPROVADO",
       "report": "docs/revisoes/codex/PR9-d7d0f08.md",
@@ -33,9 +117,24 @@
       ]
     }
   ],
-  "automation": {
-    "title": "Revisar NutriMolda no GitHub",
-    "trigger": "commit updates in PR6,PR8,PR9",
-    "enabled": true
-  }
+  "monitored_prs": [
+    {
+      "pr": 6,
+      "sha": "b12b35e5f03a9a79f3fd12f4af03b6bec02d7a74",
+      "state": "open",
+      "merged": false
+    },
+    {
+      "pr": 8,
+      "sha": "df096f40173bab751d2f471fe52d537b5c49bab6",
+      "state": "closed",
+      "merged": true
+    },
+    {
+      "pr": 9,
+      "sha": "2dd59b4322c112522f634c7e5777a1554819b98d",
+      "state": "closed",
+      "merged": true
+    }
+  ]
 }
