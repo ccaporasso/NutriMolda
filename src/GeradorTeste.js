@@ -64,7 +64,13 @@ function criarDadosDeTeste() {
   let alheios = 0;
   for (const e of montarEventosTeste(dataHoje, prefixo)) {
     let existente = null;
-    try { existente = Calendar.Events.get(id, e.id); } catch (erro) { existente = null; }
+    try {
+      existente = Calendar.Events.get(id, e.id);
+    } catch (erro) {
+      if (!eventoAusenteConfirmado(erro)) {
+        throw new Error('Não foi possível conferir se os eventos de teste já existem na agenda (erro de leitura). Nada foi criado. Tente de novo em alguns minutos.');
+      }
+    }
     const marcado = !!(existente && existente.extendedProperties && existente.extendedProperties.private
       && existente.extendedProperties.private[MARCA_TESTE] === '1');
     if (existente && !geradoAqui && !marcado) { alheios++; continue; }
@@ -99,15 +105,16 @@ function criarDadosDeTeste() {
 
 function apagarDadosDeTeste() {
   const { id } = calendarioDeTeste_();
-  if (!confirmar_('Vai apagar só os pacientes de teste gerados pelo kit (P9001 a P9006) e o que está ligado a eles em Consultas, Pagamentos e Pacotes, '
-    + 'além dos eventos de teste da agenda de teste. Dados reais não são tocados. Continuar?')) return;
+  if (!confirmar_('Vai apagar só os pacientes de teste gerados pelo kit (P9001 a P9006) e as consultas e pagamentos que o kit comprova serem de teste. '
+    + 'Pacotes e linhas sem comprovação de origem ficam. Também apaga os eventos de teste da agenda de teste. Dados reais não são tocados. Continuar?')) return;
 
+  const consultas = lerAbaComoObjetos('Consultas').map((c) => ({ ...c, origem: String(c.agenda_origem || '') }));
+  const origemTeste = marcaDaAgenda(id);
   const plano = planejarLimpezaDeTeste({
-    pacientes: lerAbaComoObjetos('Pacientes'),
-    consultas: lerAbaComoObjetos('Consultas').map((c) => ({ ...c, origem: String(c.agenda_origem || '') })),
-    pagamentos: lerAbaComoObjetos('Pagamentos'), origemTeste: marcaDaAgenda(id),
+    pacientes: lerAbaComoObjetos('Pacientes'), consultas, pagamentos: lerAbaComoObjetos('Pagamentos'), origemTeste,
   });
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  const preservadas = contarPreservadasSemProva(consultas, origemTeste);
   let linhasApagadas = 0;
   for (const aba of ABAS_DA_LIMPEZA_DE_TESTE) {
     const folha = planilha.getSheetByName(aba);
@@ -132,5 +139,6 @@ function apagarDadosDeTeste() {
     }
     pagina = resposta.nextPageToken;
   } while (pagina);
-  SpreadsheetApp.getUi().alert(`Linhas apagadas: ${linhasApagadas}. Eventos apagados: ${eventosApagados}.`);
+  SpreadsheetApp.getUi().alert(`Linhas apagadas: ${linhasApagadas}. Eventos apagados: ${eventosApagados}.`
+    + (preservadas ? ` ${preservadas} consulta(s) de versão antiga ficaram, pois não há como provar que são de teste; apague à mão se forem.` : ''));
 }

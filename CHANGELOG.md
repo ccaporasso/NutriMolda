@@ -2,6 +2,8 @@
 
 ## [não lançado]
 
+- 2026-09-30: revisão de a2ffd09 (R03i, R03k): limpeza de dados de teste não apaga mais consulta/pagamento com origem vazia (linha de versão antiga) e avisa quantas ficaram; a criação de dados de teste para na pré-conferência quando a leitura da agenda falha por outro motivo que "não encontrado". Confirmação do apagador não anuncia mais Pacotes. Decisão D29; testes em `tests/dados-teste.test.js`.
+
 - 2026-09-29: estrutura inicial de documentação criada (especificação, tarefas, decisões, segurança, manutenção).
 - 2026-09-29: repositório recomeçado do zero como Kit do Consultório.
 - 2026-09-29: T00 (parte do Code): `src/appsscript.json` com fuso `America/Sao_Paulo`, V8 e só o escopo `spreadsheets.currentonly`; `src/Principal.js`; `tests/estrutura.test.js`; `.gitignore`; `.clasp.json.exemplo`. Escopos justificados em `docs/DECISOES.md` (D16).

@@ -133,4 +133,4 @@ Como anotar: na coluna "Resultado", escreva **OK** ou descreva o que aconteceu d
 
 ## 10. Para apagar depois
 
-**Somente na conta de TESTE → TESTE: apagar dados fictícios** remove os pacientes P9xxx (e suas linhas em Consultas, Pagamentos e Pacotes) e os eventos de teste. Recibos e CSV de teste na pasta do Drive precisam ser apagados à mão.
+**Somente na conta de TESTE → TESTE: apagar dados fictícios** remove os pacientes P9xxx, as consultas e pagamentos que o kit comprova serem de teste (id exato + agenda de teste) e os eventos de teste. Pacotes nunca são apagados, e consultas de versão antiga (sem `agenda_origem`) ficam, com aviso: apague à mão se forem de teste. Recibos e CSV de teste na pasta do Drive precisam ser apagados à mão.

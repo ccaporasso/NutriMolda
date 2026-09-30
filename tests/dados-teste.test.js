@@ -66,8 +66,8 @@ test('planejarLimpezaDeTeste pega só o que tem prova de vir do gerador, de baix
   ];
   const consultas = [
     { linha: 2, id_evento: 'abc', codigo_paciente: 'P0001' },
-    { linha: 3, id_evento: D.idEventoTeste(0), codigo_paciente: ger.codigo },
-    { linha: 4, id_evento: D.idEventoTeste(8), codigo_paciente: '' }, // a identificar
+    { linha: 3, id_evento: D.idEventoTeste(0), codigo_paciente: ger.codigo, origem: 'ateste' },
+    { linha: 4, id_evento: D.idEventoTeste(8), codigo_paciente: '', origem: 'ateste' }, // a identificar
     { linha: 5, id_evento: 'xyz', codigo_paciente: 'P9500' },
     { linha: 6, id_evento: 'eventoalheio', codigo_paciente: ger.codigo }, // do mesmo paciente de teste, mas não é evento gerado
     { linha: 7, id_evento: 'kittestealheio', codigo_paciente: '' }, // prefixo parecido não vale
@@ -78,7 +78,7 @@ test('planejarLimpezaDeTeste pega só o que tem prova de vir do gerador, de baix
     { linha: 4, id_evento: 'xyz', codigo_paciente: 'P9500' },
     { linha: 5, id_evento: 'eventoalheio', codigo_paciente: ger.codigo },
   ];
-  const plano = D.planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, pacotes: [{ linha: 2, codigo_paciente: 'P9500' }, { linha: 3, codigo_paciente: ger.codigo }] });
+  const plano = D.planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, pacotes: [{ linha: 2, codigo_paciente: 'P9500' }, { linha: 3, codigo_paciente: ger.codigo }], origemTeste: 'ateste' });
   assert.deepEqual(plano, { Pacientes: [3], Consultas: [4, 3], Pagamentos: [3], Pacotes: [] }); // pacote nunca é apagado: o gerador não o cria
 });
 
@@ -137,7 +137,7 @@ function carregarGerador(configuracao) {
     google: {
       Calendar: {
         Events: {
-          get: (cal, id) => { if (!eventos.has(id)) throw new Error('404'); return eventos.get(id); },
+          get: (cal, id) => { if (!eventos.has(id)) throw new Error('API call to calendar.events.get failed with error: Not Found'); return eventos.get(id); },
           insert: (corpo, cal) => { chamadas.push(['insert', cal]); eventos.set(corpo.id, { ...corpo }); },
           update: (corpo, cal, id) => { chamadas.push(['update', cal]); eventos.set(id, { ...corpo }); },
           remove: (cal, id) => { eventos.get(id).status = 'cancelled'; },
@@ -179,8 +179,9 @@ test('R03: apagador preserva P9500 e apaga a consulta fictícia ainda sem pacien
   const { api, dados, amb } = carregarGerador({ calendario_id: CAL });
   api.criarDadosDeTeste();
   amb.abas.get('Pacientes').linhas.push(['P9500', 'Outra', 'Y.', '', 'outra@exemplo.invalid', 'leve', '', true]);
-  amb.abas.get('Consultas').linhas.push([D.idEventoTeste(8), '2026-10-05', '13:00', 'primeira', '', 'marcada', '']);
-  amb.abas.get('Consultas').linhas.push(['naogerado', '2026-10-06', '13:00', 'primeira', 'P9500', 'marcada', '']);
+  const origem = amb.rodar(`marcaDaAgenda(${JSON.stringify(CAL)})`);
+  amb.abas.get('Consultas').linhas.push([D.idEventoTeste(8), '2026-10-05', '13:00', 'primeira', '', 'marcada', '', origem]);
+  amb.abas.get('Consultas').linhas.push(['naogerado', '2026-10-06', '13:00', 'primeira', 'P9500', 'marcada', '', origem]);
   api.apagarDadosDeTeste();
   assert.ok(dados.Pacientes.some((l) => l[0] === 'P9500'));
   assert.ok(!dados.Consultas.some((l) => l[0] === D.idEventoTeste(8)));
@@ -204,4 +205,35 @@ test('R03: agenda secundária só é usada depois de ela confirmar que é de tes
   const ok = carregarGerador({ calendario_id: CAL });
   ok.api.criarDadosDeTeste();
   assert.equal(ok.amb.propriedades.get('agenda_de_teste_confirmada'), CAL);
+});
+
+test('R03i: origem vazia (linha de versão antiga) não autoriza apagar; a contagem avisa quantas ficaram', () => {
+  const consultas = [{ linha: 2, id_evento: D.idEventoTeste(0), origem: '' }, { linha: 3, id_evento: D.idEventoTeste(1), origem: 'ateste' }];
+  const pagamentos = [{ linha: 2, id_evento: D.idEventoTeste(0) }, { linha: 3, id_evento: D.idEventoTeste(1) }];
+  const plano = D.planejarLimpezaDeTeste({ pacientes: [], consultas, pagamentos, origemTeste: 'ateste' });
+  assert.deepEqual(plano, { Pacientes: [], Consultas: [3], Pagamentos: [3], Pacotes: [] });
+  assert.equal(D.contarPreservadasSemProva(consultas, 'ateste'), 1);
+  assert.deepEqual(D.planejarLimpezaDeTeste({ pacientes: [], consultas, pagamentos, origemTeste: '' }).Consultas, []);
+});
+
+test('R03k: só "não encontrado" prova ausência; cota, acesso e rede não', () => {
+  assert.equal(D.eventoAusenteConfirmado(new Error('API call to calendar.events.get failed with error: Not Found')), true);
+  assert.equal(D.eventoAusenteConfirmado({ code: 404 }), true);
+  assert.equal(D.eventoAusenteConfirmado({ details: { code: 404 } }), true);
+  for (const m of ['Quota exceeded ficticio', 'API call to calendar.events.get failed with error: Rate Limit Exceeded', 'Forbidden', 'Não achei a quota Not Found aqui', '']) {
+    assert.equal(D.eventoAusenteConfirmado(new Error(m)), false, m);
+  }
+  assert.equal(D.eventoAusenteConfirmado(null), false);
+});
+
+test('R03k: erro de leitura na pré-conferência interrompe antes de gravar pacientes ou eventos', () => {
+  const { api, eventos, dados, amb } = carregarGerador({ calendario_id: CAL });
+  amb.contexto.Calendar.Events.get = () => { throw new Error('Quota exceeded ficticio'); };
+  const escritos = [];
+  amb.contexto.Calendar.Events.insert = (...a) => escritos.push(a);
+  amb.contexto.Calendar.Events.update = (...a) => escritos.push(a);
+  assert.throws(() => api.criarDadosDeTeste(), /Não foi possível conferir/);
+  assert.equal(escritos.length, 0);
+  assert.equal(dados.Pacientes.length, 2);
+  assert.equal(eventos.size, 0);
 });

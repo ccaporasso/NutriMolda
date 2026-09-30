@@ -135,8 +135,10 @@ function codigosEmColisao(pacientes) {
 // não os cria e não deixa registro de origem. Código P9xxx sozinho nunca basta.
 function planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, origemTeste }) {
   const descendente = (lista) => lista.map((o) => o.linha).sort((a, b) => b - a);
-  const daAgendaDeTeste = (c) => !c.origem || !origemTeste || c.origem === origemTeste;
-  const consultasGeradas = consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)) && daAgendaDeTeste(c));
+  // Origem vazia (linha de versão antiga) não prova nada: a linha fica (R03i).
+  const daAgendaDeTeste = (c) => !!c.origem && !!origemTeste && c.origem === origemTeste;
+  const comIdDeTeste = consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)));
+  const consultasGeradas = comIdDeTeste.filter(daAgendaDeTeste);
   const ids = new Set(consultasGeradas.map((c) => String(c.id_evento)));
   return {
     Pacientes: descendente(pacientes.filter(ehPacienteGerado)),
@@ -146,10 +148,23 @@ function planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, origemTeste 
   };
 }
 
+// Quantas consultas com id de teste ficam por não terem origem comprovada (para avisar quem limpa).
+function contarPreservadasSemProva(consultas, origemTeste) {
+  return consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)) && !(c.origem && origemTeste && c.origem === origemTeste)).length;
+}
+
+// Só o erro "não encontrado" do serviço de agenda prova que o evento não existe; cota, acesso e rede não provam (R03k).
+function eventoAusenteConfirmado(erro) {
+  if (!erro) return false;
+  const codigo = Number(erro.code || (erro.details && erro.details.code));
+  if (codigo === 404) return true;
+  return /^(API call to calendar\.events\.get failed with error: )?Not Found$/i.test(String(erro.message || '').trim());
+}
+
 if (typeof module !== 'undefined') {
   module.exports = {
     MARCA_TESTE, PACIENTES_TESTE, EVENTOS_TESTE, validarAgendaDeTeste, montarEventosTeste,
-    idEventoTeste, idEventoEhDeTeste, linhaPaciente, pacientesQueFaltam, planejarLimpezaDeTeste,
+    idEventoTeste, idEventoEhDeTeste, eventoAusenteConfirmado, contarPreservadasSemProva, linhaPaciente, pacientesQueFaltam, planejarLimpezaDeTeste,
     codigosEmColisao, ehPacienteGerado,
   };
 }
