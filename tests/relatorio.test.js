@@ -3,6 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const R = require('../src/Relatorio.js');
 const { criarAmbiente } = require('./apoio/simulacao.js');
+const { criarDriveSimulado } = require('./apoio/drive.js');
 
 const pg = (id, nome, cpf, valor, forma, data, status = 'pago') => ({
   id, pagador_nome: nome, pagador_cpf: cpf, valor_centavos: valor, forma, data_pagamento: data, status,
@@ -100,11 +101,9 @@ test('aba: título, cabeçalho, total e por forma, retangular', () => {
 // ---------- Google simulado ----------
 
 function ambienteRelatorio({ pasta = true, resposta = '2026-09' } = {}) {
-  const arquivos = [];
-  const pastaSim = {
-    getFilesByName: (n) => { const achados = arquivos.filter((a) => a.nome === n); let i = 0; return { hasNext: () => i < achados.length, next: () => achados[i++] }; },
-    createFile: (nome, conteudo, tipo) => { const a = { nome, conteudo, tipo, setContent(c) { a.conteudo = c; } }; arquivos.push(a); return a; },
-  };
+  const drive = criarDriveSimulado();
+  // `arquivos` = só o CSV, como antes: o teste confere nome, conteúdo e quantidade
+  const arquivos = { get length() { return drive.csvsNaPasta().length; }, get 0() { return drive.csvsNaPasta()[0]; } };
   const amb = criarAmbiente({
     resposta,
     configuracoes: [
@@ -113,10 +112,10 @@ function ambienteRelatorio({ pasta = true, resposta = '2026-09' } = {}) {
       ['calendario_id', 'primary'], ['prefixo_evento_consulta', 'Consulta'], ['email_alertas', 'alerta@exemplo.invalid'],
       ['id_modelo_recibo', ''], ['id_pasta_recibos', pasta ? 'pasta123' : ''],
     ],
-    google: { DriveApp: { getFolderById: () => pastaSim } },
+    google: { Drive: drive.Drive },
   });
   dados.forEach((p, i) => amb.abas.get('Pagamentos').linhas.push([p.id, `e${i}`, 'P9001', p.pagador_nome, p.pagador_cpf, p.valor_centavos, p.forma, p.status, p.data_pagamento, '']));
-  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js', 'LeitorAbas.js', 'SincronizarAgenda.js', 'Relatorio.js', 'GerarRelatorio.js');
+  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js', 'LeitorAbas.js', 'SincronizarAgenda.js', 'Relatorio.js', 'DriveAvancado.js', 'GerarRelatorio.js');
   return { amb, arquivos };
 }
 

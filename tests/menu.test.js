@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const A = require('../src/Acoes.js');
 const { calcularCrc16 } = require('../src/Pix.js');
 const { criarAmbiente } = require('./apoio/simulacao.js');
+const { criarDriveSimulado } = require('./apoio/drive.js');
 
 const pag = (extra = {}) => ({ linha: 2, id: 'PG000001', id_evento: 'e1', codigo_paciente: 'P9001', pagador_nome: '', pagador_cpf: '', valor_centavos: 15000, forma: '', status: 'a_receber', data_pagamento: '', link_recibo: '', ...extra });
 
@@ -76,7 +77,7 @@ function ambienteMenu(opcoes = {}) {
   );
   amb.abas.get('Pacotes').linhas.push(['P9001', 2, 1, 50000, '2026-09-01']);
   amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js', 'LeitorAbas.js',
-    'SincronizarAgenda.js', 'Pagamentos.js', 'GerarAReceber.js', 'Pix.js', 'Acoes.js', 'Recibo.js', 'GeradorRecibo.js', 'Relatorio.js', 'GerarRelatorio.js', 'Instalador.js', 'DadosTeste.js', 'GeradorTeste.js', 'Menu.js');
+    'SincronizarAgenda.js', 'Pagamentos.js', 'GerarAReceber.js', 'Pix.js', 'Acoes.js', 'Recibo.js', 'DriveAvancado.js', 'GeradorRecibo.js', 'Relatorio.js', 'GerarRelatorio.js', 'Instalador.js', 'DadosTeste.js', 'GeradorTeste.js', 'Menu.js');
   return amb;
 }
 
@@ -185,7 +186,7 @@ test('erro inesperado no menu vai para o Registro e o e-mail, sem o texto do err
 
 test('fluxo completo de ponta a ponta com dados de teste: a receber -> pago -> relatório', () => {
   const amb = ambienteMenu({ selecao: { aba: 'Pagamentos', linhas: [2] }, resposta: '2026-09' });
-  amb.contexto.DriveApp = { getFolderById: () => ({ getFilesByName: () => ({ hasNext: () => false }), createFile: () => ({}) }) };
+  amb.contexto.Drive = criarDriveSimulado().Drive;
   amb.abas.get('Configurações').linhas.find((l) => l[0] === 'id_pasta_recibos')[1] = 'pasta123';
   amb.rodar('gerarAReceberPeloMenu()'); // já existem cobranças para e1 e e2: nada novo
   assert.equal(amb.abas.get('Pagamentos').linhas.length, 4);
