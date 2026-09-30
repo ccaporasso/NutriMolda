@@ -29,8 +29,8 @@ test('varrerDados avisa CPF e e-mail fora dos exemplos, sem repetir o valor', ()
   const diff = [
     '+++ b/src/A.js',
     '+const cpf = "123.456.789-09";',
-    '+const ok = "paciente@example.com";',
-    '+const real = "alguem@empresa.com.br";',
+    '+const ok = "paciente@exemplo.com";',
+    '+const real = "alguem@empresa.invalid";',
     '-const removida = "111.222.333-44";',
   ].join('\n');
   const achados = r.varrerDados(diff);
