@@ -169,7 +169,8 @@ test('consulta cancelada pela profissional: o paciente não a "reconfirma" e pod
   const c = await criarCenario(); const r0 = await agendar(c, 'F001');
   const conf = await botao(c, 'F001', 'pedir_confirmacao', 'confirmar');
   await c.nucleo.cancelarConsultaProfissional(c.prof, { consultorioId: CONS, consultaId: r0.consultaId });
-  assert.equal((await acionar(c, 'F001', conf, 'RECONF')).motivo, 'consulta_cancelada');
+  assert.equal((await c.repos.conversas.obter(CONS, 'F001')).estado, 'menu', 'a conversa acompanha o cancelamento');
+  assert.equal((await acionar(c, 'F001', conf, 'RECONF')).motivo, 'fora_da_etapa');
   assert.equal((await c.enviar('F001', 'ver_horarios')).acao, 'opcoes');
   assert.equal((await ativas(c)).length, 0);
 });

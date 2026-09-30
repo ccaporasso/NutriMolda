@@ -16,11 +16,15 @@
 <main>
   <section aria-labelledby="t-prof" class="painel">
     <h2 id="t-prof">Painel da nutricionista</h2>
+    <h3>Precisam de atenção</h3>
+    <div id="atencao"><p class="vazio">Carregando…</p></div>
     <h3>Pacientes</h3>
     <div id="pacientes" aria-busy="true"><p class="vazio">Carregando pacientes…</p></div>
     <h3>Consultas</h3>
     <div id="consultas"><p class="vazio">Carregando consultas…</p></div>
     <div id="detalhe" tabindex="-1" aria-live="polite"></div>
+    <h3>Operações pendentes</h3>
+    <div id="pendentes"><p class="vazio">Nenhuma.</p></div>
   </section>
   <section aria-labelledby="t-sim" class="painel">
     <h2 id="t-sim">Simulador de conversa (celular da paciente)</h2>
@@ -42,6 +46,8 @@
     <button type="button" data-demo="falha" data-ponto="agenda.reservar.antes">Falha antes de reservar</button>
     <button type="button" data-demo="falha" data-ponto="agenda.reservar.depois">Falha depois de reservar</button>
     <button type="button" data-demo="falha" data-ponto="saida.entregar.antes">Falha ao enviar resposta</button>
+    <button type="button" data-demo="falha" data-ponto="agenda.cancelar.depois">Falha depois de cancelar</button>
+    <button type="button" data-demo="disputa">Cena: duas pacientes disputam o mesmo horário</button>
     <button type="button" data-demo="reconciliar">Reconciliar pendências</button>
     <button type="button" data-demo="reiniciar" class="perigo">Reiniciar demonstração</button>
   </div>

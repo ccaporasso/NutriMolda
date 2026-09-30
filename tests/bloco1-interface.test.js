@@ -131,3 +131,30 @@ test('servidor local: escuta só em 127.0.0.1, serve a página e recusa Host est
     assert.equal(JSON.parse((await pedir(porta, { caminho: '/api/estado' })).corpo).pacientes[0].liberacao, 'ativa');
   } finally { await s.fechar(); }
 });
+
+test('interface: atenção, cancelamento pela profissional, operações pendentes e cena de disputa usam o mesmo núcleo', async () => {
+  const demo = await criarDemo({ inicio: INICIO });
+  await api(demo, 'POST', '/api/profissional/liberar', { codigoPaciente: 'F001' });
+  await api(demo, 'POST', '/api/paciente/evento', { codigoPaciente: 'F001', comando: 'falar_com_nutricionista' });
+  let e = await api(demo, 'GET', '/api/estado');
+  assert.ok(e.atencao.some((p) => p.codigo === 'F001' && p.sinais[0].tipo === 'atendimento_humano'));
+  await api(demo, 'POST', '/api/profissional/retomar', { codigoPaciente: 'F001' });
+  const d = await api(demo, 'POST', '/api/demo/disputa');
+  assert.equal(d.ok, true);
+  assert.deepEqual(d.resultados.map((r) => r.acao).sort(), ['conflito', 'consulta_confirmada']);
+  e = await api(demo, 'GET', '/api/estado');
+  assert.equal(e.consultas.filter((c) => c.status === 'confirmada').length, 1);
+  assert.equal((await api(demo, 'POST', '/api/demo/disputa'))._status, 422, 'não repete a cena sobre quem já tem consulta');
+  const id = e.consultas[0].id;
+  assert.equal((await api(demo, 'POST', '/api/profissional/cancelar-consulta', { consultaId: id })).acao, 'consulta_cancelada');
+  assert.equal((await api(demo, 'POST', '/api/profissional/cancelar-consulta', { consultaId: 5 }))._status, 400);
+  assert.equal((await api(demo, 'POST', '/api/profissional/cancelar-consulta', { consultaId: 'C9999' }))._status, 422);
+  e = await api(demo, 'GET', '/api/estado');
+  assert.equal(e.consultas[0].status, 'cancelada'); assert.ok(e.consultas[0].canceladaEmTexto);
+  // operação pendente aparece com comando e paciente, sem telefone nem texto
+  await api(demo, 'POST', '/api/demo/falha', { ponto: 'agenda.cancelar.antes' });
+  await api(demo, 'POST', '/api/paciente/evento', { codigoPaciente: 'F003', comando: 'ver_horarios' });
+  e = await api(demo, 'GET', '/api/estado');
+  assert.ok(Array.isArray(e.operacoesPendentes));
+  assert.doesNotMatch(JSON.stringify(e.operacoesPendentes), /5511/);
+});

@@ -16,7 +16,8 @@ Roteiro de 2 minutos:
 3. **Ver horários** → escolha um horário (ainda não reserva) → **Confirmar**.
 4. A consulta aparece em "Consultas"; **Abrir detalhes** mostra paciente, horário e origem.
 5. **Falar com a nutricionista**: a paciente fica "precisa de você" e `MENU` deixa de responder. **Retomar automação** volta ao menu.
-6. Em "Ferramentas": **Ocupar por fora o horário** antes de confirmar mostra o conflito; **Falha depois de reservar** seguido de Confirmar e **Reconciliar pendências** mostra a recuperação sem duplicar; **Avançar 1 dia** e repetir mostra a expiração.
+6. Painel **Precisam de atenção** (sinais factuais com data), botão **Cancelar** nas consultas e **Operações pendentes** com **Reconciliar**. No chat, a confirmação da consulta oferece **Remarcar** e **Cancelar consulta** (o cancelamento pede confirmação). A cobrança nunca é alterada.
+7. Em "Ferramentas": **Ocupar por fora o horário** antes de confirmar mostra o conflito; **Falha depois de reservar** seguido de Confirmar e **Reconciliar pendências** mostra a recuperação sem duplicar; **Avançar 1 dia** e repetir mostra a expiração; **Cena: duas pacientes disputam o mesmo horário** mostra uma reserva e um conflito; **Falha depois de cancelar** seguido de confirmar o cancelamento e **Reconciliar pendências** mostra a recuperação.
 
 ## Arquivos
 
@@ -30,10 +31,11 @@ Roteiro de 2 minutos:
 | `whatsapp/cenario.js` | consultório fictício montado (usado por testes e pela demonstração) |
 | `interface/` | servidor local, API fina sobre o núcleo e página (HTML/CSS/JS sem dependências externas) |
 
+| `whatsapp/atencao.js`, `whatsapp/repos-planilha.js` | painel de atenção (D39) e segunda implementação dos repositórios (planilha simulada) |
 | `ponte/meta.js` | (WA01) assinatura `X-Hub-Signature-256`, webhook da Meta -> evento do núcleo, núcleo -> corpo de mensagem da Meta (texto, botões, lista) |
 | `ponte/ponte.js` | (WA02) ponte simulada: assinatura -> normalização -> diário em disco com fsync -> só então 200; processamento e saída separados, recuperáveis e idempotentes |
 
-Testes: `tests/bloco1-nucleo.test.js`, `tests/bloco1-agendamento.test.js`, `tests/bloco1-interface.test.js`, `tests/bloco1-ponte.test.js`.
+Testes: `tests/bloco1-remarcacao.test.js`, `tests/bloco1-atencao.test.js`, `tests/bloco1-adaptador.test.js`, `tests/bloco1-endurecimento.test.js`, `tests/bloco1-nucleo.test.js`, `tests/bloco1-agendamento.test.js`, `tests/bloco1-interface.test.js`, `tests/bloco1-ponte.test.js`.
 
 ## Contrato dos repositórios e adaptador "Google" (item 1, só desenho)
 
@@ -62,4 +64,4 @@ Não há endpoint HTTP: a ponte é uma biblioteca chamada pelos testes (`receber
 
 ## O que falta para a integração real
 
-Persistência durável e fila (WA02/WA09); identidade e API autenticada no Apps Script, propriedade da consulta e escopos (WA03/UI00); vínculo verificado do canal (WA04); conta e número de teste da Meta, assinatura dos webhooks e regras de modelos/janela (WA00/WA01); reconciliação com alterações feitas direto no Google Agenda; autenticação da interface da profissional; adaptador de planilha (caso 12: o preparo de valores `whatsapp/planilha-segura.js` e a interface estão testados; falta o adaptador em si); revisão independente (D43). Remarcação, cancelamento, check-ins e editor alimentar ficam fora do B1.
+Persistência durável e fila (WA02/WA09); identidade e API autenticada no Apps Script, propriedade da consulta e escopos (WA03/UI00); vínculo verificado do canal (WA04); conta e número de teste da Meta, assinatura dos webhooks e regras de modelos/janela (WA00/WA01); reconciliação com alterações feitas direto no Google Agenda; autenticação da interface da profissional; adaptador de planilha (caso 12: o preparo de valores `whatsapp/planilha-segura.js` e a interface estão testados; falta o adaptador em si); revisão independente (D43). Check-ins e editor alimentar ficam fora do B1; remarcar e cancelar foram adicionados depois, só no núcleo local.

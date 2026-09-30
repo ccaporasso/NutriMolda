@@ -308,6 +308,11 @@ function criarNucleo({ verificar, repos, relogio, config = C.CONFIG_TESTE, regis
       const r = await repos.agenda.cancelar(cons, { chave: `prof:${pedido.consultaId}`, consultaId: pedido.consultaId, motivo: 'cancelada_pela_profissional' });
       if (r.estado === 'nao_encontrada') throw new ErroNucleo('NAO_ENCONTRADA');
       if (r.estado === 'passada' || r.estado === 'ja_cancelada') return semEfeito(r.estado === 'passada' ? 'consulta_passada' : 'ja_cancelada');
+      // Mantém a conversa coerente: quem estava "com consulta confirmada" volta ao menu (sem mensagem automática).
+      const conv = await repos.conversas.obter(cons, r.consulta.pacienteCodigo);
+      if (conv && conv.estado === 'consulta_confirmada' && conv.consultaId === r.consulta.id) {
+        await repos.conversas.gravar(cons, r.consulta.pacienteCodigo, { estado: 'menu', consultaId: null, atualizadoEm: relogio.agora() }, conv.versao);
+      }
       log('profissional_cancelar_consulta', { resultado: r.estado });
       return { ok: true, tipo: 'resposta', acao: 'consulta_cancelada', consulta: visaoConsulta(r.consulta), cobranca: 'inalterada', repetido: r.estado === 'existente' };
     });

@@ -12,10 +12,16 @@
     opcao_invalida: 'Opção inexistente: ignorada, nada foi feito.',
     horario_passado: 'Esse horário já passou: nada foi reservado.',
     pedido_incompleto: 'Pedido incompleto: nada foi feito.',
+    sem_consulta: 'Esta paciente não tem consulta para isso: nada foi feito.',
+    consulta_cancelada: 'Essa consulta já foi cancelada: nada foi feito.',
+    mesmo_horario: 'É o mesmo horário da consulta atual: nada foi feito.',
+    limite_de_frequencia: 'Muitas mensagens em pouco tempo: ignorado em silêncio.',
     consulta_mantida_sem_liberacao: 'A consulta foi mantida, mas não há envio automático sem liberação.',
   };
   const ACOES = {
     consulta_confirmada: 'Consulta confirmada.', consulta_ja_confirmada: 'Essa consulta já estava confirmada (nada foi duplicado).',
+    disputa: 'Cena executada: as duas pacientes confirmaram o mesmo horário ao mesmo tempo. Uma ficou com ele; a outra recebeu o aviso de conflito e novas opções (veja no simulador).',
+    consulta_remarcada: 'Consulta remarcada (a antiga ficou cancelada). A cobrança não foi alterada.', consulta_cancelada: 'Consulta cancelada. A cobrança não foi alterada.', aguardando_cancelamento: 'Aguardando a confirmação do cancelamento.',
     conflito: 'Conflito: o horário acabou de ser ocupado. Novas opções foram oferecidas.', encaminhado_humano: 'Encaminhado à nutricionista. A automação está pausada.',
     parado: 'Paciente pediu PARAR: a liberação foi revogada.', sem_horarios: 'Não há horários livres.', ja_tem_consulta: 'Esta paciente já tem consulta.',
   };
@@ -61,6 +67,29 @@
     await carregar();
   }
 
+  function desenharAtencao() {
+    const cont = $('atencao'); cont.textContent = '';
+    const l = estado.dados.atencao || [];
+    if (!l.length) { cont.appendChild(el('p', 'Ninguém precisa de atenção agora.', { class: 'vazio' })); return; }
+    const ul = el('ul');
+    for (const p of l) {
+      const li = el('li'); li.appendChild(el('strong', `${p.nome} (${p.codigo})`));
+      const sub = el('ul'); for (const s of p.sinais) sub.appendChild(el('li', s.texto));
+      li.appendChild(sub); ul.appendChild(li);
+    }
+    cont.appendChild(ul);
+  }
+
+  function desenharPendentes() {
+    const cont = $('pendentes'); cont.textContent = '';
+    const l = estado.dados.operacoesPendentes || [];
+    if (!l.length) { cont.appendChild(el('p', 'Nenhuma operação pendente.', { class: 'vazio' })); return; }
+    const ul = el('ul');
+    for (const o of l) ul.appendChild(el('li', `${o.pacienteCodigo || '—'}: ${o.comando || 'operação'} sem conclusão desde ${o.desdeTexto}`));
+    cont.appendChild(ul);
+    cont.appendChild(botao('Reconciliar pendências', () => agir(() => chamar('POST', '/api/demo/reconciliar'))));
+  }
+
   function desenharPacientes() {
     const cont = $('pacientes'); cont.textContent = ''; cont.setAttribute('aria-busy', 'false');
     const ps = estado.dados.pacientes;
@@ -93,8 +122,9 @@
     t.appendChild(cab);
     for (const c of cs) {
       const tr = el('tr');
-      tr.appendChild(el('td', c.inicioTexto)); tr.appendChild(el('td', c.pacienteNome || c.pacienteCodigo)); tr.appendChild(el('td', c.status));
+      tr.appendChild(el('td', c.inicioTexto)); tr.appendChild(el('td', c.pacienteNome || c.pacienteCodigo)); tr.appendChild(el('td', c.status === 'cancelada' ? `cancelada (${c.motivo === 'remarcada' ? 'remarcada' : 'sem nova data'})` : c.status));
       const td = el('td'); td.appendChild(botao('Abrir detalhes', () => abrirDetalhe(c.id), { 'aria-label': `Abrir detalhes da consulta ${c.id}` }));
+      if (c.status === 'confirmada') td.appendChild(botao('Cancelar', () => agir(() => chamar('POST', '/api/profissional/cancelar-consulta', { consultaId: c.id })), { 'aria-label': `Cancelar a consulta ${c.id}` }));
       tr.appendChild(td); t.appendChild(tr);
     }
     cont.appendChild(t);
@@ -107,7 +137,7 @@
       cont.textContent = '';
       if (!r.ok) { cont.appendChild(el('p', r.mensagem, { class: 'aviso erro' })); return; }
       const c = r.consulta; const dl = el('dl');
-      for (const [k, v] of [['Consulta', c.id], ['Paciente', `${c.pacienteNome || ''} (${c.pacienteCodigo})`], ['Quando', c.inicioTexto], ['Origem da agenda', c.origemAgenda], ['Situação', c.status]]) { dl.appendChild(el('dt', k)); dl.appendChild(el('dd', v)); }
+      for (const [k, v] of [['Consulta', c.id], ['Paciente', `${c.pacienteNome || ''} (${c.pacienteCodigo})`], ['Quando', c.inicioTexto], ['Origem da agenda', c.origemAgenda], ['Situação', c.status + (c.motivo ? ` (${c.motivo})` : '')]]) { dl.appendChild(el('dt', k)); dl.appendChild(el('dd', v)); }
       cont.appendChild(el('h3', 'Detalhes da consulta')); cont.appendChild(dl); cont.focus();
     } catch (e) { cont.textContent = ''; cont.appendChild(el('p', 'Não foi possível abrir os detalhes.', { class: 'aviso erro' })); }
   }
@@ -163,7 +193,7 @@
   async function carregar() {
     try {
       estado.dados = await chamar('GET', '/api/estado');
-      desenharRelogio(); desenharPacientes(); desenharConsultas(); desenharSeletor(); desenharConversa();
+      desenharRelogio(); desenharAtencao(); desenharPacientes(); desenharConsultas(); desenharPendentes(); desenharSeletor(); desenharConversa();
     } catch (e) {
       aviso('Não foi possível carregar a demonstração. Verifique se o servidor local está aberto e tente de novo.', 'erro');
       $('pacientes').setAttribute('aria-busy', 'false');
@@ -182,6 +212,7 @@
     if (tipo === 'reiniciar') { estado.local = {}; return agir(() => chamar('POST', '/api/demo/reiniciar')); }
     if (tipo === 'avancar') return agir(() => chamar('POST', '/api/demo/avancar', { horas: Number(b.dataset.horas) }));
     if (tipo === 'ocupar') return agir(() => chamar('POST', '/api/demo/ocupar', { codigoPaciente: estado.quem }));
+    if (tipo === 'disputa') return agir(async () => { const r = await chamar('POST', '/api/demo/disputa'); return r.ok ? { ok: true, tipo: 'resposta', acao: 'disputa' } : r; });
     if (tipo === 'falha') return agir(() => chamar('POST', '/api/demo/falha', { ponto: b.dataset.ponto }));
     return agir(() => chamar('POST', '/api/demo/reconciliar'));
   }));

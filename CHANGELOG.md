@@ -2,6 +2,8 @@
 
 ## [não lançado]
 
+- 2026-09-30: item 4 pós-B1 (só local): a demonstração ganha painel "Precisam de atenção", cancelamento pela profissional, operações pendentes com reconciliação, cena guiada de disputa entre duas pacientes e falha depois de cancelar. Conversa da paciente acompanha o cancelamento feito pela profissional. Conferido no Chromium sem erro de console.
+
 - 2026-09-30: item 2 pós-B1 (WA11, só local): remarcar (troca atômica: o novo entra e o antigo sai no mesmo passo) e cancelar (com confirmação; profissional também cancela pelo painel) no núcleo e nos dois repositórios, com propriedade da consulta, conflito, repetição, resultado incerto e reconciliação. Cobrança não é tocada (`cobranca: 'inalterada'`). Testes em `tests/bloco1-remarcacao.test.js` e no contrato dos repositórios.
 
 - 2026-09-30: item 3 pós-B1 (WA07/D39, só local): `listarAtencao` e `prototipo/whatsapp/atencao.js` — painel "precisam de atenção" com sinais factuais e data (atendimento humano, sem resposta, sem retorno marcado, liberação a vencer/expirada), limites configuráveis, sem previsão de abandono nem dado de conversa. Testes em `tests/bloco1-atencao.test.js`.
