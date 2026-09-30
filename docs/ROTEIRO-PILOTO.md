@@ -13,7 +13,7 @@ Como anotar: na coluna "Resultado", escreva **OK** ou descreva o que aconteceu d
 | 0.1 | `node --test` na pasta do projeto | Tudo passa, com 0 falhas | |
 | 0.2 | Conta de TESTE com verificação em dois fatores; planilha nova; **Extensões → Apps Script**; copiar o ID do script para o `.clasp.json` (passos em `docs/PRIMEIROS-PASSOS.md`) | `.clasp.json` fica fora do Git | |
 | 0.3 | Com o seu "ok", `clasp push` **para o projeto de TESTE** (confira `clasp --help`) | Recarregando a planilha, aparece o menu **Kit do Consultório** | |
-| 0.4 | Menu **Configuração → Instalar/atualizar planilha** e autorizar todas as permissões | A tela lista 6 permissões: planilha atual, e-mail, agenda (eventos), gatilhos, Docs, Drive (só arquivos do kit). Nenhuma de "todo o Drive" nem "todas as planilhas" | |
+| 0.4 | Menu **Configuração → Instalar/atualizar planilha** e autorizar todas as permissões | A tela lista 6 permissões: planilha atual, e-mail, agenda (eventos), gatilhos, Docs, Drive (só arquivos do kit; o serviço avançado Drive v3 aparece em Serviços do projeto). Nenhuma de "todo o Drive" nem "todas as planilhas" | |
 | 0.5 | Olhar as abas | 7 abas: Configurações, Pacientes, Consultas, Pagamentos, Pacotes, Despesas, Registro. Cabeçalhos em negrito e protegidos (o Google avisa ao editar) | |
 | 0.6 | Rodar **Instalar/atualizar planilha** de novo | Nada duplicado: mesmas abas, mesmas 13 chaves | |
 | 0.7 | Na agenda de teste (criada por você, **secundária**), copiar o ID (termina em `@group.calendar.google.com`) para `calendario_id` | ID gravado como texto | |
@@ -68,7 +68,7 @@ Como anotar: na coluna "Resultado", escreva **OK** ou descreva o que aconteceu d
 |---|---|---|---|
 | 4.1 | **Configuração → Criar modelo e pasta de recibos** | Criados o Docs "Modelo de recibo - Kit do Consultório" e a pasta "Recibos - Kit do Consultório"; os dois ids aparecem em Configurações | |
 | 4.2 | Repetir 4.1 | "Já estão configurados. Nada foi criado" | |
-| 4.3 | Na cobrança paga em Pix (P9001), preencher `pagador_nome` "Maria Souza Teste" (inventado) e `pagador_cpf` `52998224725` (CPF de exemplo). **Pagamento → Gerar recibo em PDF** | Janela com o link. **Este é o teste mais arriscado do lote (D20):** se o Google disser "arquivo não encontrado" ou pedir permissão maior, `drive.file` não basta: pare e me avise | |
+| 4.3 | Na cobrança paga em Pix (P9001), preencher `pagador_nome` "Maria Souza Teste" (inventado) e `pagador_cpf` `52998224725` (CPF de exemplo). **Pagamento → Gerar recibo em PDF** | Janela com o link. **Este é o teste mais arriscado do lote (D20, serviço avançado Drive v3):** se o Google disser "arquivo não encontrado" ou pedir permissão maior, `drive.file` não basta: pare e me avise | |
 | 4.4 | Abrir o PDF | Traz: número PG..., quem recebeu, CPF `529.982.247-25`, valor `R$ 150,00`, descrição com a data da consulta, forma Pix, data do pagamento, nome e CRN. Nenhum `{{campo}}` sobrando. Acentos corretos | |
 | 4.5 | Conferir o nome do arquivo e a pasta | `Recibo-PG00000X-P9001.pdf`; **sem nome de pessoa**; sem arquivo `rascunho-...` fora da lixeira | |
 | 4.6 | Repetir 4.3 na mesma linha | "Já tem recibo"; nenhum PDF novo. Apagar o link em `link_recibo` libera um novo (teste só se quiser) | |

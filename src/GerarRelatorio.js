@@ -14,12 +14,12 @@ function gerarRelatorioMensal(mes) {
 
   let csvSalvo = false;
   if (config.id_pasta_recibos) {
-    const pasta = DriveApp.getFolderById(config.id_pasta_recibos);
+    const idPasta = validarIdDrive_(config.id_pasta_recibos, 'id_pasta_recibos');
     const nome = nomeArquivoRelatorio(mes);
-    const existentes = pasta.getFilesByName(nome);
-    const conteudo = montarCsvRelatorio(resultado);
-    if (existentes.hasNext()) existentes.next().setContent(conteudo);
-    else pasta.createFile(nome, conteudo, 'text/csv');
+    const blob = Utilities.newBlob(montarCsvRelatorio(resultado), 'text/csv', nome);
+    const existente = driveAcharNaPasta(idPasta, nome);
+    if (existente) driveSubstituirConteudo(existente, blob);
+    else driveCriarArquivo(idPasta, nome, 'text/csv', blob);
     csvSalvo = true;
   } else {
     resultado.avisos.push('O CSV não foi salvo: "id_pasta_recibos" está em branco (use "Criar modelo e pasta de recibos").');

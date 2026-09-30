@@ -1,5 +1,5 @@
 // Recibo em PDF (chamadas ao Google). A lógica está em Recibo.js.
-// Escopos: documents (preencher o modelo) e drive.file (copiar e salvar PDF). Com drive.file o script só enxerga arquivos
+// Escopos: documents (preencher o modelo e gerar o PDF) e drive.file (copiar o modelo e salvar o PDF, pelo serviço avançado Drive, ver DriveAvancado.js). Com drive.file o script só enxerga arquivos
 // que ele mesmo criou: por isso o menu "Criar modelo e pasta de recibos" cria os dois e grava os ids em Configurações.
 // Fluxo: copia o modelo -> troca os campos -> exporta PDF na pasta -> apaga a cópia -> grava o link no pagamento.
 
@@ -29,9 +29,10 @@ function gerarRecibo(numeroLinha) {
     if (jaTem) return { jaTinha: true };
     if (erros.length > 0) throw erroDeUso_(erros.join('\n'));
 
-    const pasta = DriveApp.getFolderById(config.id_pasta_recibos);
-    copia = DriveApp.getFileById(config.id_modelo_recibo).makeCopy(`rascunho-${nomeArquivoRecibo(pagamento).replace('.pdf', '')}`, pasta);
-    const documento = DocumentApp.openById(copia.getId());
+    const idPasta = validarIdDrive_(config.id_pasta_recibos, 'id_pasta_recibos');
+    const idModelo = validarIdDrive_(config.id_modelo_recibo, 'id_modelo_recibo');
+    copia = driveCopiar(idModelo, `rascunho-${nomeArquivoRecibo(pagamento).replace('.pdf', '')}`, idPasta);
+    const documento = DocumentApp.openById(copia);
     for (const [campo, valor] of Object.entries(dados.campos)) {
       const padrao = escaparPadrao_(`{{${campo}}}`);
       documento.getBody().replaceText(padrao, valor);
@@ -44,14 +45,14 @@ function gerarRecibo(numeroLinha) {
     }
     documento.saveAndClose();
 
-    const pdf = copia.getAs('application/pdf').setName(dados.nomeArquivo);
-    const arquivo = pasta.createFile(pdf);
-    const link = arquivo.getUrl();
+    // O PDF sai do próprio Docs (escopo documents); só a gravação na pasta passa pelo Drive.
+    const pdf = DocumentApp.openById(copia).getAs('application/pdf').setName(dados.nomeArquivo);
+    const link = driveCriarArquivo(idPasta, dados.nomeArquivo, 'application/pdf', pdf).url;
     gravarCelula('Pagamentos', numeroLinha, 'link_recibo', link);
     registrar('recibo', 'info', `Recibo gerado para o pagamento ${pagamento.id}.`);
     return { link };
   } finally {
-    if (copia) copia.setTrashed(true); // a cópia de trabalho nunca fica no Drive
+    if (copia) driveMandarParaLixeira(copia); // a cópia de trabalho nunca fica no Drive
     trava.releaseLock();
   }
 }
@@ -91,7 +92,7 @@ function criarModeloEPastaDeRecibos() {
       feito.push('modelo do recibo (Google Docs)');
     }
     if (!cfg.id_pasta_recibos) {
-      atualizarConfiguracao_('id_pasta_recibos', DriveApp.createFolder('Recibos - Kit do Consultório').getId());
+      atualizarConfiguracao_('id_pasta_recibos', driveCriarPasta('Recibos - Kit do Consultório'));
       feito.push('pasta dos recibos (Drive)');
     }
     SpreadsheetApp.getUi().alert(feito.length > 0

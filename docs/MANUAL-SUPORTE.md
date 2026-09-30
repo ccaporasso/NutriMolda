@@ -54,7 +54,7 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 | `calendar.events.readonly` | **Só no pacote de produção**: ler eventos da agenda (D23; a validar no Google) |
 | `script.scriptapp` | Gatilho de hora em hora |
 | `documents` | Preencher o modelo do recibo |
-| `drive.file` | Só arquivos e pastas criados pelo kit (recibos, CSV) |
+| `drive.file` | Só arquivos e pastas criados pelo kit (recibos, CSV), pelo serviço avançado Drive v3 |
 
 ## 6. O que é dado pessoal aqui
 

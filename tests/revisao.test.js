@@ -48,7 +48,7 @@ test('todo escopo declarado é usado por alguma chamada do código (nada de perm
     'calendar.events': /Calendar\.Events\./,
     'script.scriptapp': /ScriptApp\./,
     documents: /DocumentApp\./,
-    'drive.file': /DriveApp\./, // atenção: só prova que o serviço é usado; NÃO prova que o escopo basta (ver abaixo)
+    'drive.file': /Drive\.Files\./, // só prova que o serviço é usado; o escopo só se confirma no Google (ver abaixo)
   };
   for (const escopo of manifesto.oauthScopes) {
     const nome = escopo.split('/').pop();
@@ -136,15 +136,16 @@ test('dúvidas para a nutricionista: linguagem de consultório, sem dado real e 
   assert.doesNotMatch(d, /clasp|Apps Script|escopo|vm\.|node --test/i);
 });
 
-// Achado N8-01 da revisão automática: existir DriveApp no código e drive.file no manifesto NÃO prova que o escopo
-// basta. A documentação do DriveApp lista `drive` para copiar arquivo e criar pasta. Este teste não finge validar
-// o escopo: só garante que o risco continua escrito e que nenhum escopo amplo entrou sem decisão do Caio.
-test('DriveApp com drive.file é um risco aberto e documentado; nenhum escopo amplo de Drive foi declarado', () => {
-  assert.match(todoSrc, /DriveApp\./);
+// Achado N8-01 (R08): DriveApp exige `drive`. Decisão do Caio: serviço avançado Drive v3 com `drive.file`.
+// Este teste não finge validar o escopo no Google: garante que DriveApp não voltou e que nenhum escopo amplo entrou.
+test('Drive só pelo serviço avançado v3 com drive.file; DriveApp e escopo drive completo não voltam', () => {
+  assert.doesNotMatch(todoSrc.replace(/^\s*\/\/.*$/gm, ''), /DriveApp/);
+  assert.match(todoSrc, /Drive\.Files\./);
   assert.ok(manifesto.oauthScopes.some((e) => e.endsWith('/drive.file')));
   assert.ok(!manifesto.oauthScopes.some((e) => /\/drive$/.test(e)), 'escopo drive completo declarado sem decisão do Caio');
-  assert.match(ler('docs', 'DECISOES.md'), /Risco aberto \(revisão automática R08\/N8-01\)/);
-  assert.match(ler('docs', 'VALIDACAO-NO-GOOGLE.md'), /risco conhecido: a documentação do `DriveApp`/);
+  assert.ok(manifesto.dependencies.enabledAdvancedServices.some((s) => s.userSymbol === 'Drive' && s.version === 'v3'));
+  assert.match(ler('docs', 'DECISOES.md'), /serviço avançado Drive \(API v3\)[^|]*ainda precisa de validação no Google/);
+  assert.match(ler('docs', 'VALIDACAO-NO-GOOGLE.md'), /serviço avançado Drive v3/);
 });
 
 test('D23: a documentação não manda ampliar escopo por conta própria', () => {

@@ -3,6 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const R = require('../src/Recibo.js');
 const { criarAmbiente } = require('./apoio/simulacao.js');
+const { criarDriveSimulado } = require('./apoio/drive.js');
 
 const config = { nome_profissional: 'Dra. Teste Exemplo', crn: 'CRN-0 00000', id_modelo_recibo: 'modelo123', id_pasta_recibos: 'pasta123' };
 const pagamento = {
@@ -76,23 +77,11 @@ test('cifrão e barra do nome saem, para não virarem comando na troca de texto 
 // ---------- Google simulado ----------
 
 function ambienteRecibo({ docsExtra } = {}) {
-  const corpoTexto = [];
-  const arquivos = new Map();
-  const pasta = { id: 'pasta123', criados: [], createFile(blob) { const a = arquivoNovo(blob.nome, blob); pasta.criados.push(a); return a; } };
-  function arquivoNovo(nome, blob) {
-    const a = { id: `arq${arquivos.size + 1}`, nome, lixeira: false, blob, getId: () => a.id, getUrl: () => `https://exemplo.invalid/${a.id}`, setTrashed(v) { a.lixeira = v; return a; }, getName: () => a.nome };
-    a.getAs = (tipo) => ({ tipo, nome: a.nome, setName(n) { this.nome = n; return this; } });
-    a.makeCopy = (n) => arquivoNovo(n);
-    arquivos.set(a.id, a);
-    return a;
-  }
-  const modelo = arquivoNovo('modelo');
-  modelo.id = 'modelo123'; arquivos.set('modelo123', modelo);
-  const corpo = {
-    texto: R.linhasModeloRecibo().join('\n') + (docsExtra || ''),
-    replaceText(padrao, valor) { this.texto = this.texto.replace(new RegExp(padrao, 'g'), valor); return this; },
-    getText() { return this.texto; }, appendParagraph(t) { corpoTexto.push(t); return this; },
-  };
+  const drive = criarDriveSimulado();
+  if (docsExtra) drive.arquivos.get('modelo123').texto += docsExtra;
+  const { arquivos } = drive;
+  const pasta = { get criados() { return drive.pdfsNaPasta(); } };
+  const corpo = { get texto() { return arquivos.get('modelo123').texto; } };
   const amb = criarAmbiente({
     configuracoes: [
       ['nome_profissional', 'Dra. Teste Exemplo'], ['crn', 'CRN-0 00000'], ['valor_primeira_consulta_centavos', '15000'], ['valor_retorno_centavos', '10000'],
@@ -101,16 +90,13 @@ function ambienteRecibo({ docsExtra } = {}) {
       ['id_modelo_recibo', 'modelo123'], ['id_pasta_recibos', 'pasta123'],
     ],
     selecao: { aba: 'Pagamentos', linhas: [2] },
-    google: {
-      DriveApp: { getFileById: (id) => arquivos.get(id), getFolderById: () => pasta },
-      DocumentApp: { openById: () => ({ getBody: () => corpo, getHeader: () => null, getFooter: () => null, saveAndClose() {} }) },
-    },
+    google: { Drive: drive.Drive, DocumentApp: drive.DocumentApp },
   });
   amb.abas.get('Pacientes').linhas.push(['P9001', 'Ana', 'S.', '5511900000001', 'ana.teste@exemplo.invalid', 'leve', '', true]);
   amb.abas.get('Consultas').linhas.push(['e1', '2026-09-28', '09:00', 'primeira', 'P9001', 'realizada', '']);
   amb.abas.get('Pagamentos').linhas.push(['PG000001', 'e1', 'P9001', 'Maria Souza Teste', '52998224725', 15000, 'pix', 'pago', '2026-09-30', '']);
-  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js', 'LeitorAbas.js', 'Recibo.js', 'GeradorRecibo.js');
-  return { amb, corpo, pasta, arquivos };
+  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js', 'LeitorAbas.js', 'Recibo.js', 'DriveAvancado.js', 'GeradorRecibo.js');
+  return { amb, corpo, pasta, arquivos, drive };
 }
 
 test('Google simulado: gera o PDF na pasta, apaga a cópia e grava o link', () => {
@@ -141,22 +127,33 @@ test('Google simulado: recibo recusado mostra os problemas em português', () =>
   assert.equal(amb.emails.length, 0); // problema de uso não manda e-mail de alerta
 });
 
-test('Google simulado: cria modelo e pasta só quando os ids estão em branco', () => {
-  const criados = [];
-  const { amb } = ambienteRecibo();
+test('Google simulado: cria modelo e pasta só quando os ids estão em branco, sem usar DriveApp', () => {
+  const { amb, drive } = ambienteRecibo();
   const linhasConfig = amb.abas.get('Configurações').linhas;
   for (const l of linhasConfig) if (l[0] === 'id_modelo_recibo' || l[0] === 'id_pasta_recibos') l[1] = '';
-  const paragrafos = [];
-  amb.contexto.DocumentApp.create = () => ({
-    getBody: () => ({ clear() {}, appendParagraph: (t) => { paragrafos.push(t); } }), saveAndClose() {}, getId: () => 'novoDoc',
-  });
-  amb.contexto.DriveApp.createFolder = (n) => { criados.push(n); return { getId: () => 'novaPasta' }; };
+  const antes = drive.arquivos.size;
   amb.rodar('criarModeloEPastaDeRecibos()');
   const valor = (k) => linhasConfig.find((l) => l[0] === k)[1];
-  assert.equal(valor('id_modelo_recibo'), 'novoDoc');
-  assert.equal(valor('id_pasta_recibos'), 'novaPasta');
-  assert.ok(paragrafos.some((p) => p.includes('{{pagador}}')));
+  assert.ok(drive.arquivos.has(valor('id_modelo_recibo')), 'o id do modelo gravado não existe no Drive');
+  assert.ok(drive.arquivos.get(valor('id_pasta_recibos')).ehPasta, 'o id da pasta gravado não é de uma pasta');
+  assert.match(drive.arquivos.get(valor('id_modelo_recibo')).texto, /\{\{pagador\}\}/);
+  assert.equal(drive.arquivos.size, antes + 2);
   amb.rodar('criarModeloEPastaDeRecibos()'); // segunda vez: não cria nada
-  assert.equal(criados.length, 1);
+  assert.equal(drive.arquivos.size, antes + 2);
   assert.match(amb.alertas.at(-1), /já estão configurados/);
+});
+
+test('Google simulado: o recibo só usa o serviço avançado Drive (copiar, criar, lixeira), nunca DriveApp', () => {
+  const { amb, drive } = ambienteRecibo();
+  assert.equal(amb.contexto.DriveApp, undefined);
+  amb.rodar('gerarReciboDaLinhaSelecionada()');
+  assert.deepEqual([...new Set(drive.chamadas)].sort(), ['Drive.Files.copy', 'Drive.Files.create', 'Drive.Files.update']);
+});
+
+test('Google simulado: id de pasta ou de modelo com caractere estranho é recusado antes de qualquer chamada ao Drive', () => {
+  const { amb, drive } = ambienteRecibo();
+  amb.abas.get('Configurações').linhas.find((l) => l[0] === 'id_pasta_recibos')[1] = "pasta' or 'x' in parents";
+  amb.rodar('gerarReciboDaLinhaSelecionada()');
+  assert.match(amb.alertas.at(-1), /id_pasta_recibos/);
+  assert.equal(drive.chamadas.length, 0);
 });

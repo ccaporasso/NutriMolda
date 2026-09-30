@@ -14,7 +14,7 @@ const CONFIG_COMPLETA = [
 
 const ARQUIVOS_SRC = ['Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js',
   'LeitorAbas.js', 'Agenda.js', 'SincronizarAgenda.js', 'Pagamentos.js', 'GerarAReceber.js', 'Pix.js', 'Acoes.js', 'Recibo.js',
-  'GeradorRecibo.js', 'Relatorio.js', 'GerarRelatorio.js', 'Instalador.js', 'Menu.js'];
+  'DriveAvancado.js', 'GeradorRecibo.js', 'Relatorio.js', 'GerarRelatorio.js', 'Instalador.js', 'Menu.js'];
 
 const HOJE = { ano: 2026, mes: 9, dia: 30 };
 
@@ -31,7 +31,7 @@ function criarConsultorio({ configuracoes = CONFIG_COMPLETA, comDrive = true, op
   const eventos = D.montarEventosTeste(HOJE).map(eventoDaAgenda);
   const amb = criarAmbiente({
     configuracoes, eventos, resposta: '2026-09', selecao: { aba: 'Consultas', linhas: [] },
-    google: comDrive ? { DriveApp: drive.DriveApp, DocumentApp: drive.DocumentApp } : {}, ...opcoes,
+    google: comDrive ? { Drive: drive.Drive, DocumentApp: drive.DocumentApp } : {}, ...opcoes,
   });
   for (const p of D.PACIENTES_TESTE) amb.abas.get('Pacientes').linhas.push(D.linhaPaciente(p));
   amb.carregar(...ARQUIVOS_SRC);
