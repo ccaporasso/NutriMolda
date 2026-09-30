@@ -1,8 +1,10 @@
 # O que está implementado e o que depende de validação no Google
 
-Os testes automáticos (`node --test`) rodam o código contra um Google **simulado** (`tests/apoio/simulacao.js`). Eles provam a lógica, mas **não** provam que o Google se comporta igual. Cada item abaixo precisa ser conferido na planilha e na agenda de TESTE antes de qualquer uso real. Nada disto foi instalado nem enviado com `clasp`.
+Os testes automáticos (`node --test`) rodam o código contra um Google **simulado** (`tests/apoio/simulacao.js`). Eles provam a lógica, mas **não** provam que o Google se comporta igual. Cada item abaixo precisa ser conferido na planilha e na agenda de TESTE antes de qualquer uso real. O pacote foi instalado manualmente apenas na cópia descartável de teste; não foi usado `clasp` nem feita instalação na cliente.
 
-Legenda: **Implementado** = código e testes prontos · **Validar no Google** = só você consegue conferir, na conta de teste.
+Legenda: **Implementado** = código e testes prontos · **Validar no Google** = roteiro de conferência na conta de teste.
+
+**Atualização de 30/09/2026:** os resultados observados, a correção D32 e as pendências atuais estão em [RESULTADOS-GOOGLE-2026-09-30.md](RESULTADOS-GOOGLE-2026-09-30.md). As listas abaixo continuam sendo o roteiro completo, não uma declaração de que todos os itens estão pendentes ou aprovados. Não repetir cenários aprovados sem nova falha ou mudança relevante.
 
 ## T05 — Sincronizar agenda
 
@@ -48,10 +50,10 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 **Validar no Google (o mais arriscado do lote):**
 1. **Escopo `drive.file` (D20/D32):** confirme em Serviços que o serviço avançado Drive v3 está ativado e autorizado. O kit cria agora o modelo por `Drive.Files.create` e o preenche pelo Docs. Rode "Criar modelo e pasta de recibos", preencha um pagamento pago (Pix, `pagador_nome`, `data_pagamento` AAAA-MM-DD) e use "Gerar recibo em PDF" (submenu Pagamento). O PDF deve aparecer na pasta. “Arquivo não encontrado” exige investigar o arquivo e seu acesso pelo app; por si só não demonstra que é necessário ampliar o escopo. Confira também o CSV do relatório do mês (mesma pasta).
 
-   **Reteste da falha observada em 979b202, somente na cópia descartável:** instale a correção D32; anote/preserve o id e o conteúdo do modelo antigo; esvazie apenas `id_modelo_recibo`, mantendo `id_pasta_recibos`. Rode "Criar modelo e pasta de recibos" e repita: deve criar um modelo novo na primeira vez e nada na segunda. Não se espera que o código substitua automaticamente um modelo já configurado. Gere os recibos dos pagamentos fictícios de 15000 e 123456 centavos, confira `R$ 150,00`, `R$ 1.234,56`, campos substituídos e aparência. Repita cada emissão: mesmo link e um PDF por pagamento, nenhum rascunho fora da lixeira. Até passar no Google, a correção permanece candidata.
+   **Reteste da falha observada em 979b202, somente na cópia descartável:** instale a correção D32; anote/preserve o id e o conteúdo do modelo antigo; esvazie apenas `id_modelo_recibo`, mantendo `id_pasta_recibos`. Rode "Criar modelo e pasta de recibos" e repita: deve criar um modelo novo na primeira vez e nada na segunda. Não se espera que o código substitua automaticamente um modelo já configurado. Gere os recibos dos pagamentos fictícios de 15000 e 123456 centavos, confira `R$ 150,00`, `R$ 1.234,56`, campos substituídos e aparência. Repita cada emissão: mesmo link e um PDF por pagamento, nenhum rascunho fora da lixeira. O reteste descrito passou na cópia descartável; veja os resultados consolidados.
 2. Confira no PDF: nome e CRN, pagador, CPF (se preenchido), valor, data, descrição, forma. Sem CPF, a linha some.
 3. Confira que o nome do arquivo é `Recibo-PG000001-P9001.pdf` e que não sobrou o arquivo `rascunho-...` fora da lixeira.
-4. A troca de campos no Docs (`replaceText`) foi testada só em simulação; confira que valores com acento e vírgula (R$ 1.234,56) saem certos.
+4. A troca literal de campos no Docs (`findText`/`deleteText`/`insertText`) foi conferida em PDFs reais com acentos e R$ 150,00/R$ 1.234,56, inclusive campos no cabeçalho; novos modelos exigem sua própria conferência.
 5. O visual do PDF (fonte, margens) é do modelo: ajuste no Docs; os campos `{{...}}` precisam ficar.
 6. Rodar de novo na mesma linha não gera outro PDF; apagar o link em `link_recibo` libera um novo.
 
