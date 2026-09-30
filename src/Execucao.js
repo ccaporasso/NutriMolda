@@ -15,3 +15,14 @@ function executarNoMenu_(modulo, funcao) {
     return null;
   }
 }
+
+// Trava para operações que gravam na planilha: duas ao mesmo tempo (menu e gatilho) não se atropelam.
+function comTrava_(funcao) {
+  const trava = LockService.getScriptLock();
+  if (!trava.tryLock(30000)) throw erroDeUso_('Outra operação está em andamento. Tente de novo em um minuto.');
+  try {
+    return funcao();
+  } finally {
+    trava.releaseLock();
+  }
+}

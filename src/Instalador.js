@@ -3,23 +3,6 @@
 
 const DESCRICAO_PROTECAO = 'Kit do Consultório: cabeçalho';
 
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('Kit do Consultório')
-    .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
-    .addItem('Sincronizar agenda', 'sincronizarAgendaPeloMenu')
-    .addItem('Ativar sincronização automática', 'ativarSincronizacaoAutomatica')
-    .addItem('Gerar valores a receber', 'gerarAReceberPeloMenu')
-    .addItem('Gerar recibo da linha selecionada', 'gerarReciboDaLinhaSelecionada')
-    .addItem('Criar modelo e pasta de recibos', 'criarModeloEPastaDeRecibos')
-    .addItem('Relatório do mês (aba e CSV)', 'gerarRelatorioDoMes')
-    .addItem('Testar alerta de falha', 'testarAlertaDeFalha')
-    .addSeparator()
-    .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')
-    .addItem('TESTE: apagar dados fictícios', 'apagarDadosDeTeste')
-    .addToUi();
-}
-
 function instalarPlanilha() {
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
   const plano = planejarInstalacao(lerEstadoAtual_(planilha));

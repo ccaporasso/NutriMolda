@@ -3,7 +3,7 @@
 
 function gerarAReceber() {
   const trava = LockService.getScriptLock();
-  if (!trava.tryLock(30000)) throw new Error('Outra operação está em andamento. Tente de novo em um minuto.');
+  if (!trava.tryLock(30000)) throw erroDeUso_('Outra operação está em andamento. Tente de novo em um minuto.');
   try {
     const config = lerConfiguracoes().config;
     const plano = planejarAReceber({
@@ -21,6 +21,8 @@ function gerarAReceber() {
 
 // Item do menu.
 function gerarAReceberPeloMenu() {
-  const plano = gerarAReceber();
-  SpreadsheetApp.getUi().alert('Valores a receber', resumirAReceber(plano), SpreadsheetApp.getUi().ButtonSet.OK);
+  executarNoMenu_('pagamentos', () => {
+    const plano = gerarAReceber();
+    SpreadsheetApp.getUi().alert('Valores a receber', resumirAReceber(plano), SpreadsheetApp.getUi().ButtonSet.OK);
+  });
 }

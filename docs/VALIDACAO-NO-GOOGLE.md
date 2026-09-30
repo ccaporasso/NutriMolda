@@ -48,3 +48,17 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 3. Rodar duas vezes no mesmo mês não cria segundo arquivo nem segunda aba.
 4. **Em aberto (D21):** venda de pacote no relatório.
 
+## T08 — Menu da planilha
+
+**Implementado:** menu completo (sincronizar, valores a receber, pagamento, consulta, relatório, configuração, teste), ações por linha selecionada, mensagens em português, erros inesperados no Registro e e-mail.
+
+**Validar no Google:**
+1. Feche e abra a planilha: o menu "Kit do Consultório" aparece com os submenus. (Só depois de o código ser enviado à conta de TESTE, com a sua confirmação.)
+2. Clique numa linha de Pagamentos e use "Marcar como pago (Pix)": a linha vira `pago`, forma `pix`, data de hoje. Selecione várias linhas (arrastando) e repita.
+3. Clique numa linha e use "Gerar Pix copia e cola": o texto aparece na janela. **Escaneie/cole num app de banco sem pagar** e confira valor e nome do recebedor (é a validação da T06).
+4. A janela de alerta tem tamanho limitado: confirme que o texto do Pix aparece inteiro e dá para selecionar e copiar.
+5. Cortesia pede confirmação; consulta de pacote gasta uma consulta na aba Pacotes.
+6. Marcar consulta como realizada ou faltou funciona em Consultas.
+7. Usar um item na aba errada mostra a mensagem "Abra a aba ..." e não gera e-mail de alerta.
+8. Na primeira execução, o Google pede a autorização de todos os escopos declarados (planilha, e-mail, agenda, gatilhos, Docs, Drive).
+
