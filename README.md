@@ -1,10 +1,12 @@
 # Kit do Consultório
 
-Solução para consultórios de nutrição que roda **dentro da conta Google de cada nutricionista**: Agenda, Planilhas, Formulários e Apps Script. Não existe servidor próprio.
+Solução configurável para consultórios de nutrição, com o **WhatsApp oficial como canal do paciente** e uma **interface própria para a nutricionista**. A direção do MVP é facilitar agendamento e acompanhamento, mostrando fatos sobre pacientes que precisam de atenção. Planilhas, Agenda e Apps Script formam a base inicial; a integração com a Meta exige uma ponte com tratamento mínimo de dados e persistência definida. Desenho em [WhatsApp: ponte e base Google](docs/WHATSAPP-PONTE-COFRE.md) (planejado, não implementado).
 
 **Estado:** base e financeiro testados nos cenários descritos em [Resultados no Google](docs/RESULTADOS-GOOGLE-2026-09-30.md). **Somente dados fictícios; sem liberação para clientes.**
 
-**Direção aprovada para o MVP:** a nutricionista usará uma interface gráfica própria; Planilhas, Agenda e Drive ficarão por trás dela. Essa interface ainda não foi implementada. O uso atual pelos menus da planilha é o caminho técnico validado. Consulte [MVP: interface sobre a base Google](docs/MVP-INTERFACE-GOOGLE.md) e [Tarefas](docs/TAREFAS.md).
+**Direção aprovada para o MVP:** WhatsApp e interface própria evoluem sobre o mesmo contrato (D42). Primeira entrega: liberar paciente → agendar → visualizar consulta → encaminhar ao atendimento humano. Remarcação, cancelamento e check-ins vêm em incrementos posteriores. O financeiro validado é complemento (D40). O uso atual pelos menus da planilha é o caminho técnico validado; a nova jornada ainda não foi construída. Consulte [MVP: interface sobre a base Google](docs/MVP-INTERFACE-GOOGLE.md) e [Tarefas](docs/TAREFAS.md).
+
+**Próximo trabalho do Claude:** [bloco B1 — núcleo testável e interface local](docs/CLAUDE-BLOCO-1.md), sem depender de login, hospedagem ou credenciais da Meta. [Prompt de execução](PROMPT-CLAUDE-CODE.md).
 
 ## Estrutura
 
@@ -24,6 +26,6 @@ Solução para consultórios de nutrição que roda **dentro da conta Google de 
 
 ## Por onde começar
 
-1. Leia `docs/PRIMEIROS-PASSOS.md` e faça a parte manual.
-2. Abra o Claude Code nesta pasta e cole o conteúdo de `PROMPT-CLAUDE-CODE.md`.
-3. Siga `docs/TAREFAS.md`, uma tarefa por vez.
+1. Atualize sua cópia a partir de `main`, preservando trabalho local existente.
+2. Abra o Claude Code no repositório e use `PROMPT-CLAUDE-CODE.md`; ele aponta para B1 e seus critérios de aceite.
+3. Siga os incrementos do bloco e registre resultados. `docs/PRIMEIROS-PASSOS.md` continua sendo o guia de instalação futura; não é pré-requisito do trabalho local.
