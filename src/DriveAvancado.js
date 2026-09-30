@@ -5,6 +5,13 @@
 // Ainda precisa ser validado no Google (docs/VALIDACAO-NO-GOOGLE.md).
 
 const MIME_PASTA_DRIVE = 'application/vnd.google-apps.folder';
+const MIME_DOCUMENTO_DRIVE = 'application/vnd.google-apps.document';
+
+// Cria o modelo pelo mesmo app da API Drive que depois o copia com drive.file.
+// DocumentApp fica responsável por preencher o Docs, não por criar o arquivo.
+function driveCriarDocumento(nome) {
+  return Drive.Files.create({ name: nome, mimeType: MIME_DOCUMENTO_DRIVE }, null, { fields: 'id' }).id;
+}
 
 // Id de arquivo ou pasta do Drive: só letras, números, hífen e sublinhado. Vira parte de uma consulta (q), então
 // qualquer outro caractere (aspas, por exemplo) é recusado em vez de escapado.
