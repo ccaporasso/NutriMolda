@@ -12,6 +12,7 @@ function onOpen() {
     .addItem('Gerar valores a receber', 'gerarAReceberPeloMenu')
     .addItem('Gerar recibo da linha selecionada', 'gerarReciboDaLinhaSelecionada')
     .addItem('Criar modelo e pasta de recibos', 'criarModeloEPastaDeRecibos')
+    .addItem('Relatório do mês (aba e CSV)', 'gerarRelatorioDoMes')
     .addItem('Testar alerta de falha', 'testarAlertaDeFalha')
     .addSeparator()
     .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')

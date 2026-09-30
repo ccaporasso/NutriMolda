@@ -38,3 +38,13 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 5. O visual do PDF (fonte, margens) é do modelo: ajuste no Docs; os campos `{{...}}` precisam ficar.
 6. Rodar de novo na mesma linha não gera outro PDF; apagar o link em `link_recibo` libera um novo.
 
+## T10 — Relatório mensal e CSV
+
+**Implementado:** consolidação por pagador, conferência dos totais (recusa sair se não baterem), aba refeita a cada vez, CSV atualizado no mesmo arquivo, nomes de arquivo sem nome de pessoa.
+
+**Validar no Google:**
+1. Com pagamentos de teste marcados como pagos no mês, use "Relatório do mês" e confira a aba "Relatório AAAA-MM" contra a soma feita à mão.
+2. Abra o CSV no Excel ou Planilhas em português: acentos corretos, colunas separadas, valores com vírgula ("150,00"). Peça à contadora para abrir um exemplo fictício e dizer se o formato serve.
+3. Rodar duas vezes no mesmo mês não cria segundo arquivo nem segunda aba.
+4. **Em aberto (D21):** venda de pacote no relatório.
+
