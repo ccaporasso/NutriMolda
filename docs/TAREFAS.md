@@ -10,9 +10,9 @@ Escopo definido em [CLAUDE-BLOCO-1.md](CLAUDE-BLOCO-1.md). Usar [PROMPT-CLAUDE-C
 
 | # | Tarefa | Dono | Depende de | Situação / aceite |
 |---|---|---|---|---|
-| B1.1 | Núcleo local: contratos, identidade/autorização, liberação e estados | Code | contrato B1 definido | a fazer; lógica pura e testes negativos, sem rede ou dados reais |
-| B1.2 | Agendamento simulado: conflito, idempotência, falhas e recuperação | Code | B1.1 | a fazer; uma reserva por operação/horário, concorrência testada e jornada completa por integração simulada |
-| B1.3 | Interface local e simulador usando o mesmo núcleo | Code | B1.2 | a fazer; liberar → agendar → visualizar → encaminhar/retomar humano; ver UI01L |
+| B1.1 | Núcleo local: contratos, identidade/autorização, liberação e estados | Code | contrato B1 definido | código local testado (`tests/bloco1-nucleo.test.js`), adaptadores simulados; integração real não feita |
+| B1.2 | Agendamento simulado: conflito, idempotência, falhas e recuperação | Code | B1.1 | código local testado (`tests/bloco1-agendamento.test.js`): concorrência real, falha antes/depois de reservar, jornada completa; não prova persistência nem Google Agenda |
+| B1.3 | Interface local e simulador usando o mesmo núcleo | Code | B1.2 | código local testado (`tests/bloco1-interface.test.js`) e percorrida no Chromium; ver `prototipo/README.md`; aguarda revisão do PR |
 
 Avançar nessa ordem, em commits revisáveis. Ao terminar B1, entregar PR e limites explícitos; parar a expansão até a revisão do código. Simulação local não encerra WA02/WA03/UI00 nem libera clientes.
 

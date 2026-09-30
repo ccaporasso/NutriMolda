@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demonstração do agendamento (dados fictícios)</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div class="faixa" role="note"><strong>DEMONSTRAÇÃO — dados fictícios.</strong> Nada é enviado a ninguém, nenhuma conta real é usada e reiniciar apaga só estes dados de teste.</div>
+<header>
+  <h1>Kit do Consultório — primeiro agendamento</h1>
+  <p id="relogio" class="discreto">Carregando…</p>
+</header>
+<div id="aviso" class="aviso" role="status" aria-live="polite" hidden></div>
+<main>
+  <section aria-labelledby="t-prof" class="painel">
+    <h2 id="t-prof">Painel da nutricionista</h2>
+    <h3>Pacientes</h3>
+    <div id="pacientes" aria-busy="true"><p class="vazio">Carregando pacientes…</p></div>
+    <h3>Consultas</h3>
+    <div id="consultas"><p class="vazio">Carregando consultas…</p></div>
+    <div id="detalhe" tabindex="-1" aria-live="polite"></div>
+  </section>
+  <section aria-labelledby="t-sim" class="painel">
+    <h2 id="t-sim">Simulador de conversa (celular da paciente)</h2>
+    <label for="quem">Quem está conversando</label>
+    <select id="quem"></select>
+    <div id="conversa" class="conversa" aria-live="polite" aria-label="Conversa"></div>
+    <form id="form-texto">
+      <label for="texto">Mensagem (teste: MENU, PARAR ou qualquer texto)</label>
+      <div class="linha"><input id="texto" type="text" maxlength="200" autocomplete="off"><button type="submit">Enviar</button></div>
+    </form>
+  </section>
+</main>
+<details class="ferramentas">
+  <summary>Ferramentas da demonstração (simular situações)</summary>
+  <div class="linha quebra">
+    <button type="button" data-demo="avancar" data-horas="1">Avançar 1 hora</button>
+    <button type="button" data-demo="avancar" data-horas="24">Avançar 1 dia</button>
+    <button type="button" data-demo="ocupar">Ocupar por fora o horário da paciente</button>
+    <button type="button" data-demo="falha" data-ponto="agenda.reservar.antes">Falha antes de reservar</button>
+    <button type="button" data-demo="falha" data-ponto="agenda.reservar.depois">Falha depois de reservar</button>
+    <button type="button" data-demo="falha" data-ponto="saida.entregar.antes">Falha ao enviar resposta</button>
+    <button type="button" data-demo="reconciliar">Reconciliar pendências</button>
+    <button type="button" data-demo="reiniciar" class="perigo">Reiniciar demonstração</button>
+  </div>
+</details>
+<script src="app.js"></script>
+</body>
+</html>

@@ -252,3 +252,14 @@ test('isolamento entre consultórios: mesmo código de paciente e mesmo canal em
   const r = await c.nucleo.processarEventoPaciente(c.confiavel.contextoPaciente(OUTRO_CONS, CANAIS.F001), { consultorioId: OUTRO_CONS, eventoId: 'X1', comando: 'menu' });
   assert.equal(r.tipo, 'sem_efeito');
 });
+
+test('o protótipo fica fora de src/ e do pacote de produção', () => {
+  const fs = require('node:fs'); const path = require('node:path');
+  const E = require('../scripts/empacotar-producao.js');
+  const pacote = E.montarPacoteProducao();
+  const texto = pacote.arquivos.map((a) => a.conteudo).join('\n') + JSON.stringify(pacote.manifesto);
+  assert.doesNotMatch(texto, /prototipo|whatsapp\/|nucleo\.js|agendamento\.js/);
+  assert.ok(!pacote.arquivos.some((a) => /prototipo/.test(a.nome)));
+  assert.ok(!fs.readdirSync(path.join(__dirname, '..', 'src')).some((f) => /prototipo/.test(f)));
+  assert.deepEqual(pacote.manifesto.oauthScopes.length, 6);
+});
