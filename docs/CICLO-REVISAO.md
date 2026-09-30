@@ -15,6 +15,17 @@ O Claude Code não tem acesso ao ChatGPT, e o ChatGPT não tem acesso ao reposit
 6. **Commitar a resposta** na branch da tarefa e pedir ao Claude: "corrija a revisão em docs/revisoes/T05-....md". O Claude corrige só o que está lá (ALTA e MÉDIA sempre; BAIXA se for simples), roda `node --test`, faz novo commit e responde a cada problema (corrigido, ou por que não).
 7. **Repetir** os passos 2 a 6 até o parecer ser APROVADO ou APROVADO COM RESSALVAS sem problema ALTA. Depois disso, a tarefa segue para a validação no Google (`docs/VALIDACAO-NO-GOOGLE.md`), que só você faz.
 
+## Revisão direta pelo GitHub (sem copiar pacote)
+
+Quando o revisor consegue ler o repositório e comentar no PR, o pacote não é necessário:
+
+1. O revisor comenta no PR da tarefa, informando o **SHA revisado**, o parecer (APROVADO, APROVADO COM RESSALVAS ou REPROVADO) e cada problema com prioridade, arquivo, função e correção esperada. Relatórios longos podem ficar numa branch de revisões, com o link no comentário.
+2. O Claude, inscrito no PR, lê o comentário, corrige, roda `node --test` e publica um commit novo na branch da tarefa. Responde a cada problema (corrigido, ou por que não).
+3. A próxima revisão acompanha o SHA novo. Repete-se até o parecer ser aprovado, sem problema ALTA.
+4. Continua valendo: sem merge na `main`, sem `clasp push`, só dados fictícios. O modo manual (pacote e colagem) segue disponível.
+
+Nos dois modos, o critério é o mesmo: a tarefa só avança para a validação no Google com parecer APROVADO ou APROVADO COM RESSALVAS e **nenhum problema ALTA**. Uma resposta com o formato certo pode ser REPROVADO; `salvar` e `conferir` mostram isso (código de saída 0 = liberada, 1 = fora do formato, 3 = formato ok mas não pode avançar).
+
 ## Regras do ciclo
 
 - O ChatGPT revisa e aponta; **quem altera o código é o Claude**. A decisão final é sua.

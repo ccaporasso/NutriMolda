@@ -124,3 +124,26 @@ test('comando da área de transferência por sistema', () => {
   assert.equal(r.comandoAreaDeTransferencia('linux', 'colar')[0], 'xclip');
   assert.equal(r.comandoAreaDeTransferencia('freebsd', 'colar')[0], 'xclip');
 });
+
+test('"NÃO APROVADO" e parecer com texto extra não viram APROVADO', () => {
+  for (const ruim of ['NÃO APROVADO', 'Não aprovado', 'APROVADO, mas com dúvidas', 'REPROVADO ou APROVADO']) {
+    const x = r.lerResposta(RESPOSTA_OK.replace('APROVADO COM RESSALVAS', ruim));
+    assert.equal(x.valida, false, ruim);
+    assert.equal(x.aprovada, false, ruim);
+  }
+  assert.equal(r.lerResposta(RESPOSTA_OK.replace('APROVADO COM RESSALVAS', '**Aprovado com ressalvas.**')).valida, true);
+});
+
+test('APROVADO COM RESSALVAS com problema ALTA é inválido e não aprova', () => {
+  const x = r.lerResposta(RESPOSTA_OK.replace('[MÉDIA]', '[ALTA]'));
+  assert.equal(x.valida, false);
+  assert.equal(x.aprovada, false);
+  assert.match(x.erros.join(' '), /ALTA/);
+});
+
+test('formato válido separa de aprovação técnica: REPROVADO é válido mas não aprovado', () => {
+  const x = r.lerResposta(RESPOSTA_OK.replace('APROVADO COM RESSALVAS', 'REPROVADO').replace('[MÉDIA]', '[ALTA]'));
+  assert.equal(x.valida, true, x.erros.join('; '));
+  assert.equal(x.aprovada, false);
+  assert.equal(r.lerResposta(RESPOSTA_OK).aprovada, true);
+});

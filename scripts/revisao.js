@@ -181,11 +181,11 @@ function lerResposta(texto) {
   let parecer = null;
   if (parecerBruto === null) erros.push('Falta a seção "## Parecer".');
   else {
-    const maiusculo = parecerBruto.toUpperCase();
-    // O mais específico primeiro: "APROVADO COM RESSALVAS" também contém "APROVADO".
-    parecer = ['APROVADO COM RESSALVAS', 'REPROVADO', 'APROVADO'].find((p) => maiusculo.includes(p)) || null;
-    if (!parecer) erros.push(`O parecer precisa ser um destes: ${PARECERES.join(', ')}.`);
-    else if (parecerBruto.includes('|')) erros.push('O parecer traz as três opções; deixe só uma.');
+    // Exige uma única opção exata (sem "NÃO APROVADO", sem as três opções juntas).
+    const linhas = parecerBruto.split('\n').map((l) => l.replace(/[*_`#>\s.]+$/g, '').replace(/^[*_`#>\s-]+/g, '').trim()).filter(Boolean);
+    const opcao = (linhas[0] || '').toUpperCase();
+    if (linhas.length === 1 && PARECERES.includes(opcao)) parecer = opcao;
+    else erros.push(`O parecer precisa ser exatamente uma destas opções, sozinha na linha: ${PARECERES.join(', ')}.`);
   }
   const problemasBruto = secao('Problemas');
   const problemas = [];
@@ -202,13 +202,16 @@ function lerResposta(texto) {
   }
   if (secao('Testes') === null) erros.push('Falta a seção "## Testes".');
   if (secao('Pontos para validar no Google') === null) erros.push('Falta a seção "## Pontos para validar no Google".');
-  if (parecer === 'APROVADO' && problemas.some((p) => p.prioridade === 'ALTA')) {
-    erros.push('Parecer APROVADO, mas há problema de prioridade ALTA.');
+  if (parecer && parecer !== 'REPROVADO' && problemas.some((p) => p.prioridade === 'ALTA')) {
+    erros.push(`Parecer ${parecer}, mas há problema de prioridade ALTA: o parecer contradiz a lista.`);
   }
   if (parecer === 'REPROVADO' && !problemas.length) erros.push('Parecer REPROVADO, mas nenhum problema listado.');
   const contagem = { ALTA: 0, MÉDIA: 0, BAIXA: 0 };
   for (const p of problemas) if (p.prioridade in contagem) contagem[p.prioridade] += 1;
-  return { valida: erros.length === 0, erros, parecer, problemas, contagem };
+  const valida = erros.length === 0;
+  // Formato válido não é aprovação: só avança quem tem parecer aprovado e nenhum ALTA.
+  const aprovada = valida && parecer !== 'REPROVADO' && contagem.ALTA === 0;
+  return { valida, aprovada, erros, parecer, problemas, contagem };
 }
 
 // Última resposta salva para a tarefa, pela data no nome (T05-2026-09-30.md, T05-2026-09-30-2.md).
