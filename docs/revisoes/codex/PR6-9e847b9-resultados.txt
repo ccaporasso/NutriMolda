@@ -1,0 +1,129 @@
+✔ R11d: renovar após uma consulta no mesmo dia não reatribui consumo antigo ao pacote novo (9.523341ms)
+✔ R11e: início impossível não pode produzir consumo de pacote (0.512799ms)
+✔ R03f: limpeza preserva evento com id exato de teste vindo de outra agenda (3.381307ms)
+✔ R03g: pacote sem comprovação de geração é preservado mesmo com paciente fictício exato (0.697904ms)
+✔ R03h: criar dados recusa colisão com evento cancelado sem marca do gerador antes de escrever (3.401477ms)
+✔ R07e: instalador recusa Configurações com coluna extra antes de acrescentar chaves (3.359264ms)
+✔ R04d/R06b: mesmo id confirmado em outra agenda não gera vínculo ambíguo em Consultas (3.452883ms)
+✔ R03i: linha com origem vazia e id reservado não autoriza apagar consulta nem pagamento (2.42434ms)
+✔ CONTROLE: origem explícita da agenda atual mantém a limpeza dos registros comprovados (3.189863ms)
+✔ R03k: falha de leitura da agenda não equivale a ausência e não permite primeiras escritas (6.776974ms)
+✔ CONTROLE: erro.message fictício não aparece no Registro nem no e-mail (2.186468ms)
+✔ CONTROLE: fallback do Logger não inclui a mensagem sensível da falha de gravação (1.809299ms)
+✔ R01: módulo fora da lista fechada deve ser desconhecido em todos os destinos (0.284531ms)
+✔ R02: saída efetiva de produção exclui gerador e escrita na agenda (5.604078ms)
+✔ R03: apagador deve preservar P9500, que não foi criado pelo gerador (3.078549ms)
+✔ R04: ausência na janela, sem prova de exclusão, não deve cancelar uma remarcação distante (0.559238ms)
+✔ R03b: apagador deve remover a consulta fictícia ainda sem paciente identificado (2.273025ms)
+✔ R05a: consulta cancelada nesta execução não deve converter a primeira em retorno (0.394434ms)
+✔ R05b: histórico deve usar a data remarcada nesta execução, não a data antiga (6.471884ms)
+✔ R06: linha de consulta sem id_evento não deve criar cobrança repetidamente (0.750231ms)
+✔ R07: leitor deve recusar cabeçalho diferente antes de interpretar/gravar dados (2.285504ms)
+✔ R08: DriveApp de escrita exige drive, ausente do manifesto atual (0.218563ms)
+✔ R09: modelo sem os campos obrigatórios não deve gerar recibo incompleto (3.828754ms)
+✔ R10: relatório não deve atribuir CPF a outro pagamento só por igualdade de nome (0.974443ms)
+✔ R11: falha ao gravar pagamento não deve consumir duas consultas de pacote ao repetir (2.569845ms)
+✔ R11b: leitura do pacote deve ocorrer depois de adquirir a trava (2.193057ms)
+✔ R03c: código reservado sem prova de origem não autoriza apagar linhas (0.198333ms)
+✔ R03d: prefixo não comprova pertencer aos nove eventos gerados (0.071416ms)
+✔ R03e: consulta alheia do mesmo paciente fictício deve ser preservada (0.08749ms)
+✔ R04b: troca de agenda não deve perder a origem na segunda sincronização (2.874937ms)
+✔ R04c: ID igual em agenda nova não autoriza cancelar consulta da agenda antiga (2.049255ms)
+✔ R11c: duas consultas não devem consumir três unidades ao renovar um pacote (3.786046ms)
+✔ R07b: leitor de Configurações deve recusar cabeçalho invertido (1.908937ms)
+✔ R07c: gravador de Configurações deve recusar cabeçalho invertido sem escrita (1.780636ms)
+✔ R07d: cabeçalho com coluna extra deve ser recusado antes da leitura (1.623143ms)
+✔ CONTROLE: menu e manifesto reais do pacote de produção preservam R02 e D17 (2.669223ms)
+✔ N8-02: data inexistente não entra nas respostas (0.238814ms)
+✔ N8-03: troca vazia ou ausente não produz aprovação nem texto undefined (0.284922ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.754474
+✖ R03l: pagamento com id compartilhado por consulta comprovada e legada deve ser preservado (10.548579ms)
+✔ CONTROLE R03l: id exclusivo com origem comprovada permite apagar pagamento ligado (0.843519ms)
+✔ CONTROLE R03k: falha depois de quatro ausências confirmadas interrompe sem primeiras escritas (8.712202ms)
+✔ CONTROLE: criar, repetir, apagar e recriar com prova funciona no Google em memória (4.024936ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.480394
+
+✖ failing tests:
+
+test at ../review-9e847b9/PR6-9e847b9.cjs:19:1
+✖ R03l: pagamento com id compartilhado por consulta comprovada e legada deve ser preservado (10.548579ms)
+  AssertionError [ERR_ASSERTION]: Pagamento da consulta legada sem origem comprovada não deve desaparecer por compartilhar id
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (/workspace/scratch/90f55f4ba3d8/review-9e847b9/PR6-9e847b9.cjs:31:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+✔ N9-01: aprovado com ressalvas e ALTA deve impedir a aprovação (1.703522ms)
+✔ N9-02: parecer negado não pode ser aceito como aprovado (1.22248ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13.780276
+salvar T05: esperado=0 obtido=0
+conferir T05: esperado=0 obtido=0
+salvar T06: esperado=3 obtido=3
+conferir T06: esperado=3 obtido=3
+salvar T07: esperado=1 obtido=1
+conferir T07: esperado=1 obtido=1
+conferir T08: esperado=1 obtido=1
+Pacote de produção montado em dist/producao/ (28 arquivos).
+Ficaram de fora: DadosTeste.js, GeradorTeste.js.
+Nada foi enviado ao Google. O envio (clasp push) continua exigindo a confirmação do Caio.
+✔ tests/regressoes-revisao.test.js (149.220079ms)
+✔ tests/relatorio.test.js (81.90033ms)
+✔ tests/respostas.test.js (69.227268ms)
+✔ tests/revisao.test.js (73.937075ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24973.452642
+
+✖ failing tests:
+
+test at tests/ciclo-revisao.test.js:1:1
+✖ tests/ciclo-revisao.test.js (24947.004517ms)
+  'Promise resolution is still pending but the event loop has already resolved'
+✔ roteiro do piloto: os números esperados são os que o fluxo simulado calcula, e cada passo tem resultado esperado (0.859002ms)
+✔ dúvidas para a nutricionista: linguagem de consultório, sem dado real e com resposta em branco (0.424549ms)
+✔ Drive só pelo serviço avançado v3 com drive.file; DriveApp e escopo drive completo não voltam (1.441294ms)
+✔ D23: a documentação não manda ampliar escopo por conta própria (0.591205ms)
+ℹ tests 321
+ℹ suites 0
+ℹ pass 321
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 521.86806
