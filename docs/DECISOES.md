@@ -40,7 +40,7 @@ Registro das decisões tomadas até 29/09/2026. Mudar qualquer uma exige uma nov
 
 | # | Decisão | Motivo |
 |---|---|---|
-| D32 | Manter D20 e `drive.file`; criar o modelo do recibo por `Drive.Files.create` com MIME `application/vnd.google-apps.document`, abrindo depois pelo `DocumentApp` para preencher. Não substituir ids existentes automaticamente. Modelo anterior deve ser preservado e recriado explicitamente na cópia de teste após instalar a correção; a pasta existente pode ser mantida. | Na validação real de 979b202, o modelo criado por `DocumentApp.create` existia para a conta, mas `Drive.Files.copy` retornou “File not found”. CSV criado pela API Drive funcionou. Esta correção trata a hipótese de acesso por arquivo sem ampliar permissões. Testes locais não provam o resultado no Google: a nova emissão de PDF continua obrigatória. |
+| D32 | Manter D20 e `drive.file`; criar o modelo do recibo por `Drive.Files.create` com MIME `application/vnd.google-apps.document`, abrindo depois pelo `DocumentApp` para preencher. Não substituir ids existentes automaticamente. Modelo anterior deve ser preservado e recriado explicitamente na cópia de teste após instalar a correção; a pasta existente pode ser mantida. | Na validação real de 979b202, o modelo criado por `DocumentApp.create` existia para a conta, mas `Drive.Files.copy` retornou “File not found”. CSV criado pela API Drive funcionou. A correção foi validada no Google em cópia descartável: PDFs gerados e inspecionados, repetição sem duplicação e rascunhos na lixeira; também passaram campo obrigatório ausente e campos no cabeçalho. Testes locais não substituem essas verificações. Resultados e limites em `docs/RESULTADOS-GOOGLE-2026-09-30.md`. |
 
 ## Escopos de permissão
 
@@ -51,7 +51,7 @@ Declarados em `src/appsscript.json`. Cada tarefa que precisar de um escopo novo 
 | `spreadsheets.currentonly` | Ler e escrever **só** a planilha à qual o script está ligado (abas, cabeçalhos, validações, menu). Não dá acesso a outras planilhas do Drive. | T00 |
 | `script.send_mail` | Enviar o e-mail de alerta de falha para `email_alertas`. Só envia; não lê nem apaga e-mails. O e-mail traz apenas o módulo e o horário, nunca dado de paciente. | T03 |
 | `calendar.events` | **Só no pacote de TESTE.** Criar e apagar os eventos FICTÍCIOS de teste (T04), via Serviço Avançado Calendar, só na agenda secundária indicada em `calendario_id` (a trava recusa `primary`). Não permite criar nem apagar agendas. Cobre também a leitura de eventos da T05, que por isso não precisa de `calendar.readonly`. | T04 |
-| `calendar.events.readonly` | **Só no pacote de PRODUÇÃO**, no lugar de `calendar.events`: ler os eventos da agenda para a sincronização (T05). Não permite criar, alterar nem apagar eventos. Ainda a validar no Google (D23). | R4 |
+| `calendar.events.readonly` | **Só no pacote de PRODUÇÃO**, no lugar de `calendar.events`: ler os eventos da agenda para a sincronização (T05). Não permite criar, alterar nem apagar eventos. Sincronização automática e interativa validadas na cópia com esse manifesto (D23); a autorização ampla anterior não foi revogada e a tela final de novo consentimento não foi inspecionada. | R4 |
 | `script.scriptapp` | Criar o gatilho de hora em hora da sincronização da agenda, uma vez só (item de menu "Ativar sincronização automática"). Só cria e consulta gatilhos deste projeto. | T05 |
 | `documents` | Preencher o modelo do recibo (Google Docs) trocando os campos `{{...}}`. Só abre documentos que o script pode acessar. | T09 |
 | `drive.file` | Copiar o modelo, salvar o PDF e apagar a cópia de trabalho **só em arquivos e pastas que o próprio kit criou** (o Google não deixa o kit ver o resto do Drive). O item de menu "Criar modelo e pasta de recibos" cria os dois. Escopo menor que `drive` completo. Usado pelo serviço avançado Drive v3 (D20). | T09 |
@@ -60,3 +60,11 @@ Previstos, ainda **não** declarados (entram só na tarefa que os usar):
 
 | Escopo | Tarefa | Para quê |
 |---|---|---|
+
+## Interface do MVP aprovada em 30/09/2026
+
+| # | Decisão | Motivo |
+|---|---|---|
+| D33 | A cliente nutricionista usará uma interface gráfica própria no MVP. Planilhas serão o armazenamento inicial, Apps Script a camada de regras e Agenda/Drive os serviços de apoio. Os menus da planilha permanecem como caminho técnico já validado. Primeira entrega prevista: consultas → detalhes → Pix da cobrança a receber. Sem implementação ou publicação de interface nesta consolidação; definir acesso restrito, isolamento por consultório, contexto de execução e permissões antes de conectar. Nenhum servidor próprio, acesso anônimo, banco externo, dependência ou escopo novo foi aprovado por este registro. | Caio esclareceu expressamente que a cliente deve trabalhar apenas na nossa interface intuitiva, com os serviços Google por trás. Essa direção não equivale ao editor de planos alimentares ou ao portal do paciente, que ainda não foram construídos. |
+
+Caio autorizou expressamente o merge do código testado e aprovado em 30/09/2026. Os resultados da cópia descartável estão em `docs/RESULTADOS-GOOGLE-2026-09-30.md`. Merge não significa instalação na cliente ou autorização de dados reais.
