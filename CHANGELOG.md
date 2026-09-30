@@ -2,6 +2,8 @@
 
 ## [não lançado]
 
+- 2026-09-30: itens 5 e 1 pós-B1 (só local): limite de frequência por paciente (PARAR nunca barrado), rotação de segredo da ponte, teste de carga com 40 pacientes; contrato de repositórios com suíte compartilhada e segunda implementação "planilha simulada" (`prototipo/whatsapp/repos-planilha.js`) sobre a qual o núcleo inteiro roda. Não conecta ao Google; WA03/UI00 seguem a fazer.
+
 - 2026-09-30: itens 1 e 2 após B1 (WA01/WA02, só local): `prototipo/ponte/` traduz webhooks da Meta (formato a conferir na documentação vigente) para o evento do núcleo e o núcleo para mensagens com botões/lista; ponte simulada com aceitação durável em arquivo local (fsync antes do 200), reenvio, recuperação após queda, revogação antes do envio e retenção. Testes em `tests/bloco1-ponte.test.js`. Sem endpoint, sem rede, sem segredo real; WA02/WA09 seguem a fazer.
 
 - 2026-09-30: B1.1–B1.3 (D44), protótipo local em `prototipo/` (fora de `src/` e do pacote de produção; nenhum escopo, instalador ou arquivo de produção alterado). Núcleo de autorização/liberação/estados, agendamento com adaptadores simulados (reserva atômica, idempotência, conflito, resultado incerto e reconciliação) e demonstração local com simulador de conversa e painel da nutricionista, todos sobre o mesmo núcleo. Código local testado (`tests/bloco1-*.test.js`); NÃO é integração real: sem Meta, Google, persistência durável nem segurança de implantação. WA02/WA03/WA09/UI00 seguem a fazer. Como abrir e limites: `prototipo/README.md`.

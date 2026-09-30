@@ -14,7 +14,7 @@ const acoesMenu = () => [
 const textoConfirmacao = (c) => `Consulta confirmada para ${formatarInstante(c.inicio)}. Até lá!`;
 
 function montarAgendamento({ repos, relogio, config }) {
-  const agenda = criarAgendaSimulada({ falhas: repos.falhas, latencia: repos.latencia, relogio, config });
+  const agenda = repos.agenda || criarAgendaSimulada({ falhas: repos.falhas, latencia: repos.latencia, relogio, config });
 
   // Mostra opções atuais (várias, cada uma com ID estável). Não reserva nada.
   async function ofertar(d, aviso) {

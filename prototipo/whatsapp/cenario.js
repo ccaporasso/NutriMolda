@@ -17,10 +17,10 @@ const PACIENTES = [
   { codigo: 'F003', nome: 'Paciente Fictícia Três' },
 ];
 
-async function criarCenario({ inicio = '2026-10-01T12:00:00Z', latencia = false, extras = montarAgendamento } = {}) {
+async function criarCenario({ inicio = '2026-10-01T12:00:00Z', latencia = false, extras = montarAgendamento, fabricaRepos } = {}) {
   const relogio = C.criarRelogio(inicio);
   const confiavel = criarAdaptadorConfiavel();
-  const repos = criarRepositorios({ latencia });
+  const repos = fabricaRepos ? fabricaRepos({ latencia, relogio, config: C.CONFIG_TESTE }) : criarRepositorios({ latencia });
   const logs = [];
   let manipuladores = {};
   if (extras) { const r = extras({ repos, relogio, config: C.CONFIG_TESTE }); manipuladores = r.manipuladores || {}; Object.assign(repos, r.repos || {}); }

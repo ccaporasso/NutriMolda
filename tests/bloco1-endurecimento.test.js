@@ -74,7 +74,7 @@ test('carga local: 40 pacientes agendando em paralelo terminam com uma consulta 
     const faltam = codigos.map((g, i) => i).filter((i) => !temConsulta.has(i));
     // todos pedem horários e escolhem (em paralelo); depois todos confirmam (em paralelo)
     await Promise.all(faltam.map((i) => ev(i, 'ver_horarios')));
-    await Promise.all(faltam.map(async (i) => { const cv = await c.repos.conversas.obter(CONS, codigos[i]); if (cv && cv.estado === 'escolhendo_horario') await ev(i, 'escolher_horario', { opcaoId: cv.opcoes[0].id, versao: cv.versao }); }));
+    await Promise.all(faltam.map(async (i) => { const cv = await c.repos.conversas.obter(CONS, codigos[i]); if (cv && cv.estado === 'escolhendo_horario') await ev(i, 'escolher_horario', { opcaoId: cv.opcoes[i % cv.opcoes.length].id, versao: cv.versao }); }));
     await Promise.all(faltam.map(async (i) => { const cv = await c.repos.conversas.obter(CONS, codigos[i]); if (cv && cv.estado === 'aguardando_confirmacao') await ev(i, 'confirmar', { opcaoId: cv.opcaoEscolhida.id, versao: cv.versao }); }));
     for (const i of faltam) { const cv = await c.repos.conversas.obter(CONS, codigos[i]); if (cv && cv.estado === 'consulta_confirmada') temConsulta.add(i); }
     c.relogio.avancar(61000); // a janela do limite de frequência passa entre as rodadas

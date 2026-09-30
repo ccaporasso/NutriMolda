@@ -35,6 +35,14 @@ Roteiro de 2 minutos:
 
 Testes: `tests/bloco1-nucleo.test.js`, `tests/bloco1-agendamento.test.js`, `tests/bloco1-interface.test.js`, `tests/bloco1-ponte.test.js`.
 
+## Contrato dos repositórios e adaptador "Google" (item 1, só desenho)
+
+O núcleo só conhece os repositórios `cadastro`, `conversas`, `operacoes`, `saida` e `agenda` (métodos e garantias verificados em `tests/apoio/contrato-repositorios.js`). Duas implementações passam a mesma suíte: a em memória (`adaptadores.js`, `agenda-simulada.js`) e `repos-planilha.js`, modelada como abas de texto com trava por consultório e neutralização de fórmulas. O núcleo inteiro (jornada, disputa, falha e reconciliação, carga de 40 pacientes) roda sobre a segunda. Um adaptador Google real precisa: (1) passar a mesma suíte; (2) fazer conferir+gravar sob trava (o `LockService` real tem tempo limite: falha de trava é resultado incerto, não conflito); (3) usar a chave da operação para reconciliar; (4) não aceitar consultório, planilha ou agenda vindos do cliente. Isto NÃO prova cotas, latência, permissões nem isolamento no Google (UI00/WA03).
+
+## Endurecimento (item 5)
+
+Limite de frequência por paciente (30 eventos novos por minuto nos testes; excesso é ignorado em silêncio, repetição de evento já processado e `PARAR` nunca são barrados); rotação de segredo da ponte (lista de segredos: o novo e o anterior valem juntos até retirar o anterior); carga local com 40 pacientes agendando em paralelo. O contador do limite é aproximado na simulação: um adaptador real precisa de contador atômico.
+
 ## Ponte e formato da Meta (itens 1 e 2, só local)
 
 Não há endpoint HTTP: a ponte é uma biblioteca chamada pelos testes (`receber(corpoBruto, assinatura)` devolve o status que o servidor real responderia: 401 assinatura inválida, 400/413 corpo ruim, 503 se não gravou, 200 só depois de gravar). O formato dos webhooks, os limites de botões/listas e a assinatura foram escritos a partir da documentação pública conhecida e **precisam ser conferidos na documentação vigente e na conta de teste (WA00)**. O diário (`diario.jsonl`, 0600) guarda só id do evento, consultório, identificador do canal, comando e parâmetros, nunca o texto da conversa; retenção em `compactar`; é descartável e NÃO é a persistência de produção (WA09). Reenvio da Meta, queda antes/depois do núcleo, linha torta no fim do arquivo, revogação entre etapas e falha do transporte estão cobertos. O transporte de saída é um objeto simulado: nada é enviado.
