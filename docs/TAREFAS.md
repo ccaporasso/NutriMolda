@@ -1,8 +1,20 @@
 # Tarefas
 
-Legenda de dono: **Code** = o Claude Code faz · **Você** = o Caio faz à mão · **Ambos** = o Code prepara, você executa ou confere.
+Legenda de dono: **Code** = o Claude Code faz · **Você** = o Caio faz à mão · **Ambos** = o Code prepara, você executa ou confere · **Programador** = o programador de confiança do Caio, que faz os testes de segurança e não escreve o código (D43).
 
 Situação: a fazer · em andamento · feita. Código implementado, teste no Google e liberação para clientes são estados diferentes. Fonte dos resultados atuais: [RESULTADOS-GOOGLE-2026-09-30.md](RESULTADOS-GOOGLE-2026-09-30.md).
+
+## Próxima prioridade — B1 para o Claude (D44)
+
+Escopo definido em [CLAUDE-BLOCO-1.md](CLAUDE-BLOCO-1.md). Usar [PROMPT-CLAUDE-CODE.md](../PROMPT-CLAUDE-CODE.md). Não reiniciar T00 nem aguardar Meta/clasp para programar este bloco.
+
+| # | Tarefa | Dono | Depende de | Situação / aceite |
+|---|---|---|---|---|
+| B1.1 | Núcleo local: contratos, identidade/autorização, liberação e estados | Code | contrato B1 definido | a fazer; lógica pura e testes negativos, sem rede ou dados reais |
+| B1.2 | Agendamento simulado: conflito, idempotência, falhas e recuperação | Code | B1.1 | a fazer; uma reserva por operação/horário, concorrência testada e jornada completa por integração simulada |
+| B1.3 | Interface local e simulador usando o mesmo núcleo | Code | B1.2 | a fazer; liberar → agendar → visualizar → encaminhar/retomar humano; ver UI01L |
+
+Avançar nessa ordem, em commits revisáveis. Ao terminar B1, entregar PR e limites explícitos; parar a expansão até a revisão do código. Simulação local não encerra WA02/WA03/UI00 nem libera clientes.
 
 ## Fase 2a — Base e financeiro (pode começar agora, sem cliente)
 
@@ -48,7 +60,7 @@ Situação: a fazer · em andamento · feita. Código implementado, teste no Goo
 | T20 | Formulário da pergunta semanal com código pré-preenchido e aba Respostas | Code | esqueleto feito (`src/Respostas.js`, lógica pura); nada criado no Google; pendências P1, P2, P8 |
 | T21 | Painel de presença: "ainda não" duas vezes, silêncio, nota escrita, retorno sem data | Code | esqueleto feito (`src/Presenca.js`, lógica pura, sem painel na planilha); pendências P3, P4 |
 | T22 | Fila de ajustes com aprovação em um ou dois toques | Code | esqueleto feito (`src/FilaAjustes.js`, lógica pura, sem aba nem botão); pendências P5, P6 |
-| T23 | Biblioteca de frases e geração de links wa.me com texto pronto | Code | esqueleto feito (`src/Frases.js`, só monta o link; frases de exemplo); pendência P7 |
+| T23 | Biblioteca de frases e geração de links wa.me com texto pronto | Code | esqueleto feito (`src/Frases.js`, só monta o link; frases de exemplo); pendência P7. Com a D37, o link vira alternativa manual; o caminho principal é o disparo pela API (WA06) |
 | T24 | Os três modos de acompanhamento e o limite de mensagens por modo | Code | esqueleto feito (`src/Modos.js`, lógica pura, limites de exemplo); pendências P9, P10 |
 
 **Espera pela cliente:** frases, tabela de substituições, regras de modo e textos finais.
@@ -61,7 +73,9 @@ Situação: a fazer · em andamento · feita. Código implementado, teste no Goo
 | T31 | Resumo semanal por e-mail | Code |
 | T32 | Comparação antes e depois (faltas e retornos) | Code |
 
-## Fase 3 — WhatsApp oficial (depois do teste técnico)
+## Fase 3 — WhatsApp oficial (substituída pela trilha WA, D34)
+
+A D34 trouxe o WhatsApp para o MVP. T40 virou WA00, T41 virou WA10 e T42 virou WA05. A tabela fica só como histórico.
 
 | # | Tarefa | Dono |
 |---|---|---|
@@ -69,13 +83,34 @@ Situação: a fazer · em andamento · feita. Código implementado, teste no Goo
 | T41 | Escolha do provedor oficial com coexistência, botões e pausa quando a pessoa responde | Você |
 | T42 | Menu 24 horas integrado à planilha | Code |
 
-## Próxima entrega — interface própria sobre a base Google (D33)
+## Trilha WA — integração oficial, após contrato e núcleo locais
+
+Direção incorporada; integração real não implementada. B1 não depende de WA00, WA09 ou login. A preparação da conta pode ocorrer enquanto o código local avança, sem consumir programação com tentativas repetidas de acesso.
+
+| # | Tarefa | Dono | Depende de | Critérios de aceite | Situação |
+|---|---|---|---|---|---|
+| WA00 | Preparar conta/número de teste da Meta; conferir versão da API, permissões e modelos | Você | — | Envio autorizado para destinatário de teste verificado, com evidência e segredos fora do Git | a fazer |
+| WA01 | Contrato de menus, eventos, erros e comandos | Code | — | Contrato do primeiro percurso em CLAUDE-BLOCO-1.md; mapeamento da Meta e fluxos posteriores documentados na integração | contrato inicial definido; transporte e fluxos posteriores pendentes |
+| WA02 | Ponte: origem/assinatura, aceitação durável, deduplicação, processamento e saídas recuperáveis | Code | WA01, WA09 | Não perder evento após confirmação; reinício real, reenvio, assinatura inválida e revogação antes de envio testados | a fazer; B1 só simula contratos |
+| WA03 | Adaptador/API Apps Script com identidade, autorização e comandos limitados; reservar/reconciliar consultas | Code | WA01, UI00, WA09 | Provar acesso à base correta, propriedade da consulta, concorrência e recuperação; justificar escopos e eventual implantação antes de ativar | a fazer; nenhuma nova porta ou permissão no B1 |
+| WA04 | Vínculo verificado do canal e lista de liberados pela interface | Code | WA03 | Verificação inicial sem aproximação por telefone; validade/revogação e consulta alheia testadas | a fazer; B1 usa identidades fictícias |
+| WA05 | Primeiro fluxo real: menu, agendar, confirmar, PARAR e encaminhamento humano | Ambos | WA00, WA02, WA03, WA04 | Número de teste, dados inventados, uma consulta por confirmação, falhas e pausa humana verificadas | a fazer |
+| WA06 | Disparo pelo botão via API | Ambos | WA05, UI01 | Texto autorizado, regras/categoria/modelo/preço conferidos, saída rastreável e autorização revalidada antes de enviar | a fazer |
+| WA07 | Painel de pacientes que precisam de atenção | Code | UI01, fontes de sinais definidas | Motivo factual e data, sem probabilidade de abandono; regras de silêncio configuráveis e verificadas | a fazer; reaproveitar T21 quando pertinente |
+| WA08 | Revisão independente de segurança e implantação | Programador | WA05, UI01 | Relatório, autorização por paciente/consultório, recuperação e concorrência reais; corrigir achados antes de dados reais | a fazer |
+| WA09 | Escolher hospedagem e persistência, inventário/retenção, contrato e orçamento | Você | — | Documentar localização dos dados/fila/estado, recuperação, limites e custo total com fontes vigentes; não presumir gratuidade | a fazer |
+| WA10 | Definir número real e eventual coexistência | Você | WA08 | Requisitos atuais da Meta conferidos e decisão registrada; D12 atendida antes de paciente real | a fazer |
+| WA11 | Remarcar e cancelar pela integração oficial | Ambos | WA05 | Propriedade da consulta, confirmação, conflito, repetição e recuperação cobertos; não alterar cobrança silenciosamente | posterior ao primeiro percurso |
+| WA12 | Check-ins definidos pela profissional | Ambos | WA05, D11 resolvida | Textos/consentimento e conteúdo permitido definidos; sem resposta clínica automática nem cobrança por silêncio | posterior ao primeiro percurso |
+
+## Trilha UI — interface da profissional
 
 | # | Tarefa | Situação / aceite |
 |---|---|---|
-| UI00 | Definir identidade, acesso restrito, isolamento por consultório e contexto do Apps Script | a fazer; impedir acesso sem autorização e provar leitura da planilha correta fora do menu. Reavaliar necessidade de escopo, sem ampliação automática |
-| UI01 | Tela de consultas com detalhes | a fazer após UI00; carregar dados reais da cópia de teste, com estados de carregamento, vazio e erro; uso integral pela interface |
-| UI02 | Pix da cobrança a receber pela interface | a fazer após UI01; selecionar consulta por ID estável, encontrar sua cobrança e usar as regras existentes; copiar código, recusar pagamento já pago e não alterar status financeiro |
-| UI03 | Validar o percurso completo | a fazer após UI02; dados fictícios, sem abrir planilha/menus; conferir permissões, atualização da lista e valor/recebedor do Pix |
+| UI01L | Demonstração local com dados fictícios (mesma entrega de B1.3) | a fazer; liberar/revogar, simular agendamento, listar/detalhar e pausar/retomar atendimento. Não depende de UI00 e não prova acesso real |
+| UI00 | Definir/provar identidade, acesso restrito, isolamento e contexto do Apps Script | a fazer antes da conexão real; sem autorização, acesso recusado; leitura da base correta; escopos sem ampliação automática |
+| UI01 | Conectar consultas e detalhes à base Google | a fazer após UI00/WA03/B1.3; dados fictícios da cópia de teste, carregamento/vazio/erro e consulta criada pela WA05 visível |
+| UI02 | Pix da cobrança a receber pela interface | a fazer após UI01; ID estável, regras existentes, recusa de pagamento já pago e nenhuma alteração de status financeiro |
+| UI03 | Validar percurso integrado pela interface | a fazer após UI01/WA05, e UI02 para o complemento Pix; dados fictícios, sem planilha/menus; permissões, isolamento, repetição e atualização conferidos |
 
-Essas tarefas são planejamento aprovado de direção, não código concluído. Não implementar portal do paciente, editor alimentar ou fase 2b por inferência nesta entrega.
+Essas tarefas não são código concluído. O editor alimentar e o portal do paciente permanecem posteriores. O novo fluxo exige evidência própria; resultados antigos continuam limitados aos cenários do relatório Google.
