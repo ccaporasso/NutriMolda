@@ -1,0 +1,710 @@
+PR6 SHA b12b35e5f03a9a79f3fd12f4af03b6bec02d7a74
+Node v24.19.0 — 2026-09-30
+
+node --test (timeout 15; exit124)
+✔ tests/agenda.test.js (100.671419ms)
+
+Interrupted while running:
+
+⚠ tests/ciclo-revisao.test.js (tests/ciclo-revisao.test.js:1:1)
+⚠ tests/configuracoes.test.js (tests/configuracoes.test.js:1:1)
+⚠ tests/dados-teste.test.js (tests/dados-teste.test.js:1:1)
+⚠ tests/esquema.test.js (tests/esquema.test.js:1:1)
+⚠ tests/estrutura.test.js (tests/estrutura.test.js:1:1)
+⚠ tests/falhas.test.js (tests/falhas.test.js:1:1)
+⚠ tests/fase2b.test.js (tests/fase2b.test.js:1:1)
+⚠ tests/fila-ajustes.test.js (tests/fila-ajustes.test.js:1:1)
+⚠ tests/formatos.test.js (tests/formatos.test.js:1:1)
+⚠ tests/frases.test.js (tests/frases.test.js:1:1)
+⚠ tests/instalador.test.js (tests/instalador.test.js:1:1)
+⚠ tests/integracao.test.js (tests/integracao.test.js:1:1)
+⚠ tests/menu.test.js (tests/menu.test.js:1:1)
+⚠ tests/modos.test.js (tests/modos.test.js:1:1)
+⚠ tests/pagamentos.test.js (tests/pagamentos.test.js:1:1)
+⚠ tests/pix.test.js (tests/pix.test.js:1:1)
+⚠ tests/precos.test.js (tests/precos.test.js:1:1)
+⚠ tests/presenca.test.js (tests/presenca.test.js:1:1)
+⚠ tests/producao.test.js (tests/producao.test.js:1:1)
+⚠ tests/recibo.test.js (tests/recibo.test.js:1:1)
+⚠ tests/registro.test.js (tests/registro.test.js:1:1)
+⚠ tests/regressoes-revisao.test.js (tests/regressoes-revisao.test.js:1:1)
+⚠ tests/relatorio.test.js (tests/relatorio.test.js:1:1)
+⚠ tests/respostas.test.js (tests/respostas.test.js:1:1)
+⚠ tests/revisao.test.js (tests/revisao.test.js:1:1)
+✖ tests/ciclo-revisao.test.js (14919.272265ms)
+✔ tests/configuracoes.test.js (96.410341ms)
+✔ tests/dados-teste.test.js (77.360391ms)
+✔ tests/esquema.test.js (82.053168ms)
+✔ tests/estrutura.test.js (95.26794ms)
+✔ tests/falhas.test.js (172.165637ms)
+✔ tests/fase2b.test.js (54.579514ms)
+✔ tests/fila-ajustes.test.js (74.248265ms)
+✔ tests/formatos.test.js (70.859748ms)
+✔ tests/frases.test.js (72.707023ms)
+✔ tests/instalador.test.js (97.815677ms)
+✔ tests/integracao.test.js (124.057873ms)
+✔ tests/menu.test.js (128.822867ms)
+✔ tests/modos.test.js (56.77866ms)
+✔ tests/pagamentos.test.js (90.186559ms)
+✔ tests/pix.test.js (53.422386ms)
+✔ tests/precos.test.js (87.935717ms)
+✔ tests/presenca.test.js (83.298666ms)
+✔ tests/producao.test.js (84.141555ms)
+✔ tests/recibo.test.js (94.455092ms)
+✔ tests/registro.test.js (84.336408ms)
+✔ tests/regressoes-revisao.test.js (120.161475ms)
+✔ tests/relatorio.test.js (85.584109ms)
+✔ tests/respostas.test.js (61.916905ms)
+✔ tests/revisao.test.js (66.333067ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14948.209426
+
+✖ failing tests:
+
+test at tests/ciclo-revisao.test.js:1:1
+✖ tests/ciclo-revisao.test.js (14919.272265ms)
+  'Promise resolution is still pending but the event loop has already resolved'
+
+node --test com exclusão de um caso de subprocesso (exit0)
+✔ tests/agenda.test.js (117.634679ms)
+✔ tests/ciclo-revisao.test.js (156.596266ms)
+✔ tests/configuracoes.test.js (158.843812ms)
+✔ tests/dados-teste.test.js (163.946355ms)
+✔ tests/esquema.test.js (143.581242ms)
+✔ tests/estrutura.test.js (148.507073ms)
+✔ tests/falhas.test.js (321.820181ms)
+✔ tests/fase2b.test.js (70.172351ms)
+✔ tests/fila-ajustes.test.js (126.879502ms)
+✔ tests/formatos.test.js (73.377254ms)
+✔ tests/frases.test.js (126.146808ms)
+✔ tests/instalador.test.js (77.515028ms)
+✔ tests/integracao.test.js (196.692797ms)
+✔ tests/menu.test.js (156.387957ms)
+✔ tests/modos.test.js (75.112178ms)
+✔ tests/pagamentos.test.js (84.724389ms)
+✔ tests/pix.test.js (90.980188ms)
+✔ tests/precos.test.js (109.995402ms)
+✔ tests/presenca.test.js (87.413014ms)
+✔ tests/producao.test.js (87.678251ms)
+✔ tests/recibo.test.js (85.640415ms)
+✔ tests/registro.test.js (85.451917ms)
+✔ tests/regressoes-revisao.test.js (120.383473ms)
+✔ tests/relatorio.test.js (101.257871ms)
+✔ tests/respostas.test.js (55.234793ms)
+✔ tests/revisao.test.js (69.640063ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 518.889059
+
+node --test --test-isolation=none --test-reporter=spec com mesma seleção (exit0)
+✔ janela: 30 dias para trás, leitura até 120 e cancelamento por ausência até 90 dias (2.727718ms)
+✔ paciente identificado pelo e-mail do convidado, pela descrição ou pelo telefone (0.491918ms)
+✔ contato que bate com dois pacientes ou com paciente inativo não é adivinhado (0.161158ms)
+✔ evento novo vira linha de Consultas; o que não é consulta ou é dia inteiro é ignorado (1.143743ms)
+✔ não grava título nem descrição do evento em nenhuma linha (0.312383ms)
+✔ primeira x retorno: o segundo evento do mesmo paciente é retorno, mesmo vindo antes na lista (6.002174ms)
+✔ consulta anterior já na planilha faz o novo evento ser retorno (0.2902ms)
+✔ sem paciente conhecido vai para a lista "a identificar" (0.272453ms)
+✔ segunda execução com os mesmos eventos não muda nada (idempotente) (0.292593ms)
+✔ remarcação muda data e hora; status e tipo ajustados por ela são preservados (0.376277ms)
+✔ código preenchido à mão por ela nunca é trocado (0.158254ms)
+✔ cancelamento: evento cancelado na agenda vira cancelada; realizada não é desfeita (0.160137ms)
+✔ ausência na leitura não cancela: o plano só lista as consultas marcadas a conferir (0.138014ms)
+✔ R04: consulta remarcada para depois da janela não é cancelada por sumir da leitura (0.209701ms)
+✔ calendario_id trocado: nada é conferido nem cancelado por ausência (0.164093ms)
+✔ agenda que volta vazia não cancela nada e avisa (0.118636ms)
+✔ evento cancelado que voltou para a agenda reativa a consulta (0.098255ms)
+✔ R05: consulta cancelada nesta execução não faz a nova virar retorno (0.105186ms)
+✔ R05: consulta remarcada para depois da nova não conta como anterior (0.14912ms)
+✔ R05: consulta anterior válida continua fazendo a nova ser retorno; reativação conta (0.217242ms)
+✔ Google simulado: duas execuções seguidas não duplicam; cancelamento é tratado (5.875106ms)
+✔ Google simulado: o gatilho automático é criado uma vez só (1.386162ms)
+✔ Google simulado: falha no gatilho vai para o Registro e para o e-mail, sem texto da exceção (1.613839ms)
+✔ extrairLinhaTarefa acha a linha e ignora o cabeçalho (0.174248ms)
+✔ extrairDecisoes devolve só as citadas, em ordem (0.28435ms)
+✔ acharCommit pelo prefixo da tarefa (0.135501ms)
+✔ varrerDados avisa CPF e e-mail fora dos exemplos, sem repetir o valor (0.737932ms)
+✔ cerca cresce quando o texto já tem cercas (0.119237ms)
+✔ pacote traz roteiro, tarefa, testes e diff (0.259343ms)
+✔ lerResposta aceita resposta no formato e conta prioridades (1.154469ms)
+✔ lerResposta aceita "Nenhum." em Problemas (0.598576ms)
+✔ lerResposta recusa formato errado (0.220757ms)
+✔ lerResposta recusa APROVADO com problema ALTA e REPROVADO sem problema (0.193947ms)
+✔ nomes de resposta: próximo e última (0.24314ms)
+✔ o modelo de resposta do roteiro é lido pelo próprio conferidor quando preenchido (0.112376ms)
+✔ comando da área de transferência por sistema (0.103663ms)
+✔ "NÃO APROVADO" e parecer com texto extra não viram APROVADO (0.22303ms)
+✔ APROVADO COM RESSALVAS com problema ALTA é inválido e não aprova (0.101821ms)
+✔ formato válido separa de aprovação técnica: REPROVADO é válido mas não aprovado (0.137554ms)
+✔ as chaves validadas são exatamente as do esquema da planilha (0.09426ms)
+✔ configuração completa: sem erro nem aviso, com valores tipados (0.379411ms)
+✔ a planilha recém-instalada dá erros só nos campos de identidade, Pix e alerta (0.250711ms)
+✔ chave ausente obrigatória: erro dizendo o que fazer (0.127359ms)
+✔ valor obrigatório em branco (ou só espaços): erro (0.23604ms)
+✔ chave ausente opcional: aviso, sem erro; padrões do kit são aplicados (0.110874ms)
+✔ espaços nas pontas são aceitos e removidos (0.069303ms)
+✔ chave repetida: erro (não escolhe uma das linhas sozinho) (0.08103ms)
+✔ preço ausente, em branco ou zero: só aviso, e o valor não vira cobrança (0.225023ms)
+✔ preço aceito como número ou como texto só com algarismos (0.088261ms)
+✔ preço negativo: erro (0.226666ms)
+✔ preço fracionário (inclusive "150,00" e "150.00"): erro, sem ambiguidade (0.219645ms)
+✔ preço em texto inválido: erro (0.488823ms)
+✔ preço pequeno demais dá aviso de que o campo é em centavos (0.099417ms)
+✔ regra_retorno_dias: inteiro maior que zero; em branco só avisa (0.131574ms)
+✔ nome do recebedor Pix: 25 caracteres passa, 26 dá erro (0.094009ms)
+✔ cidade do recebedor Pix: 15 caracteres passa, 16 dá erro (0.084866ms)
+✔ o tamanho do nome Pix conta letras acentuadas como um caractere só (0.058637ms)
+✔ e-mail de alertas inválido: erro (0.239074ms)
+✔ nenhuma mensagem repete o valor digitado (privacidade) (0.198834ms)
+✔ mensagem final lista todos os erros de uma vez (0.204943ms)
+✔ entrada vazia ou nula não quebra (0.306403ms)
+✔ preço válido é devolvido em centavos, por tipo (0.106167ms)
+✔ preço zero, em branco, ausente ou inválido bloqueia a cobrança (0.400713ms)
+✔ a mensagem do bloqueio aponta a chave e a cortesia como escolha explícita (0.103994ms)
+✔ sem configuração ou tipo desconhecido, a cobrança é bloqueada (0.1221ms)
+✔ chave Pix que chega como número é rejeitada, sem corrigir e sem repetir o valor (0.095562ms)
+✔ chave Pix que chega como data ou verdadeiro/falso é rejeitada (0.235008ms)
+✔ todo campo textual rejeita número, data e verdadeiro/falso (0.578687ms)
+✔ zeros à esquerda são preservados quando o valor chega como texto (0.209089ms)
+✔ número no lugar de texto nunca é "consertado" com zeros ou formatação (0.0945ms)
+✔ preço já alterado pelo Planilhas não é multiplicado nem ganha zeros (0.114049ms)
+✔ preço digitado como texto puro mantém "150,00" como erro (sem ambiguidade) (0.063424ms)
+✔ pacientes de teste: códigos P9xxx únicos e só dados inventados (0.204693ms)
+✔ eventos: datas relativas, título mínimo, ids válidos e fixos (0.590654ms)
+✔ há um evento de paciente desconhecido, passado e futuro, primeira e retorno (0.10195ms)
+✔ trava: agenda principal e ids vazios são recusados (0.150323ms)
+✔ pacientesQueFaltam não repete o que já existe (0.105887ms)
+✔ planejarLimpezaDeTeste pega só o que o gerador cria, de baixo para cima (R03) (0.309708ms)
+✔ código de teste já usado com outros dados é colisão: nada dele é apagado (0.149051ms)
+✔ gerador: criar duas vezes não duplica; apagar remove só dados de teste (3.224833ms)
+✔ gerador: recusa agenda principal antes de tocar em qualquer coisa (1.265564ms)
+✔ R03: apagador preserva P9500 e apaga a consulta fictícia ainda sem paciente identificado (1.47943ms)
+✔ R03: criar recusa código de teste que já existe com outros dados (1.078536ms)
+✔ as sete abas da especificação existem, com os nomes esperados (0.081791ms)
+✔ todo cabeçalho aparece na especificação e não há coluna repetida (0.20303ms)
+✔ todas as chaves de Configurações da especificação estão no instalador (0.426732ms)
+✔ valores de exemplo em centavos são inteiros (0.092297ms)
+✔ listas de validação batem com a especificação (0.071656ms)
+✔ validações apontam para colunas que existem, nas posições certas (0.143482ms)
+✔ planilha vazia: cria tudo (0.149872ms)
+✔ rodar duas vezes não duplica nada (0.248758ms)
+✔ não sobrescreve configuração já preenchida e só acrescenta chave faltante (0.47343ms)
+✔ cabeçalho diferente gera aviso e não é reescrito (0.295698ms)
+✔ aba existente com cabeçalho vazio recebe o cabeçalho (0.096143ms)
+✔ cabeçalho estranho em Configurações: não acrescenta chaves (0.252174ms)
+✔ CPF, telefone e códigos ficam como texto (0.196781ms)
+✔ a coluna valor de Configurações também fica como texto (posição B) (0.075021ms)
+✔ fuso horário é America/Sao_Paulo (0.053589ms)
+✔ usa o motor V8 (0.042313ms)
+✔ escopos declarados explicitamente e justificados em DECISOES.md (0.214567ms)
+✔ .clasp.json fica fora do Git e envia só a pasta src (0.201238ms)
+✔ código do Apps Script também carrega no Node (0.305072ms)
+✔ nenhum nome global repetido entre os arquivos de src/ (2.399732ms)
+✔ funções do menu existem em algum arquivo de src/ (1.910007ms)
+✔ cancelamento: evento apagado da agenda vira cancelada; fora do período e realizada ficam como estão (4.545358ms)
+✔ cancelamento: agenda que volta vazia não cancela nada e avisa (2.065828ms)
+✔ cancelamento: evento cancelado que volta à agenda reativa a consulta, sem duplicar (2.440232ms)
+✔ cancelamento: consulta cancelada não gera cobrança nova e a já paga continua no relatório (4.955675ms)
+✔ trava ocupada: sincronizar, cobrar e recibo avisam em português, sem mudar nada e sem e-mail (3.816439ms)
+✔ a trava é solta mesmo quando a operação falha (a próxima tentativa funciona) (2.804421ms)
+✔ erro do Google na agenda: nada é gravado pela metade, vai ao Registro e ao e-mail sem o texto do erro (4.930217ms)
+✔ configuração incompleta: cita a chave que falta, não grava nada e não manda e-mail (é problema de uso) (1.792633ms)
+✔ configuração incompleta: no gatilho automático a falha vai ao Registro e ao e-mail, sem o valor digitado (1.418719ms)
+✔ preços em zero: nenhuma cobrança nasce, os dois avisos aparecem, e a consulta não é perdida (2.211463ms)
+✔ preço em reais em vez de centavos ("150,00"): recusado, nunca vira cobrança (2.524146ms)
+✔ recibo sem modelo ou sem pasta configurados: diz qual chave preencher e não gera nada (2.940182ms)
+✔ recibo sem pagador, sem data ou com CPF inválido: lista o que falta, sem repetir o CPF (2.353884ms)
+✔ relatório sem pasta configurada: a aba sai, o CSV não, com aviso claro (2.678564ms)
+✔ aba apagada ou planilha sem instalar: mensagem em português, sem e-mail e sem quebrar (1.87829ms)
+✔ linhas selecionadas demais ou vazias não fazem nada (2.199506ms)
+✔ falha ao exportar o PDF: sem recibo pela metade, cópia na lixeira, alerta sem o texto do erro, e a nova tentativa funciona (3.623893ms)
+✔ falha ao copiar o modelo (arquivo não encontrado): sem recibo pela metade, cópia na lixeira, alerta sem o texto do erro, e a nova tentativa funciona (3.128581ms)
+✔ falha ao salvar na pasta: sem recibo pela metade, cópia na lixeira, alerta sem o texto do erro, e a nova tentativa funciona (2.832983ms)
+✔ falha ao abrir o documento: sem recibo pela metade, cópia na lixeira, alerta sem o texto do erro, e a nova tentativa funciona (2.887584ms)
+✔ falha ao gerar o recibo de uma linha não afeta o relatório nem o pagamento (3.117894ms)
+✔ falha ao salvar o CSV do relatório: erro registrado, sem texto do erro, e a aba já feita continua lá (2.935705ms)
+✔ e-mail de alerta falha (cota ou bloqueio): o erro original fica no Registro, o aviso também, e nada quebra (1.837429ms)
+✔ e-mail de alerta falha no gatilho automático: nenhum erro escapa do gatilho (1.829988ms)
+✔ alerta com e-mail em branco ou inválido e aba Registro apagada: só o Logger, sem exceção (1.738784ms)
+✔ o teste de alerta do menu informa na tela quando o e-mail não saiu (2.78364ms)
+✔ toda marca PENDENTE Pn no código tem linha na lista de pendências (0.25663ms)
+✔ toda pendência aberta da lista aparece marcada no código (0.22991ms)
+✔ o esqueleto não chama o Google nem cria formulário, aba, gatilho ou menu (0.235669ms)
+✔ busca só por igualdade (sem acento, sem maiúscula); parecido ou ausente não devolve nada (0.266995ms)
+✔ pedido entra como pendente, com o trecho exato da tabela quando existe (0.295878ms)
+✔ pedido recusa id, código e tipo inválidos (0.137133ms)
+✔ um toque aprova o trecho da tabela; só então há texto para o paciente (0.124014ms)
+✔ dois toques: ela edita o texto e aprova; o texto dela é o que vale (0.085226ms)
+✔ sem trecho na tabela e sem texto dela, não aprova: nada é inventado (0.152245ms)
+✔ recusado ou já decidido nunca sai para o paciente nem é decidido de novo (0.178464ms)
+✔ troca ausente, vazia, só com espaços ou que não é texto nunca vira sugestão nem texto aprovado (0.20947ms)
+✔ fila: pendentes primeiro, do mais antigo ao mais novo (0.14185ms)
+✔ datas: soma dias e valida texto (0.131034ms)
+✔ instante do Google Agenda vira data e hora de São Paulo (0.085657ms)
+✔ reais só na saída, a partir de centavos inteiros (0.13488ms)
+✔ CPF: dígitos verificadores e formatação (números inventados de teste) (0.185124ms)
+✔ as frases do esqueleto passam na própria validação (0.379592ms)
+✔ validação recusa vazia, longa, campo desconhecido, chave solta, link e número longo (0.151715ms)
+✔ preencher troca o primeiro nome; sem nome dá erro claro em vez de deixar o campo cru (0.181659ms)
+✔ telefone: aceita com ou sem 55, com máscara, fixo ou celular; recusa o resto (0.231503ms)
+✔ link wa.me leva o texto codificado; nada é enviado, é só um endereço (0.211784ms)
+✔ linkDaFrase: usa a biblioteca; recusa paciente sem autorização, sem telefone ou frase inexistente (0.208458ms)
+✔ coluna de valores das Configurações vira texto antes de receber os dados (1.623884ms)
+✔ rodar o instalador duas vezes não duplica chaves e reaplica o formato de texto (1.488363ms)
+✔ agenda vira consultas: 9 linhas, uma a identificar, primeira x retorno certos (1.955495ms)
+✔ consultas viram cobranças: 8 (a do desconhecido fica de fora), R$ 1.100,00 no total (2.474312ms)
+✔ fluxo completo: pago -> recibo em PDF -> relatório com os totais conferidos à mão (3.481913ms)
+✔ rodar tudo de novo não duplica nada (consulta, cobrança, pagamento, recibo, relatório) (4.556724ms)
+✔ cancelamento na agenda: consulta cancelada, cobrança em aberto vira aviso, nada é apagado (3.416897ms)
+✔ paciente a identificar: depois de ela preencher o código, a próxima cobrança nasce sem duplicar (3.157384ms)
+✔ privacidade: Registro, e-mails de alerta e nomes de arquivo não têm nome, e-mail nem CPF (3.242349ms)
+✔ o menu monta e todo item aponta para uma função que existe (1.666847ms)
+✔ pago: só a partir de a_receber, com forma válida e data de hoje (0.253856ms)
+✔ cortesia: valor zero, forma cortesia, só a partir de a_receber (0.10148ms)
+✔ pacote: gasta uma consulta do pacote com sobra e recusa quando não há (0.153908ms)
+✔ consulta: realizada e faltou; cancelada não muda (0.102461ms)
+✔ Pix do pagamento usa o id do pagamento e o valor em centavos; recusa o que não está a receber (0.610864ms)
+✔ o menu tem todos os itens do lote e cada um aponta para uma função existente (1.788177ms)
+✔ marcar como pago (Pix) em duas linhas; repetir não remarca o que já está pago (2.015163ms)
+✔ linha já paga misturada na seleção não impede as outras (1.54728ms)
+✔ cortesia pede confirmação: "não" não muda nada, "sim" zera o valor (4.251943ms)
+✔ pacote: usa a consulta do pacote e, esgotado, recusa a próxima (2.220356ms)
+✔ Pix da linha mostra um texto com CRC correto, valor e nome, sem pagar nada (1.869137ms)
+✔ Pix de pagamento que não está a receber é recusado com mensagem (1.444108ms)
+✔ consulta: marcar faltou avisa do valor a receber; cancelada é recusada (1.843889ms)
+✔ aba errada ou cabeçalho selecionado: mensagem clara, sem e-mail de alerta (1.446882ms)
+✔ erro inesperado no menu vai para o Registro e o e-mail, sem o texto do erro (1.680968ms)
+✔ fluxo completo de ponta a ponta com dados de teste: a receber -> pago -> relatório (2.164664ms)
+✔ os três modos são os mesmos da aba Pacientes (0.077565ms)
+✔ porta aberta nunca puxa conversa; leve e próximo respeitam o limite da semana (0.242999ms)
+✔ sem autorização, inativo, sem modo ou contagem inválida: não pode, com motivo em português (0.157212ms)
+✔ semana começa na segunda-feira (0.228108ms)
+✔ D9: o módulo não conhece pagamento nem cobrança (não responder nunca gera cobrança) (0.207598ms)
+✔ consulta marcada ou realizada sem pagamento gera a_receber com o preço do tipo (0.514802ms)
+✔ não duplica: consulta que já tem pagamento (em qualquer status) é pulada (0.147929ms)
+✔ rodar duas vezes seguidas não cria nada na segunda (0.126217ms)
+✔ preço ausente, zero ou inválido nunca gera cobrança de R$ 0,00 e avisa (0.260776ms)
+✔ consulta sem paciente, faltou e cancelada não geram cobrança (0.149651ms)
+✔ tipo inválido é recusado sem quebrar as outras consultas (0.114079ms)
+✔ consulta cancelada que ainda tem valor a receber vira aviso, nunca é apagada (0.115381ms)
+✔ Google simulado: gerarAReceber grava uma vez e a segunda execução não muda nada (1.22278ms)
+✔ CRC16-CCITT: vetor conhecido "123456789" dá 29B1 (0.135721ms)
+✔ CRC sempre tem 4 letras maiúsculas (completa com zeros) (0.193957ms)
+✔ montarCampo: id, tamanho com 2 dígitos e valor (0.141049ms)
+✔ normalizarTextoPix: sem acento e em maiúsculas (0.063584ms)
+✔ gera todos os campos do padrão com os valores certos (0.178134ms)
+✔ o CRC do texto gerado confere (0.08724ms)
+✔ valor em centavos vira reais com ponto e duas casas (0.197643ms)
+✔ sem identificador usa *** (padrão do Pix) (0.120438ms)
+✔ nome e cidade com acento saem sem acento; limites 25 e 15 aceitos (0.120779ms)
+✔ erros claros em português, sem mostrar o valor digitado (0.355376ms)
+✔ lerReais converte o que ela digita em centavos (0.295648ms)
+✔ lerReais recusa vazio, zero, negativo, texto, três casas e valor absurdo (0.140609ms)
+✔ menu "Definir preços": R$ 180,00 vira 18000 e o retorno em branco não muda (1.696691ms)
+✔ menu "Definir preços": valor inválido não grava nada e explica (1.507461ms)
+✔ preço abaixo de R$ 10,00 pede confirmação; "não" não grava (1.642892ms)
+✔ gerar a receber com preço de R$ 1,50 (150 no campo de centavos) pede confirmação e "não" não cobra (2.102031ms)
+✔ "ainda não" duas vezes seguidas aparece; uma só ou intercalada com "sim" não (0.511597ms)
+✔ silêncio: conta da última resposta; o limite exato (14 dias) conta (0.12803ms)
+✔ silêncio: sem nenhuma resposta e autorizou há mais de 14 dias aparece; sem data de autorização, não (0.161609ms)
+✔ nota escrita aparece com a nota mais recente; nota em branco não (0.149502ms)
+✔ retorno sem data: realizada há 7 dias ou mais e nenhuma consulta marcada depois; cancelada não conta (0.241527ms)
+✔ paciente inativo nunca aparece; ordem: mais sinais primeiro, depois o código (0.124033ms)
+✔ resumo usa só código e rótulo; sem paciente com sinal, diz que está tudo tranquilo (0.122431ms)
+✔ o pacote de produção não tem os arquivos do gerador de dados fictícios (0.099147ms)
+✔ nada do pacote menciona o gerador, os pacientes P9xxx, e-mails inventados ou escrita na agenda (3.731143ms)
+✔ os nomes que o gerador define são descobertos sozinhos (a conferência não depende de lista escrita à mão) (0.083594ms)
+✔ produção só lê a agenda: sai calendar.events (escrita) e entra calendar.events.readonly (0.095261ms)
+✔ a lista de escopos de produção é exata e cada um está justificado em DECISOES.md (0.29692ms)
+✔ o manifesto de produção mantém fuso, motor V8 e o serviço avançado de agenda (leitura) (0.076823ms)
+✔ o pacote de produção carrega inteiro, o menu monta sem o submenu de teste e todo item aponta para função existente (1.901654ms)
+✔ o pacote de teste (src/) continua com o gerador e o submenu de teste (1.528852ms)
+✔ a conferência pega o erro: gerador escondido em outro arquivo, escopo de escrita e arquivo de teste são recusados (2.357619ms)
+✔ escreverPacote grava só em dist/, com os mesmos arquivos e o manifesto de produção; recusa outra pasta (1.144685ms)
+✔ recibo completo traz todos os campos obrigatórios (0.466631ms)
+✔ nome do arquivo leva só número do recibo e código do paciente, nunca nome (0.145926ms)
+✔ sem CPF a linha some; pagador igual ao paciente não repete a linha do paciente (0.163141ms)
+✔ recusa pagamento não pago, cortesia, pacote, valor zero, sem pagador, data ruim, CPF inválido (0.351971ms)
+✔ faltando configuração, diz qual chave preencher (0.103784ms)
+✔ recibo já emitido não é gerado de novo em silêncio (0.07396ms)
+✔ cifrão e barra do nome saem, para não virarem comando na troca de texto do Docs (0.046809ms)
+✔ Google simulado: gera o PDF na pasta, apaga a cópia e grava o link (1.696631ms)
+✔ Google simulado: campo desconhecido no modelo dela interrompe e não gera PDF (1.227517ms)
+✔ Google simulado: recibo recusado mostra os problemas em português (1.279624ms)
+✔ Google simulado: cria modelo e pasta só quando os ids estão em branco, sem usar DriveApp (1.703301ms)
+✔ Google simulado: o recibo só usa o serviço avançado Drive (copiar, criar, lixeira), nunca DriveApp (1.23705ms)
+✔ Google simulado: id de pasta ou de modelo com caractere estranho é recusado antes de qualquer chamada ao Drive (1.233886ms)
+✔ linha do Registro segue as colunas: data_hora, modulo, nivel, mensagem (0.247056ms)
+✔ nível inválido é recusado (0.125596ms)
+✔ mensagem longa é cortada (0.616282ms)
+✔ mascara e-mail, telefone e CPF, mas deixa código de paciente (0.133257ms)
+✔ mensagem que começa como fórmula não vira fórmula na planilha (0.125095ms)
+✔ módulo inválido vira "desconhecido" (nunca texto livre) (0.111846ms)
+✔ R01: texto simples sem espaço fora da lista fechada também vira "desconhecido", no Registro e no e-mail (0.137584ms)
+✔ e-mail de alerta traz módulo e horário, nunca a mensagem do erro (0.08081ms)
+✔ descreverFalha grava só módulo e tipo de listas fechadas (0.106388ms)
+✔ a coluna data_hora do Registro é texto (horário não muda de fuso) (0.062653ms)
+✔ erro forçado aparece no Registro e gera e-mail sem detalhes (1.840254ms)
+✔ sem aba Registro: não lança erro, usa o Logger e ainda envia o e-mail (0.868295ms)
+✔ e-mail de alerta ausente ou inválido: registra aviso e não envia (1.815357ms)
+✔ falha ao enviar e-mail vira aviso no Registro, sem novo erro (0.950387ms)
+✔ regressão: mensagem de exceção com nome, e-mail e saúde fictícios não vai ao Registro, e-mail nem Logger (0.766335ms)
+✔ regressão: falha de gravação com texto sensível não vai ao Logger (1.670402ms)
+✔ regressão: módulo livre e nome de tipo livre viram "desconhecido" (1.549453ms)
+✔ regressão: falha do envio de e-mail com texto sensível não vai ao Registro (1.109272ms)
+✔ registrar com nível inválido não lança erro e não grava (0.799794ms)
+✔ R07: leitor recusa cabeçalho trocado e nenhuma operação grava (2.336569ms)
+✔ R07: sincronização, a receber e relatório também recusam cabeçalho trocado (8.084365ms)
+✔ R04: evento remarcado para depois da janela é achado pelo id e só muda de data (2.092637ms)
+✔ R04: evento que a agenda não devolve (erro ou não achado) continua marcado, com aviso (2.184784ms)
+✔ R04: trocar o calendario_id não cancela consultas da agenda anterior (2.11483ms)
+✔ R09: modelo só com "RECIBO" não gera PDF, não grava link e não deixa cópia (2.218033ms)
+✔ R09: modelo sem o campo do valor é recusado; campo condicional exigido quando há CPF (3.66908ms)
+✔ R09: modelo completo continua gerando o recibo (2.04039ms)
+✔ R11: falha ao gravar o pagamento não consome consulta; repetir consome uma só (6.166036ms)
+✔ R11: falha só ao gravar "usadas" é reconciliada na ação seguinte e o pacote não estoura (2.967021ms)
+✔ R11b: o saldo do pacote é lido depois de adquirir a trava (1.722599ms)
+✔ R02: saída efetiva de produção exclui gerador e escrita na agenda (3.059258ms)
+✔ R08: nenhum DriveApp no código e nenhum escopo drive amplo (auditoria estática) (0.74286ms)
+✔ interpretarMes aceita AAAA-MM, MM/AAAA e vazio; recusa o resto (0.272633ms)
+✔ totais batem com a soma feita à mão (R$ 450,00 em 4 recebimentos, 4 linhas de pagador) (0.571106ms)
+✔ fica de fora: cortesia, pacote, a receber, outro mês e sem data válida (com aviso para a data) (0.255438ms)
+✔ outro mês soma só o que é dele (0.20271ms)
+✔ mês sem recebimentos dá total zero, sem erro (0.095341ms)
+✔ verificarTotais barra número adulterado (0.202891ms)
+✔ CPF inválido é tratado como sem CPF e o número digitado nunca aparece em aviso (0.113488ms)
+✔ CSV: separador ponto e vírgula, vírgula decimal, CPF formatado, fórmula neutralizada (0.349677ms)
+✔ CSV: nome com ponto e vírgula ou aspas vai entre aspas (0.144634ms)
+✔ nome do arquivo leva só o mês (0.103033ms)
+✔ aba: título, cabeçalho, total e por forma, retangular (0.494352ms)
+✔ Google simulado: gera a aba e o CSV; repetir refaz a aba e atualiza o mesmo CSV (2.487702ms)
+✔ Google simulado: sem pasta configurada a aba sai e o CSV não, com aviso (1.70239ms)
+✔ Google simulado: mês inválido mostra mensagem e não gera nada (1.037676ms)
+✔ R10: pagamento sem CPF de homônimo não é atribuído ao CPF de outra pessoa (0.18925ms)
+✔ link traz o código já preenchido e sempre no mesmo formato (0.162971ms)
+✔ link recusa endereço que não é de Google Formulário, campo mal formado e código inválido (0.193567ms)
+✔ resposta válida vira linha na ordem da aba Respostas (0.423907ms)
+✔ código desconhecido, resposta fora da lista e data ruim são recusados sem gravar (0.153778ms)
+✔ data e hora impossíveis são recusadas; fevereiro, ano bissexto e limites de hora conferidos (0.191793ms)
+✔ nota: e-mail e telefone são ocultados, texto longo é cortado e fórmula é neutralizada (1.643573ms)
+✔ todo item de menu citado nos manuais existe com esse nome exato (0.646086ms)
+✔ DECISOES.md: a tabela de escopos não é quebrada por linha em branco (senão vira texto solto) (0.217432ms)
+✔ todo escopo de appsscript.json tem uma linha na tabela de escopos de DECISOES.md (1.703326ms)
+✔ todo escopo declarado é usado por alguma chamada do código (nada de permissão sobrando) (0.267696ms)
+✔ o código usa cada serviço do Google só com o escopo declarado (nada de permissão faltando) (0.595541ms)
+✔ regra 2 e 3: nada de servidor próprio, web app ou WhatsApp não oficial no código (1.169651ms)
+✔ regra 4: sem IA no código (0.388925ms)
+✔ regra 1: só endereços e CPFs fictícios em código, testes e documentos (11.414649ms)
+✔ tabela de tarefas: toda tarefa T00 a T11 tem situação e está no CHANGELOG (0.465299ms)
+✔ validação no Google: toda tarefa com chamada ao Google tem uma seção em VALIDACAO-NO-GOOGLE.md (0.197332ms)
+✔ roteiro do piloto: os números esperados são os que o fluxo simulado calcula, e cada passo tem resultado esperado (0.479239ms)
+✔ dúvidas para a nutricionista: linguagem de consultório, sem dado real e com resposta em branco (0.247105ms)
+✔ Drive só pelo serviço avançado v3 com drive.file; DriveApp e escopo drive completo não voltam (0.650122ms)
+✔ D23: a documentação não manda ampliar escopo por conta própria (0.433532ms)
+ℹ tests 304
+ℹ suites 0
+ℹ pass 304
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 366.674323
+
+CLI direto por --arquivo (7 retornos conferidos)
+Salvo em docs/revisoes/T05-2026-09-29.md
+Parecer: APROVADO
+Problemas: 0 alta, 0 média, 0 baixa
+Formato ok e tarefa liberada para a validação no Google. Se houver ressalvas, peça ao Claude: "corrija a revisão em ../cli-respostas-6/T05-2026-09-29.md".
+Parecer: APROVADO
+Problemas: 0 alta, 0 média, 0 baixa
+Formato ok e tarefa liberada para a validação no Google. Se houver ressalvas, peça ao Claude: "corrija a revisão em ../cli-respostas-6/T05-2026-09-29.md".
+Salvo em docs/revisoes/T06-2026-09-29.md
+Parecer: REPROVADO
+Problemas: 1 alta, 0 média, 0 baixa
+  P1 [ALTA] src/Agenda.js, exemplo
+Formato ok, mas a tarefa NÃO pode avançar: o parecer é REPROVADO. Registrar a resposta não aprova a tarefa.
+Peça ao Claude: "corrija a revisão em ../cli-respostas-6/T06-2026-09-29.md".
+Parecer: REPROVADO
+Problemas: 1 alta, 0 média, 0 baixa
+  P1 [ALTA] src/Agenda.js, exemplo
+Formato ok, mas a tarefa NÃO pode avançar: o parecer é REPROVADO. Registrar a resposta não aprova a tarefa.
+Peça ao Claude: "corrija a revisão em ../cli-respostas-6/T06-2026-09-29.md".
+Salvo em docs/revisoes/T07-2026-09-29.md
+Parecer: (não identificado)
+Problemas: 0 alta, 0 média, 0 baixa
+A resposta NÃO segue o formato:
+  - Falta a seção "## Parecer".
+  - Falta a seção "## Problemas".
+  - Falta a seção "## Testes".
+  - Falta a seção "## Pontos para validar no Google".
+Peça ao ChatGPT para reenviar só no modelo do roteiro.
+Parecer: (não identificado)
+Problemas: 0 alta, 0 média, 0 baixa
+A resposta NÃO segue o formato:
+  - Falta a seção "## Parecer".
+  - Falta a seção "## Problemas".
+  - Falta a seção "## Testes".
+  - Falta a seção "## Pontos para validar no Google".
+Peça ao ChatGPT para reenviar só no modelo do roteiro.
+Erro: Nenhuma resposta salva para T08 em docs/revisoes/.
+
+CLI direto por stdin (7 retornos conferidos)
+salvar T05: esperado=0 obtido=0
+conferir T05: esperado=0 obtido=0
+salvar T06: esperado=3 obtido=3
+conferir T06: esperado=3 obtido=3
+salvar T07: esperado=1 obtido=1
+conferir T07: esperado=1 obtido=1
+conferir T08: esperado=1 obtido=1
+
+Suíte independente de revisão (exit1, 17pass/9fail)
+✔ CONTROLE: erro.message fictício não aparece no Registro nem no e-mail (10.232627ms)
+✔ CONTROLE: fallback do Logger não inclui a mensagem sensível da falha de gravação (2.390899ms)
+✔ R01: módulo fora da lista fechada deve ser desconhecido em todos os destinos (0.492789ms)
+✔ R02: saída efetiva de produção exclui gerador e escrita na agenda (5.581663ms)
+✔ R03: apagador deve preservar P9500, que não foi criado pelo gerador (3.030947ms)
+✔ R04: ausência na janela, sem prova de exclusão, não deve cancelar uma remarcação distante (0.624995ms)
+✔ R03b: apagador deve remover a consulta fictícia ainda sem paciente identificado (2.867765ms)
+✔ R05a: consulta cancelada nesta execução não deve converter a primeira em retorno (0.511707ms)
+✔ R05b: histórico deve usar a data remarcada nesta execução, não a data antiga (7.01197ms)
+✔ R06: linha de consulta sem id_evento não deve criar cobrança repetidamente (1.038177ms)
+✔ R07: leitor deve recusar cabeçalho diferente antes de interpretar/gravar dados (2.79718ms)
+✔ R08: DriveApp de escrita exige drive, ausente do manifesto atual (0.295287ms)
+✔ R09: modelo sem os campos obrigatórios não deve gerar recibo incompleto (4.117466ms)
+✔ R10: relatório não deve atribuir CPF a outro pagamento só por igualdade de nome (1.172866ms)
+✔ R11: falha ao gravar pagamento não deve consumir duas consultas de pacote ao repetir (3.474263ms)
+✔ R11b: leitura do pacote deve ocorrer depois de adquirir a trava (3.478469ms)
+✖ R03c: código reservado sem prova de origem não autoriza apagar linhas (1.85106ms)
+✖ R03d: prefixo não comprova pertencer aos nove eventos gerados (0.359041ms)
+✖ R03e: consulta alheia do mesmo paciente fictício deve ser preservada (0.353303ms)
+✖ R04b: troca de agenda não deve perder a origem na segunda sincronização (3.545138ms)
+✖ R04c: ID igual em agenda nova não autoriza cancelar consulta da agenda antiga (2.14178ms)
+✖ R11c: duas consultas não devem consumir três unidades ao renovar um pacote (2.22214ms)
+✖ R07b: leitor de Configurações deve recusar cabeçalho invertido (2.636162ms)
+✖ R07c: gravador de Configurações deve recusar cabeçalho invertido sem escrita (1.961984ms)
+✖ R07d: cabeçalho com coluna extra deve ser recusado antes da leitura (1.895556ms)
+✔ CONTROLE: menu e manifesto reais do pacote de produção preservam R02 e D17 (2.928305ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 17
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87.247251
+
+✖ failing tests:
+
+test at ../PR6-b12b35e.cjs:184:1
+✖ R03c: código reservado sem prova de origem não autoriza apagar linhas (1.85106ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   Consultas: [
+  +     2
+  +   ],
+  -   Consultas: [],
+      Pacientes: [],
+  +   Pacotes: [
+  +     2
+  +   ],
+  +   Pagamentos: [
+  +     2
+  +   ]
+  -   Pacotes: [],
+  -   Pagamentos: []
+    }
+  
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:189:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Object],
+    expected: [Object],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../PR6-b12b35e.cjs:191:1
+✖ R03d: prefixo não comprova pertencer aos nove eventos gerados (0.359041ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:192:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../PR6-b12b35e.cjs:194:1
+✖ R03e: consulta alheia do mesmo paciente fictício deve ser preservada (0.353303ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   2
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:197:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at ../PR6-b12b35e.cjs:199:1
+✖ R04b: troca de agenda não deve perder a origem na segunda sincronização (3.545138ms)
+  AssertionError [ERR_ASSERTION]: [["agenda-ficticia@group.calendar.google.com","mesmoid"]]
+  + actual - expected
+  
+  + 'cancelada'
+  - 'marcada'
+  
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:209:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'cancelada',
+    expected: 'marcada',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../PR6-b12b35e.cjs:211:1
+✖ R04c: ID igual em agenda nova não autoriza cancelar consulta da agenda antiga (2.14178ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'cancelada'
+  - 'marcada'
+  
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:217:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'cancelada',
+    expected: 'marcada',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../PR6-b12b35e.cjs:219:1
+✖ R11c: duas consultas não devem consumir três unidades ao renovar um pacote (2.22214ms)
+  AssertionError [ERR_ASSERTION]: [["codigo_paciente","total_consultas","usadas","valor_centavos","inicio"],["P0001",2,2,25000,"2026-09-01"],["P0001",2,1,25000,"2026-09-15"]]
+  
+  3 !== 2
+  
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:229:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../PR6-b12b35e.cjs:232:1
+✖ R07b: leitor de Configurações deve recusar cabeçalho invertido (2.636162ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:235:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /cabe|coluna|estrutura/i,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at ../PR6-b12b35e.cjs:237:1
+✖ R07c: gravador de Configurações deve recusar cabeçalho invertido sem escrita (1.961984ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:240:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /cabe|coluna|estrutura/i,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at ../PR6-b12b35e.cjs:242:1
+✖ R07d: cabeçalho com coluna extra deve ser recusado antes da leitura (1.895556ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/tmp/nutrimolda-audit-b12b35e/PR6-b12b35e.cjs:247:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /cabe|coluna|estrutura/i,
+    operator: 'throws',
+    diff: 'simple'
+  }
