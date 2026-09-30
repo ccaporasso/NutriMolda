@@ -263,3 +263,15 @@ test('o protótipo fica fora de src/ e do pacote de produção', () => {
   assert.ok(!fs.readdirSync(path.join(__dirname, '..', 'src')).some((f) => /prototipo/.test(f)));
   assert.deepEqual(pacote.manifesto.oauthScopes.length, 6);
 });
+
+test('caso 12: valores de texto que virariam fórmula são neutralizados para o futuro adaptador de planilha', () => {
+  const { neutralizarCelula, neutralizarLinha } = require('../prototipo/whatsapp/planilha-segura.js');
+  for (const perigo of ['=1+1', '+SOMA(A1)', '-2', '@cmd', '\t=x', '\r=x', ' =HYPERLINK("http://x")', '=IMPORTXML("http://x")']) {
+    const r = neutralizarCelula(perigo);
+    assert.ok(r.startsWith(' ') && !/^[=+\-@]/.test(r) && r.trim() === perigo.trim() || r.endsWith(perigo), perigo);
+    assert.doesNotMatch(r, /^[=+\-@]/);
+  }
+  assert.equal(neutralizarCelula('Ana'), 'Ana');
+  assert.equal(neutralizarCelula(42), 42);
+  assert.deepEqual(neutralizarLinha(['=A1', 'ok', 3]), [' =A1', 'ok', 3]);
+});
