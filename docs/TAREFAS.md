@@ -27,7 +27,7 @@ Situação: a fazer · em andamento · feita.
 |---|---|---|---|
 | R1 | Revisão do próprio código (T00 a T11) contra a especificação, correções claras e dúvidas para o Caio (`docs/REVISAO-T00-T11.md`) | Code | feita: 5 correções em documentos e dados de teste; 15 dúvidas aguardam o Caio |
 | R2 | Testes de integração com Google simulado: agenda → consulta → cobrança → pagamento → recibo → relatório | Code | feita (`tests/integracao.test.js`, 8 testes); só prova a lógica: o Google de verdade continua no roteiro do piloto |
-| R3 | Casos de falha: cancelamentos, execuções repetidas, configuração incompleta, falha no PDF, erro no envio de alerta | Code | a fazer |
+| R3 | Casos de falha: cancelamentos, execuções repetidas, configuração incompleta, falha no PDF, erro no envio de alerta | Code | feita (`tests/falhas.test.js`, 26 testes); o comportamento real do Google diante de cota, permissão e erro de Drive só se vê na conta de teste |
 | R4 | Separação teste/produção: pacote de produção sem gerador de dados fictícios e sem permissões só de teste, conferido por teste automático | Code | a fazer |
 | R5 | Preparação do piloto: roteiro no Google, resultados esperados e dúvidas para a nutricionista | Ambos | a fazer |
 
