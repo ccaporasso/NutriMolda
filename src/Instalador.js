@@ -8,6 +8,9 @@ function onOpen() {
     .createMenu('Kit do Consultório')
     .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
     .addItem('Testar alerta de falha', 'testarAlertaDeFalha')
+    .addSeparator()
+    .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')
+    .addItem('TESTE: apagar dados fictícios', 'apagarDadosDeTeste')
     .addToUi();
 }
 
