@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "repository": "ccaporasso/NutriMolda",
+  "review_branch": "codex/revisoes",
+  "overall": "CORRECOES_NECESSARIAS",
+  "reviews": [
+    {
+      "pr": 6,
+      "sha": "c160294dc79fd1c329270eee0c8aa14b003f87e6",
+      "status": "REPROVADO",
+      "report": "docs/revisoes/codex/PR6-c160294.md"
+    },
+    {
+      "pr": 8,
+      "sha": "aad1296a1b32d4618083cec9d3576a83d5b7cb7d",
+      "status": "REPROVADO",
+      "report": "docs/revisoes/codex/PR8-aad1296.md",
+      "resolved": [
+        "R02"
+      ]
+    },
+    {
+      "pr": 9,
+      "sha": "9e99aab08475a27f9caa86b5fac3b11b10d27cea",
+      "status": "REPROVADO",
+      "report": "docs/revisoes/codex/PR9-9e99aab.md"
+    }
+  ]
+}
