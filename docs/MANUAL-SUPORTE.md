@@ -50,7 +50,8 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 |---|---|
 | `spreadsheets.currentonly` | Só a planilha do kit |
 | `script.send_mail` | E-mail de alerta de falha |
-| `calendar.events` | Ler eventos da agenda (e criar/apagar os fictícios de teste) |
+| `calendar.events` | **Só no pacote de teste (`src/`)**: ler eventos da agenda e criar/apagar os fictícios |
+| `calendar.events.readonly` | **Só no pacote de produção**: ler eventos da agenda (D23; a validar no Google) |
 | `script.scriptapp` | Gatilho de hora em hora |
 | `documents` | Preencher o modelo do recibo |
 | `drive.file` | Só arquivos e pastas criados pelo kit (recibos, CSV) |
@@ -65,3 +66,10 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 ## 7. Testes automáticos
 
 `node --test` roda tudo, sem dependências, contra um **Google simulado** (`tests/apoio/simulacao.js`). Ele prova a lógica, não o comportamento real do Google. O que só a conta de teste confirma está em `docs/VALIDACAO-NO-GOOGLE.md`.
+
+## 8. Pacote de teste e pacote de produção
+
+- **Teste** = a pasta `src/` inteira (é o que o `clasp` envia ao projeto de TESTE). Tem o gerador de dados fictícios e o escopo `calendar.events`.
+- **Produção** = `node scripts/empacotar-producao.js` monta `dist/producao/` (fora do Git). Não tem `DadosTeste.js`, `GeradorTeste.js` nem o submenu "Somente na conta de TESTE", e troca `calendar.events` por `calendar.events.readonly`. O script recusa montar o pacote se sobrar qualquer marca de teste.
+- `node --test` já confere isso (`tests/producao.test.js`). O script só monta arquivos: não usa `clasp` e não envia nada.
+- Só use o pacote de produção depois de cumprir o que a D12 e `docs/SEGURANCA-LGPD.md` exigem. Para enviá-lo à conta da cliente, faça um `.clasp.json` **separado** (fora do Git) com `rootDir` apontando para `dist/producao`, e só com a sua confirmação (regra 8).

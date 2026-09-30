@@ -111,6 +111,8 @@ function criarAmbiente(opcoes = {}) {
     for (const n of nomes) vm.runInContext(fs.readFileSync(path.join(raiz, n), 'utf8'), contexto, { filename: n });
     return ambiente;
   };
+  // Carrega arquivos que não vêm de src/ (por exemplo, o pacote de produção montado em memória).
+  ambiente.carregarTexto = (nome, texto) => { vm.runInContext(texto, contexto, { filename: nome }); return ambiente; };
   ambiente.rodar = (codigo) => vm.runInContext(codigo, contexto);
   return ambiente;
 }

@@ -62,3 +62,12 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 7. Usar um item na aba errada mostra a mensagem "Abra a aba ..." e não gera e-mail de alerta.
 8. Na primeira execução, o Google pede a autorização de todos os escopos declarados (planilha, e-mail, agenda, gatilhos, Docs, Drive).
 
+## R4 — Pacote de produção (escopo somente leitura da agenda)
+
+**Implementado:** `node scripts/empacotar-producao.js` monta o pacote sem o gerador de dados fictícios e com `calendar.events.readonly`; testes automáticos conferem arquivos, nomes, marcas de teste e escopos.
+
+**Validar no Google (só na conta de TESTE, com o seu ok):**
+1. Monte o pacote e envie **para o projeto de TESTE** (não para a cliente), ou troque a lista de escopos do projeto de teste pela de `dist/producao/appsscript.json`.
+2. Autorize de novo: a tela deve pedir só leitura da agenda.
+3. Rode "Sincronizar agenda" na agenda de teste. **Esperado:** funciona como antes. **Se der erro de permissão:** `Calendar.Events.list` não aceita o escopo menor; a produção volta para `calendar.events` (nova decisão em `docs/DECISOES.md`).
+4. O menu não mostra "Somente na conta de TESTE".

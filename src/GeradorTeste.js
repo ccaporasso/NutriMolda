@@ -9,6 +9,13 @@ const ABAS_COM_CODIGO = [
   { aba: 'Pacotes', coluna: 'codigo_paciente' },
 ];
 
+// Chamada por onOpen (Menu.js) só quando este arquivo existe: na produção o submenu de teste nem aparece.
+function adicionarMenuDeTeste_(ui, menu) {
+  menu.addSubMenu(ui.createMenu('Somente na conta de TESTE')
+    .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')
+    .addItem('TESTE: apagar dados fictícios', 'apagarDadosDeTeste'));
+}
+
 function calendarioDeTeste_() {
   const cfg = lerConfiguracoes().config;
   const id = cfg.calendario_id;

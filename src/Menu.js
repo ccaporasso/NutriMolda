@@ -6,7 +6,7 @@ const MAX_LINHAS_POR_ACAO = 20;
 
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu('Kit do Consultório')
+  const menu = ui.createMenu('Kit do Consultório')
     .addItem('Sincronizar agenda', 'sincronizarAgendaPeloMenu')
     .addItem('Gerar valores a receber', 'gerarAReceberPeloMenu')
     .addSeparator()
@@ -28,11 +28,10 @@ function onOpen() {
       .addItem('Instalar/atualizar planilha', 'instalarPlanilha')
       .addItem('Criar modelo e pasta de recibos', 'criarModeloEPastaDeRecibos')
       .addItem('Ativar sincronização automática', 'ativarSincronizacaoAutomatica')
-      .addItem('Testar alerta de falha', 'testarAlertaDeFalha'))
-    .addSubMenu(ui.createMenu('Somente na conta de TESTE')
-      .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')
-      .addItem('TESTE: apagar dados fictícios', 'apagarDadosDeTeste'))
-    .addToUi();
+      .addItem('Testar alerta de falha', 'testarAlertaDeFalha'));
+  // O submenu de teste vem de GeradorTeste.js, que o pacote de produção não leva (ver scripts/empacotar-producao.js).
+  if (typeof adicionarMenuDeTeste_ === 'function') adicionarMenuDeTeste_(ui, menu);
+  menu.addToUi();
 }
 
 function hojeTexto_() {

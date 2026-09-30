@@ -13,3 +13,6 @@ Thumbs.db
 .vscode/
 .idea/
 node_modules/
+
+# Pacote de produção montado por scripts/empacotar-producao.js
+dist/
