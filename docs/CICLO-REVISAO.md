@@ -6,11 +6,12 @@ O Claude Code não tem acesso ao ChatGPT, e o ChatGPT não tem acesso ao reposit
 
 1. **Claude** termina a tarefa (um commit `T05: ...`, `node --test` passando) e avisa.
 2. **Gerar o pacote** (na pasta do repositório):
-   `node scripts/revisao.js pacote T05 --base origin/claude/desenvolvimento`
+   `node scripts/revisao.js pacote T05 --base origin/claude/desenvolvimento --copiar`
+   (`--copiar` já deixa o pacote pronto para colar)
    Cria `.revisao/pacote-T05.md`. Ele já traz o roteiro para o ChatGPT, os critérios de aceite, as decisões citadas, o diff do commit da tarefa e o resultado de `node --test`.
 3. **Ler o aviso sobre dados pessoais** na seção "Aviso automático" do pacote. O pacote sai do seu computador para o ChatGPT: se algo ali for dado real, **não envie**.
 4. **Colar no ChatGPT:** abra o arquivo, copie tudo e cole numa conversa nova. Ele responde no formato fixo (parecer, problemas com prioridade, arquivo e função, correção esperada).
-5. **Salvar a resposta:** `node scripts/revisao.js salvar T05` (cole a resposta e tecle Ctrl+D), ou `--arquivo resposta.txt`. O script grava em `docs/revisoes/T05-AAAA-MM-DD.md` e confere o formato. Se disser que não segue o formato, peça ao ChatGPT para reenviar só no modelo.
+5. **Salvar a resposta:** `node scripts/revisao.js salvar T05 --colar` (lê o que você copiou no ChatGPT), ou sem `--colar` para colar no terminal e teclar Ctrl+D, ou `--arquivo resposta.txt`. O script grava em `docs/revisoes/T05-AAAA-MM-DD.md` e confere o formato. Se disser que não segue o formato, peça ao ChatGPT para reenviar só no modelo.
 6. **Commitar a resposta** na branch da tarefa e pedir ao Claude: "corrija a revisão em docs/revisoes/T05-....md". O Claude corrige só o que está lá (ALTA e MÉDIA sempre; BAIXA se for simples), roda `node --test`, faz novo commit e responde a cada problema (corrigido, ou por que não).
 7. **Repetir** os passos 2 a 6 até o parecer ser APROVADO ou APROVADO COM RESSALVAS sem problema ALTA. Depois disso, a tarefa segue para a validação no Google (`docs/VALIDACAO-NO-GOOGLE.md`), que só você faz.
 

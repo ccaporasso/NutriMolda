@@ -117,3 +117,10 @@ test('o modelo de resposta do roteiro é lido pelo próprio conferidor quando pr
   // Como veio, com as três opções, deve ser recusado (é modelo, não resposta).
   assert.equal(r.lerResposta(modelo).valida, false);
 });
+
+test('comando da área de transferência por sistema', () => {
+  assert.equal(r.comandoAreaDeTransferencia('darwin', 'copiar')[0], 'pbcopy');
+  assert.equal(r.comandoAreaDeTransferencia('win32', 'copiar')[0], 'clip');
+  assert.equal(r.comandoAreaDeTransferencia('linux', 'colar')[0], 'xclip');
+  assert.equal(r.comandoAreaDeTransferencia('freebsd', 'colar')[0], 'xclip');
+});

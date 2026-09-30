@@ -232,6 +232,29 @@ function proximoNomeResposta(nomes, id, dataISO) {
   return `${base}-${n}.md`;
 }
 
+// Comando da área de transferência por sistema: Mac (pbcopy/pbpaste), Windows (clip/PowerShell), Linux (xclip).
+function comandoAreaDeTransferencia(plataforma, modo) {
+  const tabela = {
+    darwin: { copiar: ['pbcopy', []], colar: ['pbpaste', []] },
+    win32: { copiar: ['clip', []], colar: ['powershell', ['-NoProfile', '-Command', 'Get-Clipboard -Raw']] },
+    linux: { copiar: ['xclip', ['-selection', 'clipboard']], colar: ['xclip', ['-selection', 'clipboard', '-o']] },
+  };
+  return (tabela[plataforma] || tabela.linux)[modo];
+}
+
+function copiarParaAreaDeTransferencia(texto) {
+  const [cmd, args] = comandoAreaDeTransferencia(process.platform, 'copiar');
+  const r = spawnSync(cmd, args, { input: texto, encoding: 'utf8' });
+  return !r.error && r.status === 0;
+}
+
+function lerAreaDeTransferencia() {
+  const [cmd, args] = comandoAreaDeTransferencia(process.platform, 'colar');
+  const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (r.error || r.status !== 0) throw new Error('Não consegui ler a área de transferência neste computador. Salve a resposta num arquivo e use --arquivo.');
+  return r.stdout;
+}
+
 // ---------- ligação com git, arquivos e terminal ----------
 
 function git(args) {
@@ -300,6 +323,11 @@ function comandoPacote(o) {
   console.log(`Pacote gravado em: ${path.relative(RAIZ, destino) || destino} (${pacote.length} caracteres)`);
   if (diff.length > LIMITE_DIFF) console.log(`Atenção: o diff tem ${diff.length} caracteres; o ChatGPT pode cortar. Revise um commit por vez (um por tarefa) ou divida a revisão.`);
   if (avisos.length) console.log(`Atenção: ${avisos.length} ponto(s) parecem dado pessoal. Leia a seção "Aviso automático" do pacote antes de colar.`);
+  if (o.copiar) {
+    console.log(copiarParaAreaDeTransferencia(pacote)
+      ? 'Pacote copiado: é só colar (Ctrl+V ou Cmd+V) no ChatGPT.'
+      : 'Não consegui copiar sozinho neste computador; abra o arquivo e copie à mão.');
+  }
   console.log('Próximo passo: abra o arquivo, copie tudo, cole no ChatGPT e salve a resposta com:\n  node scripts/revisao.js salvar ' + id + '   (cola o texto e termina com Ctrl+D)\n  ou crie o arquivo em docs/revisoes/ à mão.');
   return 0;
 }
@@ -307,7 +335,8 @@ function comandoPacote(o) {
 function comandoSalvar(o) {
   const id = String(o._[1] || '').toUpperCase();
   if (!idValido(id)) throw new Error('Diga o código da tarefa: node scripts/revisao.js salvar T05 < resposta.txt');
-  const texto = typeof o.arquivo === 'string' ? fs.readFileSync(o.arquivo, 'utf8') : fs.readFileSync(0, 'utf8');
+  const texto = typeof o.arquivo === 'string' ? fs.readFileSync(o.arquivo, 'utf8')
+    : o.colar ? lerAreaDeTransferencia() : fs.readFileSync(0, 'utf8');
   if (!texto.trim()) throw new Error('Nenhum texto recebido.');
   fs.mkdirSync(PASTA_RESPOSTAS, { recursive: true });
   const nome = proximoNomeResposta(fs.readdirSync(PASTA_RESPOSTAS), id, dataHoje());
@@ -349,7 +378,9 @@ const AJUDA = `Ciclo de revisão do Kit do Consultório
         --branch-inteira                       usa a branch toda, não só o commit "T05:"
         --sem-testes                           não roda node --test
         --saida arquivo.md                     grava em outro lugar
+        --copiar                               já copia o pacote para colar no ChatGPT
   node scripts/revisao.js salvar T05      guarda a resposta colada (Ctrl+D) em docs/revisoes/ e confere o formato
+        --colar                                lê a resposta que você acabou de copiar no ChatGPT
         --arquivo resposta.txt                 lê de um arquivo em vez do teclado
   node scripts/revisao.js conferir T05    confere a última resposta salva (ou um arquivo .md)
   node scripts/revisao.js modelo          mostra o modelo de resposta
@@ -376,6 +407,6 @@ if (require.main === module) process.exitCode = principal(process.argv.slice(2))
 
 module.exports = {
   idValido, extrairLinhaTarefa, extrairDecisoes, acharCommit, varrerDados, cortar, cerca,
-  montarRoteiro, montarPacote, lerResposta, ultimaResposta, proximoNomeResposta, opcoes,
+  comandoAreaDeTransferencia, montarRoteiro, montarPacote, lerResposta, ultimaResposta, proximoNomeResposta, opcoes,
   MODELO_RESPOSTA,
 };
