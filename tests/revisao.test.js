@@ -84,7 +84,7 @@ test('regra 4: sem IA no código', () => {
 
 test('regra 1: só endereços e CPFs fictícios em código, testes e documentos', () => {
   const dominiosOk = new Set(['exemplo.invalid', 'exemplo.com', 'c.com', 'group.calendar.google.com']);
-  const cpfsOk = new Set(['52998224725', '52998224724', '11111111111', '12345678909', '12345678901', '00123456789', '11912345678', '55119000000']);
+  const cpfsOk = new Set(['52998224725', '52998224724', '11111111111', '12345678909', '12345678901', '00123456789', '11912345678', '55119000000', '11900000001']);
   const arquivos = [...arquivosDe('src', '.js'), ...arquivosDe('tests', '.js'), ...arquivosDe('tests/apoio', '.js'), ...arquivosDe('docs', '.md'), 'README.md', 'CHANGELOG.md', 'CLAUDE.md'];
   for (const a of arquivos) {
     const texto = ler(a);
