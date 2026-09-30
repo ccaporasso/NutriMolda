@@ -16,7 +16,7 @@ function converterCelula_(coluna, valor) {
 function lerAbaComoObjetos(nomeAba) {
   const aba = ABAS.find((a) => a.nome === nomeAba);
   const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nomeAba);
-  if (!aba || !folha) throw new Error(`A aba "${nomeAba}" não existe. Use o menu Kit do Consultório > Instalar/atualizar planilha.`);
+  if (!aba || !folha) throw erroDeUso_(`A aba "${nomeAba}" não existe. Use o menu Kit do Consultório > Instalar/atualizar planilha.`);
   if (folha.getLastRow() < 2) return [];
   const valores = folha.getRange(2, 1, folha.getLastRow() - 1, aba.cabecalho.length).getValues();
   const objetos = [];
@@ -38,4 +38,25 @@ function adicionarLinhas(nomeAba, linhas) {
 function gravarLinha(nomeAba, numeroLinha, valores) {
   const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nomeAba);
   folha.getRange(numeroLinha, 1, 1, valores.length).setValues([valores]);
+}
+
+function gravarCelula(nomeAba, numeroLinha, nomeColuna, valor) {
+  const aba = ABAS.find((a) => a.nome === nomeAba);
+  const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nomeAba);
+  folha.getRange(numeroLinha, aba.cabecalho.indexOf(nomeColuna) + 1, 1, 1).setValues([[valor]]);
+}
+
+// Números das linhas selecionadas na aba indicada (nunca o cabeçalho). Pede a aba certa se ela estiver em outra.
+function linhasSelecionadas(nomeAba, maximo) {
+  const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  const folha = planilha.getActiveSheet();
+  if (!folha || folha.getName() !== nomeAba) {
+    throw erroDeUso_(`Abra a aba "${nomeAba}" e clique na linha desejada antes de usar este item do menu.`);
+  }
+  const faixa = planilha.getActiveRange();
+  const linhas = [];
+  for (let i = 0; i < faixa.getNumRows(); i++) if (faixa.getRow() + i >= 2) linhas.push(faixa.getRow() + i);
+  if (linhas.length === 0) throw erroDeUso_(`Clique em uma linha de dados da aba "${nomeAba}" (não no cabeçalho).`);
+  if (linhas.length > maximo) throw erroDeUso_(`Selecione no máximo ${maximo} linha(s) por vez.`);
+  return linhas;
 }

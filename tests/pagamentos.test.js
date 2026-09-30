@@ -75,7 +75,7 @@ test('Google simulado: gerarAReceber grava uma vez e a segunda execução não m
     ['prefixo_evento_consulta', 'Consulta'], ['email_alertas', 'alerta@exemplo.invalid'], ['id_modelo_recibo', ''], ['id_pasta_recibos', ''],
   ] });
   amb.abas.get('Consultas').linhas.push(['e1', '2026-09-10', '09:00', 'primeira', 'P9001', 'realizada', ''], ['e2', '2026-09-20', '09:00', 'retorno', 'P9001', 'marcada', '']);
-  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'LeitorAbas.js', 'Pagamentos.js', 'GerarAReceber.js');
+  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js', 'Execucao.js', 'LeitorAbas.js', 'Pagamentos.js', 'GerarAReceber.js');
   amb.rodar('gerarAReceber()');
   const pag = amb.abas.get('Pagamentos').linhas;
   assert.equal(pag.length, 3);

@@ -10,6 +10,8 @@ function onOpen() {
     .addItem('Sincronizar agenda', 'sincronizarAgendaPeloMenu')
     .addItem('Ativar sincronização automática', 'ativarSincronizacaoAutomatica')
     .addItem('Gerar valores a receber', 'gerarAReceberPeloMenu')
+    .addItem('Gerar recibo da linha selecionada', 'gerarReciboDaLinhaSelecionada')
+    .addItem('Criar modelo e pasta de recibos', 'criarModeloEPastaDeRecibos')
     .addItem('Testar alerta de falha', 'testarAlertaDeFalha')
     .addSeparator()
     .addItem('TESTE: criar dados fictícios', 'criarDadosDeTeste')
