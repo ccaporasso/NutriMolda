@@ -4,6 +4,7 @@
 const C = require('./contrato.js');
 const { criarAdaptadorConfiavel, criarRepositorios } = require('./adaptadores.js');
 const { criarNucleo } = require('./nucleo.js');
+const { montarAgendamento } = require('./agendamento.js');
 
 const CONS = 'CONS-A';
 const OUTRO_CONS = 'CONS-B';
@@ -16,14 +17,15 @@ const PACIENTES = [
   { codigo: 'F003', nome: 'Paciente Fictícia Três' },
 ];
 
-async function criarCenario({ inicio = '2026-10-01T12:00:00Z', latencia = false, extras } = {}) {
+async function criarCenario({ inicio = '2026-10-01T12:00:00Z', latencia = false, extras = montarAgendamento } = {}) {
   const relogio = C.criarRelogio(inicio);
   const confiavel = criarAdaptadorConfiavel();
   const repos = criarRepositorios({ latencia });
   const logs = [];
   let manipuladores = {};
   if (extras) { const r = extras({ repos, relogio, config: C.CONFIG_TESTE }); manipuladores = r.manipuladores || {}; Object.assign(repos, r.repos || {}); }
-  const nucleo = criarNucleo({ verificar: confiavel.verificar, repos, relogio, registrar: (l) => logs.push(l), manipuladores });
+  const montar = () => criarNucleo({ verificar: confiavel.verificar, repos, relogio, registrar: (l) => logs.push(l), manipuladores });
+  const nucleo = montar();
   const prof = confiavel.contextoProfissional(CONS, PROFISSIONAL);
   const sistema = confiavel.contextoSistema(CONS);
   for (const p of PACIENTES) await nucleo.cadastrarPaciente(prof, { consultorioId: CONS, codigoPaciente: p.codigo, nome: p.nome });
@@ -32,7 +34,9 @@ async function criarCenario({ inicio = '2026-10-01T12:00:00Z', latencia = false,
   let seq = 0;
   const liberar = (codigo, validaAte = horas(24 * 30)) => nucleo.liberarPaciente(prof, { consultorioId: CONS, codigoPaciente: codigo, canalId: CANAIS[codigo], validaAte });
   const enviar = (codigo, comando, parametros, eventoId) => nucleo.processarEventoPaciente(ctxPac(codigo), { consultorioId: CONS, eventoId: eventoId || `E${++seq}`, comando, parametros });
-  return { relogio, confiavel, repos, nucleo, logs, prof, sistema, ctxPac, liberar, enviar, horas, CONS, OUTRO_CONS };
+  // Recria o processador mantendo os repositórios simulados (testa retomada; não prova persistência real).
+  const recriarNucleo = montar;
+  return { relogio, confiavel, repos, nucleo, recriarNucleo, logs, prof, sistema, ctxPac, liberar, enviar, horas, CONS, OUTRO_CONS };
 }
 
 module.exports = { criarCenario, CONS, OUTRO_CONS, PROFISSIONAL, CANAIS, PACIENTES };
