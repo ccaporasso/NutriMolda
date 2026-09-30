@@ -30,7 +30,14 @@ Roteiro de 2 minutos:
 | `whatsapp/cenario.js` | consultório fictício montado (usado por testes e pela demonstração) |
 | `interface/` | servidor local, API fina sobre o núcleo e página (HTML/CSS/JS sem dependências externas) |
 
-Testes: `tests/bloco1-nucleo.test.js`, `tests/bloco1-agendamento.test.js`, `tests/bloco1-interface.test.js`.
+| `ponte/meta.js` | (WA01) assinatura `X-Hub-Signature-256`, webhook da Meta -> evento do núcleo, núcleo -> corpo de mensagem da Meta (texto, botões, lista) |
+| `ponte/ponte.js` | (WA02) ponte simulada: assinatura -> normalização -> diário em disco com fsync -> só então 200; processamento e saída separados, recuperáveis e idempotentes |
+
+Testes: `tests/bloco1-nucleo.test.js`, `tests/bloco1-agendamento.test.js`, `tests/bloco1-interface.test.js`, `tests/bloco1-ponte.test.js`.
+
+## Ponte e formato da Meta (itens 1 e 2, só local)
+
+Não há endpoint HTTP: a ponte é uma biblioteca chamada pelos testes (`receber(corpoBruto, assinatura)` devolve o status que o servidor real responderia: 401 assinatura inválida, 400/413 corpo ruim, 503 se não gravou, 200 só depois de gravar). O formato dos webhooks, os limites de botões/listas e a assinatura foram escritos a partir da documentação pública conhecida e **precisam ser conferidos na documentação vigente e na conta de teste (WA00)**. O diário (`diario.jsonl`, 0600) guarda só id do evento, consultório, identificador do canal, comando e parâmetros, nunca o texto da conversa; retenção em `compactar`; é descartável e NÃO é a persistência de produção (WA09). Reenvio da Meta, queda antes/depois do núcleo, linha torta no fim do arquivo, revogação entre etapas e falha do transporte estão cobertos. O transporte de saída é um objeto simulado: nada é enviado.
 
 ## Contrato final (B1)
 
