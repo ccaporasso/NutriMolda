@@ -1,7 +1,9 @@
 // Drive (serviço avançado v3) e Docs simulados para os testes de integração (não é dado real).
 // Reproduz só o que o kit usa: copiar o modelo, trocar campos, exportar o PDF pelo Docs, gravar na pasta,
 // mandar para a lixeira, criar e atualizar o CSV. `falhas` liga erros à vontade para testar o que acontece
-// quando o Google recusa. O kit não pode usar DriveApp: ele nem existe neste simulador (ver DriveAvancado.js).
+// quando o Google recusa. A criação pelo Docs não dá acesso automático ao Drive simulado com drive.file:
+// esse limite reproduz a falha observada no Google, mas não substitui validar a correção lá.
+// O kit não pode usar DriveApp: ele nem existe neste simulador (ver DriveAvancado.js).
 const { linhasModeloRecibo } = require('../../src/Recibo.js');
 
 function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {}) {
@@ -11,7 +13,7 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
   let seq = 0;
 
   function novo(nome, extra = {}) {
-    const a = { id: `arq${++seq}`, nome, lixeira: false, conteudo: '', tipo: '', texto: '', ...extra };
+    const a = { id: `arq${String(++seq).padStart(5, '0')}`, nome, lixeira: false, conteudo: '', tipo: '', texto: '', acessoDrive: true, ...extra };
     arquivos.set(a.id, a);
     return a;
   }
@@ -30,13 +32,15 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
     Files: {
       copy(recurso, id) {
         chamadas.push('Drive.Files.copy');
-        if (falhas.copiar) throw new Error('Arquivo não encontrado: Ana S. tem diabetes');
+        if (falhas.copiar) throw new Error('Arquivo não encontrado: EXCECAO_FICTICIA_COPIA_001');
         const origem = existente(id);
+        if (!origem.acessoDrive) throw new Error('Arquivo não encontrado.');
         return { id: novo(recurso.name, { texto: origem.texto, pasta: (recurso.parents || [])[0] }).id };
       },
       create(recurso, blob) {
         chamadas.push('Drive.Files.create');
         if (recurso.mimeType === 'application/vnd.google-apps.folder') return { id: novo(recurso.name, { ehPasta: true }).id };
+        if (recurso.mimeType === 'application/vnd.google-apps.document') return { id: novo(recurso.name, { tipo: recurso.mimeType }).id };
         if (falhas.criarArquivo) throw new Error('Sem espaço no Drive');
         const pai = (recurso.parents || [])[0];
         if (!pai || !arquivos.get(pai) || !arquivos.get(pai).ehPasta) throw new Error('Pasta não encontrada.');
@@ -70,6 +74,8 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
         insertText(ini, t) { arq.texto = arq.texto.slice(0, ini) + t + arq.texto.slice(ini); return textoDoArquivo; },
       };
       const corpo = {
+        clear() { arq.texto = ''; },
+        appendParagraph(t) { arq.texto += `${t}\n`; },
         replaceText() { throw new Error('replaceText não deve ser usado: o valor "R$" viraria referência de grupo.'); },
         findText(padrao) {
           const m = new RegExp(padrao).exec(arq.texto);
@@ -79,16 +85,17 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
         getText: () => arq.texto,
       };
       return {
-        getBody: () => corpo, getHeader: () => null, getFooter: () => null, saveAndClose() {},
+        getId: () => arq.id, getBody: () => corpo, getHeader: () => null, getFooter: () => null, saveAndClose() {},
         getAs: (tipo) => {
-          if (falhas.exportarPdf) throw new Error('Falha ao exportar: Maria Souza Teste');
+          if (falhas.exportarPdf) throw new Error('Falha ao exportar: EXCECAO_FICTICIA_PDF_001');
           const blob = { tipo, nome: arq.nome, texto: arq.texto, setName(n) { blob.nome = n; return blob; } };
           return blob;
         },
       };
     },
     create: (nome) => {
-      const arq = novo(nome);
+      chamadas.push('DocumentApp.create');
+      const arq = novo(nome, { acessoDrive: false });
       return { getBody: () => ({ clear() {}, appendParagraph(t) { arq.texto += `${t}\n`; } }), saveAndClose() {}, getId: () => arq.id };
     },
   };

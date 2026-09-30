@@ -116,7 +116,7 @@ function criarModeloEPastaDeRecibos() {
     const cfg = validarConfiguracoes(lerLinhasConfiguracoes_()).config;
     const feito = [];
     if (!cfg.id_modelo_recibo) {
-      const documento = DocumentApp.create('Modelo de recibo - Kit do Consultório');
+      const documento = DocumentApp.openById(driveCriarDocumento('Modelo de recibo - Kit do Consultório'));
       const corpo = documento.getBody();
       corpo.clear();
       for (const linha of linhasModeloRecibo()) corpo.appendParagraph(linha);
