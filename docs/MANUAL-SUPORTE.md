@@ -67,6 +67,12 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 
 `node --test` roda tudo, sem dependências, contra um **Google simulado** (`tests/apoio/simulacao.js`). Ele prova a lógica, não o comportamento real do Google. O que só a conta de teste confirma está em `docs/VALIDACAO-NO-GOOGLE.md`.
 
+## 7b. Colunas novas e troca de agenda
+
+- Planilha de versão anterior mostra "é de uma versão anterior do kit": rodar **Configuração > Instalar/atualizar planilha**. Isso completa `agenda_origem` (Consultas) e `pacote_inicio` (Pagamentos); ambas são preenchidas pelo kit, ninguém edita.
+- Trocar o `calendario_id`: as consultas antigas ficam como estão (`agenda_origem` diferente), não são canceladas nem atualizadas. Evento da agenda nova com o mesmo id de uma consulta antiga não é importado (aviso na sincronização): peça ajuda, não apague a consulta antiga.
+- Coluna a mais no cabeçalho de qualquer aba do kit é recusada (inclusive pelo instalador): use outra aba para anotações.
+
 ## 8. Pacote de teste e pacote de produção
 
 - **Teste** = a pasta `src/` inteira (é o que o `clasp` envia ao projeto de TESTE). Tem o gerador de dados fictícios e o escopo `calendar.events`.

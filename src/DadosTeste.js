@@ -130,16 +130,19 @@ function codigosEmColisao(pacientes) {
 
 // Recebe as linhas atuais (objetos com `linha`) de cada aba e devolve, por aba, os números das linhas a apagar
 // (de baixo para cima, para apagar uma não deslocar as outras). Só entra o que tem prova de ter vindo do gerador:
-// pacientes com código e e-mail exatos; consultas e pagamentos com id de evento exato dos nove eventos de teste;
-// pacotes de um paciente gerado que ainda está na planilha. Código P9xxx sozinho nunca basta.
-function planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, pacotes }) {
-  const geradosPresentes = new Set(pacientes.filter(ehPacienteGerado).map((p) => String(p.codigo)));
+// pacientes com código e e-mail exatos; consultas com id exato de um dos nove eventos de teste e da agenda de teste
+// (`origemTeste`; linha de outra agenda fica); pagamentos ligados a essas consultas. Pacotes nunca são apagados: o gerador
+// não os cria e não deixa registro de origem. Código P9xxx sozinho nunca basta.
+function planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, origemTeste }) {
   const descendente = (lista) => lista.map((o) => o.linha).sort((a, b) => b - a);
+  const daAgendaDeTeste = (c) => !c.origem || !origemTeste || c.origem === origemTeste;
+  const consultasGeradas = consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)) && daAgendaDeTeste(c));
+  const ids = new Set(consultasGeradas.map((c) => String(c.id_evento)));
   return {
     Pacientes: descendente(pacientes.filter(ehPacienteGerado)),
-    Consultas: descendente(consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)))),
-    Pagamentos: descendente(pagamentos.filter((p) => idEventoEhDeTeste(String(p.id_evento)))),
-    Pacotes: descendente(pacotes.filter((p) => geradosPresentes.has(String(p.codigo_paciente)))),
+    Consultas: descendente(consultasGeradas),
+    Pagamentos: descendente(pagamentos.filter((p) => ids.has(String(p.id_evento)))),
+    Pacotes: [],
   };
 }
 

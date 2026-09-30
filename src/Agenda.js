@@ -25,6 +25,13 @@ function calcularJanelaAgenda(hoje) {
   };
 }
 
+// Marca curta e estável do calendario_id (não guarda o id na planilha). Começa com letra para não virar número.
+function marcaDaAgenda(calendarioId) {
+  let h = 5381;
+  for (const c of String(calendarioId)) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0;
+  return `a${h.toString(16).padStart(8, '0')}`;
+}
+
 // Só letras e números; 55 na frente (Brasil) é ignorado.
 function normalizarTelefoneAgenda(texto) {
   let d = String(texto === undefined || texto === null ? '' : texto).replace(/\D/g, '');
@@ -157,8 +164,16 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
   };
   for (const c of finais) if (c.status !== 'cancelada') registrarHistorico(c.codigo_paciente, String(c.data), String(c.hora));
 
+  // Mesmo id em outra agenda: cobrança e recibo ligam pela única chave `id_evento`, então duas linhas com o mesmo id
+  // se confundiriam. Não importa o evento e não mexe na linha antiga (R04d).
+  const idsDeOutraAgenda = new Set(existentes.filter((c) => !daAgenda(c)).map((c) => String(c.id_evento)));
+  const barrados = novosEventos.filter((n) => idsDeOutraAgenda.has(n.id));
+  if (barrados.length > 0) {
+    avisos.push(`${barrados.length} evento(s) da agenda atual têm o mesmo id de uma consulta de outra agenda e não foram importados, `
+      + 'para não misturar cobrança e recibo. Não apague a consulta antiga; peça ajuda ao suporte.');
+  }
   const novos = [];
-  for (const { ev, id, local } of novosEventos) {
+  for (const { ev, id, local } of novosEventos.filter((n) => !idsDeOutraAgenda.has(n.id))) {
     const codigoAgenda = identificarPacienteAgenda(ev, pacientes);
     const anteriores = (historico.get(codigoAgenda) || []).filter((x) => x < local.data + local.hora);
     novos.push({
@@ -191,7 +206,7 @@ function resumirSincronizacao(plano) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    calcularJanelaAgenda, normalizarTelefoneAgenda, contatosDoEvento, identificarPacienteAgenda,
+    calcularJanelaAgenda, marcaDaAgenda, normalizarTelefoneAgenda, contatosDoEvento, identificarPacienteAgenda,
     ehEventoDeConsulta, linhaConsulta, planejarSincronizacaoAgenda, resumirSincronizacao,
   };
 }

@@ -79,7 +79,30 @@ test('planejarLimpezaDeTeste pega só o que tem prova de vir do gerador, de baix
     { linha: 5, id_evento: 'eventoalheio', codigo_paciente: ger.codigo },
   ];
   const plano = D.planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, pacotes: [{ linha: 2, codigo_paciente: 'P9500' }, { linha: 3, codigo_paciente: ger.codigo }] });
-  assert.deepEqual(plano, { Pacientes: [3], Consultas: [4, 3], Pagamentos: [3], Pacotes: [3] });
+  assert.deepEqual(plano, { Pacientes: [3], Consultas: [4, 3], Pagamentos: [3], Pacotes: [] }); // pacote nunca é apagado: o gerador não o cria
+});
+
+test('R03f/R03g: consulta de teste de outra agenda e pacote sem prova de origem são preservados', () => {
+  const ger = D.PACIENTES_TESTE[0];
+  const plano = D.planejarLimpezaDeTeste({
+    pacientes: [{ linha: 2, codigo: ger.codigo, email: ger.email }],
+    consultas: [{ linha: 2, id_evento: D.idEventoTeste(0), codigo_paciente: ger.codigo, origem: 'aalheia' }, { linha: 3, id_evento: D.idEventoTeste(1), codigo_paciente: ger.codigo, origem: 'ateste' }],
+    pagamentos: [{ linha: 2, id_evento: D.idEventoTeste(0) }, { linha: 3, id_evento: D.idEventoTeste(1) }],
+    pacotes: [{ linha: 2, codigo_paciente: ger.codigo, total_consultas: 99, usadas: 3 }], origemTeste: 'ateste',
+  });
+  assert.deepEqual(plano, { Pacientes: [2], Consultas: [3], Pagamentos: [3], Pacotes: [] });
+});
+
+test('R03h: evento com id ocupado sem prova de origem recusa a criação antes de escrever qualquer coisa', () => {
+  const { api, eventos, dados, amb } = carregarGerador({ calendario_id: CAL });
+  amb.contexto.Calendar.Events.get = (cal, id) => { if (id === D.idEventoTeste(0)) return { id, status: 'cancelled' }; throw new Error('Not Found'); };
+  const escritos = [];
+  amb.contexto.Calendar.Events.update = (...a) => escritos.push(a);
+  amb.contexto.Calendar.Events.insert = (...a) => escritos.push(a);
+  assert.throws(() => api.criarDadosDeTeste(), /não há prova/);
+  assert.equal(escritos.length, 0);
+  assert.equal(dados.Pacientes.length, 2);
+  assert.equal(eventos.size, 0);
 });
 
 test('R03c/R03d/R03e: código reservado sem prova de origem não autoriza apagar; prefixo parecido não é evento gerado', () => {
@@ -123,7 +146,7 @@ function carregarGerador(configuracao) {
       },
     },
   });
-  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Execucao.js', 'LeitorAbas.js', 'DadosTeste.js', 'GeradorTeste.js');
+  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Execucao.js', 'LeitorAbas.js', 'Agenda.js', 'DadosTeste.js', 'GeradorTeste.js');
   amb.abas.get('Pacientes').linhas.push(['P0001', 'Real', 'X.', '', 'real@exemplo.invalid', 'leve', '', true]);
   const dados = { get Pacientes() { return amb.abas.get('Pacientes').linhas; }, get Consultas() { return amb.abas.get('Consultas').linhas; }, get Pagamentos() { return amb.abas.get('Pagamentos').linhas; } };
   return { api: { criarDadosDeTeste: () => amb.rodar('criarDadosDeTeste()'), apagarDadosDeTeste: () => amb.rodar('apagarDadosDeTeste()') }, eventos, dados, chamadas, amb };

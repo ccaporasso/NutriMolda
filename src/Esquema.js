@@ -54,9 +54,10 @@ const ABAS = [
   {
     nome: 'Pagamentos',
     cabecalho: ['id', 'id_evento', 'codigo_paciente', 'pagador_nome', 'pagador_cpf',
-      'valor_centavos', 'forma', 'status', 'data_pagamento', 'link_recibo'],
+      'valor_centavos', 'forma', 'status', 'data_pagamento', 'link_recibo', 'pacote_inicio'],
     validacoes: { forma: 'forma_pagamento', status: 'status_pagamento' },
-    textoExtra: ['data_pagamento'], // texto AAAA-MM-DD (T07/T08)
+    // `data_pagamento` texto AAAA-MM-DD (T07/T08). `pacote_inicio`: início do pacote gasto nesta consulta (o kit preenche; R11).
+    textoExtra: ['data_pagamento', 'pacote_inicio'],
   },
   {
     nome: 'Pacotes',
@@ -88,6 +89,10 @@ function planejarInstalacao(existente) {
       continue;
     }
     const atualCab = (atual.cabecalho || []).map(String);
+    if (atualCab.some((c, i) => i >= aba.cabecalho.length && c.trim() !== '')) {
+      plano.avisos.push(`A aba "${aba.nome}" tem coluna a mais no cabeçalho. Não foi alterada; use outra aba para anotações ou confira com o suporte.`);
+      continue;
+    }
     const vazio = atualCab.every((c) => c === '');
     // Planilha de uma versão anterior: só faltam colunas novas no fim (células vazias). O cabeçalho é completado.
     const semAsNovas = atualCab.slice(0, aba.cabecalho.length).map((c, i) => (c === '' ? aba.cabecalho[i] : c));
@@ -120,6 +125,11 @@ function divergenciaDeCabecalho(aba, lido) {
   }
   for (let i = 0; i < aba.cabecalho.length; i++) {
     if (atual[i] !== aba.cabecalho[i]) {
+      const soFaltaOFim = atual.slice(i).every((c) => c === '');
+      if (soFaltaOFim) {
+        return `A aba "${aba.nome}" é de uma versão anterior do kit e falta(m) a(s) coluna(s) nova(s) no cabeçalho (a partir da coluna ${i + 1}, "${aba.cabecalho[i]}"). `
+          + 'Nada foi lido nem gravado. Use o menu Kit do Consultório > Configuração > Instalar/atualizar planilha e tente de novo.';
+      }
       return `A aba "${aba.nome}" está com o cabeçalho diferente do esperado (coluna ${i + 1} deveria ser "${aba.cabecalho[i]}"). `
         + 'Nada foi lido nem gravado. Não mude a ordem nem o nome das colunas; peça ajuda ao suporte.';
     }

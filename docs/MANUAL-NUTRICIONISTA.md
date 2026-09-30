@@ -53,7 +53,7 @@ Na aba **Pagamentos**, clique na linha (ou arraste para várias) e use **Pagamen
 
 - **Marcar como pago (Pix)**, **Marcar como pago (cartão)** e **Marcar como pago (dinheiro):** gravam a forma e a data de hoje.
 - **Marcar como cortesia:** valor zero, sem cobrança (o kit pede confirmação).
-- **Marcar como consulta de pacote:** gasta uma consulta do pacote do paciente (aba **Pacotes**).
+- **Marcar como consulta de pacote:** gasta uma consulta do pacote **mais recente** do paciente (aba **Pacotes**). Sempre preencha o `inicio` (AAAA-MM-DD, uma data real). Para renovar, acrescente uma linha nova com o `inicio` de hoje ou posterior; não apague nem mude a linha do pacote antigo, e não deixe dois pacotes do mesmo paciente com o mesmo início.
 
 Se o paciente faltou: na aba **Consultas**, clique na linha e use **Consulta → Marcar como faltou**. O kit não cobra nem perdoa sozinho: você decide em Pagamentos.
 

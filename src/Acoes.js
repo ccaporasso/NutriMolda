@@ -34,20 +34,30 @@ function aplicarCortesia(pagamento) {
 
 // Consulta de pacote: usa uma das consultas do pacote do paciente (a primeira com consulta sobrando).
 // A consulta fica paga com valor zero: o dinheiro do pacote entrou na venda dele (D21).
-// Só o pacote VIGENTE do paciente (o de `inicio` mais recente) pode ser usado: assim cada pagamento tem um pacote só,
-// o do `inicio` mais recente que não passa da data do pagamento. Início igual, início no futuro ou pacote sem saldo
-// (mesmo que um mais antigo tenha) recusam antes de qualquer gravação (R11).
+function textoParaDataAcoes_(texto) {
+  return typeof textoParaData !== 'undefined' ? textoParaData(texto) : require('./Formatos.js').textoParaData(texto);
+}
+
+function pacoteUtilizavel_(p) {
+  return textoParaDataAcoes_(String(p.inicio || '')) !== null && Number.isSafeInteger(p.total_consultas) && Number.isSafeInteger(p.usadas)
+    && p.total_consultas >= 0 && p.usadas >= 0;
+}
+
+// Só o pacote VIGENTE do paciente (o de `inicio` mais recente) pode ser usado. O pagamento guarda o `inicio` do pacote
+// gasto (coluna pacote_inicio): a identidade do pacote é (paciente, inicio) e nunca é deduzida por datas depois.
+// Início inválido ou igual em dois pacotes, início no futuro ou vigente sem saldo recusam antes de qualquer gravação (R11).
 function pacoteVigente_(pagamento, pacotes, hojeTexto) {
+  const semSaldo = recusa_(`O paciente do pagamento ${pagamento.id} não tem pacote com consulta sobrando. Cadastre ou renove na aba Pacotes.`);
   const doPaciente = pacotes.filter((p) => String(p.codigo_paciente) === String(pagamento.codigo_paciente));
-  if (doPaciente.length === 0) return recusa_(`O paciente do pagamento ${pagamento.id} não tem pacote com consulta sobrando. Cadastre ou renove na aba Pacotes.`);
-  const maior = doPaciente.reduce((m, p) => (String(p.inicio || '') > m ? String(p.inicio || '') : m), '');
-  const vigentes = doPaciente.filter((p) => String(p.inicio || '') === maior);
+  if (doPaciente.length === 0) return semSaldo;
+  const invalido = doPaciente.find((p) => !pacoteUtilizavel_(p));
+  if (invalido) return recusa_(`Há pacote do paciente do pagamento ${pagamento.id} com "inicio" (data AAAA-MM-DD real) ou números inválidos na aba Pacotes (linha ${invalido.linha || '?'}). Corrija antes de usar.`);
+  const maior = doPaciente.reduce((m, p) => (String(p.inicio) > m ? String(p.inicio) : m), '');
+  const vigentes = doPaciente.filter((p) => String(p.inicio) === maior);
   if (vigentes.length > 1) return recusa_(`O paciente do pagamento ${pagamento.id} tem mais de um pacote com o mesmo início. Deixe só um, ou corrija o "inicio" na aba Pacotes.`);
   if (maior > hojeTexto) return recusa_(`O pacote do paciente do pagamento ${pagamento.id} começa depois de hoje. Confira o "inicio" na aba Pacotes.`);
   const p = vigentes[0];
-  if (!Number.isSafeInteger(p.total_consultas) || !Number.isSafeInteger(p.usadas) || p.usadas >= p.total_consultas) {
-    return recusa_(`O paciente do pagamento ${pagamento.id} não tem pacote com consulta sobrando. Cadastre ou renove na aba Pacotes.`);
-  }
+  if (p.usadas >= p.total_consultas) return semSaldo;
   return { ok: true, pacote: p };
 }
 
@@ -57,7 +67,7 @@ function aplicarPacote(pagamento, pacotes, hojeTexto) {
   if (!v.ok) return v;
   return {
     ok: true,
-    pagamento: { ...pagamento, status: 'pago', forma: 'pacote', valor_centavos: 0, data_pagamento: hojeTexto },
+    pagamento: { ...pagamento, status: 'pago', forma: 'pacote', valor_centavos: 0, data_pagamento: hojeTexto, pacote_inicio: String(v.pacote.inicio) },
     pacote: { ...v.pacote, usadas: v.pacote.usadas + 1 },
   };
 }
@@ -84,18 +94,17 @@ function montarPixDoPagamento(pagamento, config) {
   }
 }
 
-// Consultas já pagas por pacote (pago + forma pacote) de cada pacote, contadas a partir do `inicio` dele e até o
-// `inicio` do pacote seguinte do mesmo paciente. Serve para reconciliar `usadas` depois de uma falha entre as duas
-// gravações (R11): o pagamento é gravado primeiro, então nunca falta uma consulta contada a mais, só a menos.
+// Consultas já pagas por pacote (pago + forma pacote) de cada pacote, contadas pelo `pacote_inicio` gravado no próprio pagamento.
+// Serve para reconciliar `usadas` depois de uma falha entre as duas gravações (R11): o pagamento é gravado primeiro, então
+// nunca falta uma consulta contada a mais, só a menos. Pagamento de pacote sem `pacote_inicio` (versão antiga) não é atribuído
+// a ninguém e pacotes com o mesmo paciente e início não são corrigidos (ambíguos).
 function consumidasPorPacote(pacotes, pagamentos) {
-  const inicios = (codigo) => pacotes.filter((x) => String(x.codigo_paciente) === codigo).map((x) => String(x.inicio || '')).sort();
   return pacotes.map((p) => {
     const codigo = String(p.codigo_paciente);
     const inicio = String(p.inicio || '');
-    if (inicios(codigo).filter((i) => i === inicio).length > 1) return 0; // pacotes com o mesmo início: não dá para atribuir, não corrige
-    const proximo = inicios(codigo).find((i) => i > inicio) || null;
+    if (inicio === '' || pacotes.filter((x) => String(x.codigo_paciente) === codigo && String(x.inicio || '') === inicio).length > 1) return 0;
     return pagamentos.filter((g) => String(g.codigo_paciente) === codigo && g.status === 'pago' && g.forma === 'pacote'
-      && String(g.data_pagamento || '') >= inicio && (proximo === null || String(g.data_pagamento || '') < proximo)).length;
+      && String(g.pacote_inicio || '') === inicio).length;
   });
 }
 

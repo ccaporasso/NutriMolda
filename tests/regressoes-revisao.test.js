@@ -277,3 +277,61 @@ test('R11c: dois pacotes com o mesmo início: recusa e não escreve nada', () =>
   assert.equal(JSON.stringify([amb.abas.get('Pagamentos').linhas, amb.abas.get('Pacotes').linhas]), antes);
   assert.match(amb.alertas.at(-1), /mesmo início/);
 });
+
+// ---------- rodada 3 (revisão de 4682127) ----------
+
+test('R11d: renovar depois de uma consulta no mesmo dia não reatribui o consumo antigo ao pacote novo', () => {
+  const amb = ambiente({ selecao: { aba: 'Pagamentos', linhas: [2] } });
+  amb.abas.get('Pagamentos').linhas.push(['PG000001', 'e1', 'P0001', '', '', 15000, '', 'a_receber', '', ''], ['PG000002', 'e2', 'P0001', '', '', 15000, '', 'a_receber', '', '']);
+  amb.abas.get('Pacotes').linhas.push(['P0001', 1, 0, 15000, '2026-09-01']);
+  amb.rodar('marcarConsultaDePacote()');
+  assert.equal(amb.abas.get('Pagamentos').linhas[1][10], '2026-09-01'); // o pagamento guarda qual pacote gastou
+  amb.abas.get('Pacotes').linhas.push(['P0001', 2, 0, 25000, '2026-09-30']);
+  amb.selecao.linhas = [3];
+  amb.rodar('marcarConsultaDePacote()');
+  const pacotes = amb.abas.get('Pacotes').linhas.slice(1);
+  assert.deepEqual(pacotes.map((l) => l[2]), [1, 1]);
+});
+
+test('R11e: início impossível, texto ou saldo negativo não produzem consumo', () => {
+  const A = require('../src/Acoes.js');
+  const pag = { id: 'PG000001', codigo_paciente: 'P0001', status: 'a_receber' };
+  for (const inicio of ['2026-02-31', '', '01/09/2026']) {
+    assert.equal(A.aplicarPacote(pag, [{ linha: 2, codigo_paciente: 'P0001', total_consultas: 2, usadas: 0, inicio }], '2026-09-30').ok, false, inicio);
+  }
+  assert.equal(A.aplicarPacote(pag, [{ linha: 2, codigo_paciente: 'P0001', total_consultas: 2, usadas: -1, inicio: '2026-09-01' }], '2026-09-30').ok, false);
+});
+
+test('R04d: mesmo id confirmado em outra agenda não cria segunda consulta com o mesmo id_evento', () => {
+  const amb = ambienteAgenda([]);
+  amb.abas.get('Consultas').linhas.push(['idigual', '2026-10-01', '09:00', 'primeira', 'P0001', 'marcada', '', amb.rodar("marcaDaAgenda('agenda-antiga@group.calendar.google.com')")]);
+  amb.abas.get('Pacientes').linhas.push(['P0002', 'Pessoa', 'G.', '', 'novo@exemplo.invalid', 'leve', '', true]);
+  amb.contexto.Calendar.Events.list = () => ({ items: [{ id: 'idigual', summary: 'Consulta', status: 'confirmed', start: { dateTime: '2026-10-02T09:00:00-03:00' }, description: 'novo@exemplo.invalid' }] });
+  const plano = amb.rodar('sincronizarAgenda()');
+  assert.equal(amb.abas.get('Consultas').linhas.filter((l) => l[0] === 'idigual').length, 1);
+  assert.equal(amb.abas.get('Consultas').linhas[1][1], '2026-10-01'); // a linha antiga não mudou
+  assert.match(plano.avisos.join('\n'), /mesmo id de uma consulta de outra agenda/);
+});
+
+test('R07e: instalador recusa Configurações com coluna extra e não acrescenta chaves', () => {
+  const amb = ambiente();
+  const folha = amb.abas.get('Configurações');
+  folha.linhas[0].push('coluna_alheia');
+  folha.linhas.splice(folha.linhas.findIndex((l) => l[0] === 'valor_retorno_centavos'), 1);
+  for (const f of amb.abas.values()) f.getProtections = () => [];
+  amb.rodar('instalarPlanilha()');
+  assert.ok(!folha.linhas.some((l) => l[0] === 'valor_retorno_centavos'));
+  assert.match(amb.alertas.at(-1), /coluna a mais/);
+});
+
+test('planilha de versão anterior: mensagem manda rodar Instalar/atualizar e o instalador completa o cabeçalho', () => {
+  const amb = ambiente();
+  amb.abas.get('Consultas').linhas[0].pop(); // versão sem agenda_origem
+  amb.abas.get('Pagamentos').linhas[0].pop(); // versão sem pacote_inicio
+  assert.throws(() => amb.rodar("lerAbaComoObjetos('Consultas')"), /Instalar\/atualizar planilha/);
+  for (const f of amb.abas.values()) f.getProtections = () => [];
+  amb.rodar('instalarPlanilha()');
+  assert.equal(amb.abas.get('Consultas').linhas[0].at(-1), 'agenda_origem');
+  assert.equal(amb.abas.get('Pagamentos').linhas[0].at(-1), 'pacote_inicio');
+  assert.equal(amb.rodar("lerAbaComoObjetos('Consultas')").length, 0);
+});

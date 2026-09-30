@@ -51,7 +51,7 @@ Não existe servidor próprio, web app público nem IA nesta versão.
 - O evento só leva o mínimo, como "Consulta — Ana S.". Nenhum dado clínico.
 
 ### Pagamentos
-`id` · `id_evento` · `codigo_paciente` · `pagador_nome` · `pagador_cpf` (opcional, só para o recibo) · `valor_centavos` · `forma` (pix, cartao, dinheiro, pacote, cortesia) · `status` (a_receber, pago, cortesia) · `data_pagamento` · `link_recibo`
+`id` · `id_evento` · `codigo_paciente` · `pagador_nome` · `pagador_cpf` (opcional, só para o recibo) · `valor_centavos` · `forma` (pix, cartao, dinheiro, pacote, cortesia) · `status` (a_receber, pago, cortesia) · `data_pagamento` · `link_recibo` · `pacote_inicio` (preenchida pelo kit: início do pacote gasto naquela consulta)
 
 ### Pacotes
 `codigo_paciente` · `total_consultas` · `usadas` · `valor_centavos` · `inicio`

@@ -22,10 +22,10 @@ function idPagamento(numero) {
   return `PG${String(numero).padStart(6, '0')}`;
 }
 
-// Linha de Pagamentos na ordem do cabeçalho (10 colunas).
+// Linha de Pagamentos na ordem do cabeçalho (11 colunas).
 function linhaPagamento(p) {
   return [p.id, p.id_evento, p.codigo_paciente, p.pagador_nome || '', p.pagador_cpf || '',
-    p.valor_centavos, p.forma || '', p.status, p.data_pagamento || '', p.link_recibo || ''];
+    p.valor_centavos, p.forma || '', p.status, p.data_pagamento || '', p.link_recibo || '', p.pacote_inicio || ''];
 }
 
 // consultas: objetos de Consultas. pagamentos: objetos de Pagamentos. config: resultado de lerConfiguracoes().
@@ -82,7 +82,7 @@ function planejarAReceber({ consultas, pagamentos, config }) {
       + 'Rode "Sincronizar agenda" ou apague a linha incompleta e gere de novo.');
   }
   if (contagens.idRepetido > 0) {
-    avisos.push(`${contagens.idRepetido} consulta(s) repetem um "id_evento" que já aparece acima${linhasRepetidas.some((n) => n !== undefined) ? ` (linha(s) ${listaLinhas(linhasRepetidas)} da aba Consultas)` : ''} e não geraram cobrança. Apague a linha repetida.`);
+    avisos.push(`${contagens.idRepetido} consulta(s) repetem um "id_evento" que já aparece acima${linhasRepetidas.some((n) => n !== undefined) ? ` (linha(s) ${listaLinhas(linhasRepetidas)} da aba Consultas)` : ''} e não geraram cobrança. Confira as linhas repetidas com o suporte antes de apagar qualquer uma: podem ser consultas diferentes.`);
   }
   if (contagens.pagamentoSemConsulta > 0) {
     avisos.push(`${contagens.pagamentoSemConsulta} pagamento(s) estão ligados a um "id_evento" que não existe na aba Consultas. Confira a aba Pagamentos.`);

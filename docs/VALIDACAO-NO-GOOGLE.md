@@ -34,7 +34,7 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 4. **Pacote:** com `inicio` preenchido em Pacotes, marcar consulta de pacote: pagamento vira pago/pacote e `usadas` sobe uma vez.
 5. **Recibo:** apagar `{{valor}}` do modelo e gerar: mensagem de campo obrigatório, nenhum PDF na pasta, nenhum `rascunho-` fora da lixeira.
 6. **Gerador de teste:** na primeira vez para a agenda, a pergunta "Esta agenda é só de TESTE?" aparece; Não interrompe sem escrever nada.
-7. **Pacotes:** com dois pacotes do mesmo paciente (início 01/09 e 15/09), a consulta de pacote usa só o de 15/09.
+7. **Pacotes:** com dois pacotes do mesmo paciente (início 01/09 e 15/09), a consulta de pacote usa só o de 15/09 e o pagamento fica com `pacote_inicio` 2026-09-15. Renovar no mesmo dia (linha nova com início de hoje) não muda o pacote antigo.
 8. **Relatório:** dois pagamentos com o mesmo nome, um com CPF e outro sem: duas linhas e um aviso.
 
 ## T09 — Recibo em PDF

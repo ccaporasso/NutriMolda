@@ -14,6 +14,7 @@ function adicionarMenuDeTeste_(ui, menu) {
 // O sufixo de agenda secundária não prova que a agenda é de teste (R03): a primeira vez para cada agenda, ela precisa
 // dizer que é só de teste. A resposta fica guardada nas propriedades do documento, junto com o id dessa agenda.
 const CHAVE_AGENDA_DE_TESTE = 'agenda_de_teste_confirmada';
+const CHAVE_EVENTOS_GERADOS = 'agenda_com_eventos_de_teste_gerados'; // agenda onde o gerador já criou os nove eventos
 
 function confirmarAgendaDeTeste_(calendarioId) {
   const propriedades = PropertiesService.getDocumentProperties();
@@ -44,23 +45,40 @@ function criarDadosDeTeste() {
   const { id, prefixo } = calendarioDeTeste_();
   if (!confirmar_('Vai criar pacientes e eventos INVENTADOS na agenda de teste. Continuar?')) return;
 
+  // Tudo é conferido ANTES de escrever qualquer coisa (R03h): pacientes com código já usado e eventos com id já ocupado.
   const existentes = lerAbaComoObjetos('Pacientes');
   const colisoes = codigosEmColisao(existentes);
   if (colisoes.length > 0) {
     throw new Error(`Os códigos ${colisoes.join(', ')} já existem na aba Pacientes com outros dados. `
       + 'O gerador não mistura dados de teste com esses: nada foi criado. Use outros códigos ou apague essas linhas à mão.');
   }
-  const novas = pacientesQueFaltam(existentes.map((p) => String(p.codigo)));
-  adicionarLinhas('Pacientes', novas);
-
+  const propriedades = PropertiesService.getDocumentProperties();
+  const geradoAqui = propriedades.getProperty(CHAVE_EVENTOS_GERADOS) === id; // o kit já criou os nove eventos nesta agenda
   const hoje = new Date();
   const dataHoje = {
     ano: Number(Utilities.formatDate(hoje, 'America/Sao_Paulo', 'yyyy')),
     mes: Number(Utilities.formatDate(hoje, 'America/Sao_Paulo', 'M')),
     dia: Number(Utilities.formatDate(hoje, 'America/Sao_Paulo', 'd')),
   };
-  let criados = 0;
+  const plano = [];
+  let alheios = 0;
   for (const e of montarEventosTeste(dataHoje, prefixo)) {
+    let existente = null;
+    try { existente = Calendar.Events.get(id, e.id); } catch (erro) { existente = null; }
+    const marcado = !!(existente && existente.extendedProperties && existente.extendedProperties.private
+      && existente.extendedProperties.private[MARCA_TESTE] === '1');
+    if (existente && !geradoAqui && !marcado) { alheios++; continue; }
+    plano.push({ e, existente });
+  }
+  if (alheios > 0) {
+    throw new Error(`${alheios} evento(s) já ocupam os ids que o gerador usaria nesta agenda e não há prova de que foram criados por ele. `
+      + 'Nada foi criado. Use uma agenda de teste nova, vazia.');
+  }
+
+  const novas = pacientesQueFaltam(existentes.map((p) => String(p.codigo)));
+  adicionarLinhas('Pacientes', novas);
+  let criados = 0;
+  for (const { e, existente } of plano) {
     const corpo = {
       id: e.id,
       summary: e.titulo,
@@ -70,13 +88,12 @@ function criarDadosDeTeste() {
       extendedProperties: { private: e.marca },
       status: 'confirmed',
     };
-    let existente = null;
-    try { existente = Calendar.Events.get(id, e.id); } catch (erro) { existente = null; }
-    if (existente && existente.status !== 'cancelled') continue; // já existe: não duplica
-    if (existente) Calendar.Events.update(corpo, id, e.id); // apagado antes: reativa
+    if (existente && existente.status !== 'cancelled') continue; // já existe (criado por ele): não duplica
+    if (existente) Calendar.Events.update(corpo, id, e.id); // apagado antes por ele: reativa
     else Calendar.Events.insert(corpo, id);
     criados++;
   }
+  propriedades.setProperty(CHAVE_EVENTOS_GERADOS, id);
   SpreadsheetApp.getUi().alert(`Pacientes de teste novos: ${novas.length}. Eventos criados: ${criados}.`);
 }
 
@@ -86,8 +103,9 @@ function apagarDadosDeTeste() {
     + 'além dos eventos de teste da agenda de teste. Dados reais não são tocados. Continuar?')) return;
 
   const plano = planejarLimpezaDeTeste({
-    pacientes: lerAbaComoObjetos('Pacientes'), consultas: lerAbaComoObjetos('Consultas'),
-    pagamentos: lerAbaComoObjetos('Pagamentos'), pacotes: lerAbaComoObjetos('Pacotes'),
+    pacientes: lerAbaComoObjetos('Pacientes'),
+    consultas: lerAbaComoObjetos('Consultas').map((c) => ({ ...c, origem: String(c.agenda_origem || '') })),
+    pagamentos: lerAbaComoObjetos('Pagamentos'), origemTeste: marcaDaAgenda(id),
   });
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
   let linhasApagadas = 0;

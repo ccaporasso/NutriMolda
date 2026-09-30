@@ -14,7 +14,7 @@ test('consulta marcada ou realizada sem pagamento gera a_receber com o preço do
   assert.deepEqual(p.novos.map((n) => [n.id, n.id_evento, n.valor_centavos, n.status]), [
     ['PG000001', 'e1', 15000, 'a_receber'], ['PG000002', 'e2', 10000, 'a_receber'],
   ]);
-  assert.deepEqual(P.linhaPagamento(p.novos[0]), ['PG000001', 'e1', 'P9001', '', '', 15000, '', 'a_receber', '', '']);
+  assert.deepEqual(P.linhaPagamento(p.novos[0]), ['PG000001', 'e1', 'P9001', '', '', 15000, '', 'a_receber', '', '', '']);
 });
 
 test('não duplica: consulta que já tem pagamento (em qualquer status) é pulada', () => {
@@ -79,7 +79,7 @@ test('Google simulado: gerarAReceber grava uma vez e a segunda execução não m
   amb.rodar('gerarAReceber()');
   const pag = amb.abas.get('Pagamentos').linhas;
   assert.equal(pag.length, 3);
-  assert.deepEqual(pag[1], ['PG000001', 'e1', 'P9001', '', '', 15000, '', 'a_receber', '', '']);
+  assert.deepEqual(pag[1], ['PG000001', 'e1', 'P9001', '', '', 15000, '', 'a_receber', '', '', '']);
   assert.equal(pag[2][5], 10000);
   amb.rodar('gerarAReceber()');
   assert.equal(amb.abas.get('Pagamentos').linhas.length, 3);

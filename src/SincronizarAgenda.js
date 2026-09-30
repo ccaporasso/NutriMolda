@@ -16,13 +16,6 @@ function hojeSaoPaulo_() {
 const CHAVE_ORIGEM_AGENDA = 'calendario_da_ultima_sincronizacao';
 const MAX_CONFERENCIAS_AGENDA = 40; // consultas ausentes conferidas uma a uma por execução
 
-// Marca curta e estável do calendario_id (não guarda o id na planilha). Começa com letra para não virar número.
-function marcaDaAgenda(calendarioId) {
-  let h = 5381;
-  for (const c of String(calendarioId)) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0;
-  return `a${h.toString(16).padStart(8, '0')}`;
-}
-
 // Consultas como objetos (já com data e hora em texto). Cabeçalho conferido em lerAbaComoObjetos.
 // Linha antiga, sem marca de agenda, pertence à última agenda sincronizada (ou a esta, se nunca houve outra).
 function lerConsultasExistentes_(origemAtual, origemLegado) {

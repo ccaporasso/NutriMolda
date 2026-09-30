@@ -42,7 +42,7 @@ function lerEstadoAtual_(planilha) {
     if (!folha) continue;
     const largura = aba.cabecalho.length;
     estado[aba.nome] = {
-      cabecalho: folha.getRange(1, 1, 1, Math.min(largura, folha.getMaxColumns())).getValues()[0],
+      cabecalho: folha.getRange(1, 1, 1, Math.min(Math.max(largura, typeof folha.getLastColumn === 'function' ? folha.getLastColumn() : 0), folha.getMaxColumns())).getValues()[0],
       chaves: aba.nome === 'Configurações' && folha.getLastRow() > 1
         ? folha.getRange(2, 1, folha.getLastRow() - 1, 1).getValues().map((l) => String(l[0]))
         : [],
