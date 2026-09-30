@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const D = require('../src/DadosTeste.js');
+const { criarAmbiente } = require('./apoio/simulacao.js');
 
 const hoje = { ano: 2026, mes: 9, dia: 30 };
 
@@ -56,51 +57,63 @@ test('pacientesQueFaltam não repete o que já existe', () => {
   assert.equal(D.pacientesQueFaltam(D.PACIENTES_TESTE.map((p) => p.codigo)).length, 0);
 });
 
-test('linhasParaApagar pega só P9xxx, de baixo para cima, sem tocar no cabeçalho', () => {
-  const coluna = ['codigo', 'P0001', 'P9001', 'P0002', 'P9002', 'P9', 'P90001'];
-  assert.deepEqual(D.linhasParaApagar(coluna, D.ehCodigoDeTeste), [5, 3]);
+test('planejarLimpezaDeTeste pega só o que o gerador cria, de baixo para cima (R03)', () => {
+  const ger = D.PACIENTES_TESTE[0];
+  const pacientes = [
+    { linha: 2, codigo: 'P0001', email: 'real@exemplo.invalid' },
+    { linha: 3, codigo: ger.codigo, email: ger.email },
+    { linha: 4, codigo: 'P9500', email: 'outra@exemplo.invalid' }, // começa com P9, mas não é do gerador
+  ];
+  const consultas = [
+    { linha: 2, id_evento: 'abc', codigo_paciente: 'P0001' },
+    { linha: 3, id_evento: D.idEventoTeste(0), codigo_paciente: ger.codigo },
+    { linha: 4, id_evento: D.idEventoTeste(8), codigo_paciente: '' }, // a identificar
+    { linha: 5, id_evento: 'xyz', codigo_paciente: 'P9500' },
+  ];
+  const pagamentos = [
+    { linha: 2, id_evento: 'abc', codigo_paciente: 'P0001' },
+    { linha: 3, id_evento: D.idEventoTeste(8), codigo_paciente: '' },
+    { linha: 4, id_evento: 'xyz', codigo_paciente: 'P9500' },
+  ];
+  const plano = D.planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, pacotes: [{ linha: 2, codigo_paciente: 'P9500' }, { linha: 3, codigo_paciente: ger.codigo }] });
+  assert.deepEqual(plano, { Pacientes: [3], Consultas: [4, 3], Pagamentos: [3], Pacotes: [3] });
 });
 
-// Gerador contra um Google simulado.
+test('código de teste já usado com outros dados é colisão: nada dele é apagado', () => {
+  const pacientes = [{ linha: 2, codigo: 'P9001', email: 'outra.pessoa@exemplo.invalid' }];
+  assert.deepEqual(D.codigosEmColisao(pacientes), ['P9001']);
+  const plano = D.planejarLimpezaDeTeste({ pacientes, consultas: [{ linha: 2, id_evento: 'abc', codigo_paciente: 'P9001' }], pagamentos: [], pacotes: [] });
+  assert.deepEqual(plano, { Pacientes: [], Consultas: [], Pagamentos: [], Pacotes: [] });
+});
+
+// Gerador contra um Google simulado (planilha completa do simulador; agenda em memória).
 function carregarGerador(configuracao) {
   const eventos = new Map();
-  const linhasPorAba = { Pacientes: [['codigo'], ['P0001']], Consultas: [['codigo_paciente']], Pagamentos: [['codigo_paciente']], Pacotes: [['codigo_paciente']] };
   const chamadas = [];
-  const folhas = {};
-  for (const [nome, dados] of Object.entries(linhasPorAba)) {
-    folhas[nome] = {
-      getLastRow: () => dados.length,
-      getRange: (l, c, n = 1, w = 1) => ({
-        getValues: () => dados.slice(l - 1, l - 1 + n).map((r) => [r[c - 1]]),
-        setValues: (v) => v.forEach((linha, i) => { dados[l - 1 + i] = linha; }),
-      }),
-      deleteRow: (l) => dados.splice(l - 1, 1),
-    };
-  }
-  const contexto = {
-    console,
-    SpreadsheetApp: {
-      getActiveSpreadsheet: () => ({ getSheetByName: (n) => folhas[n] }),
-      getUi: () => ({ alert: () => 'OK', ButtonSet: { OK_CANCEL: 1 }, Button: { OK: 'OK' } }),
-    },
-    Utilities: { formatDate: (d, tz, f) => ({ yyyy: '2026', M: '9', d: '30' })[f] },
-    Calendar: {
-      Events: {
-        get: (cal, id) => { if (!eventos.has(id)) throw new Error('404'); return eventos.get(id); },
-        insert: (corpo, cal) => { chamadas.push(['insert', cal]); eventos.set(corpo.id, { ...corpo }); },
-        update: (corpo, cal, id) => { chamadas.push(['update', cal]); eventos.set(id, { ...corpo }); },
-        remove: (cal, id) => { eventos.get(id).status = 'cancelled'; },
-        list: () => ({ items: [...eventos.values()].filter((e) => e.status !== 'cancelled') }),
+  const base = {
+    nome_profissional: 'Dra. Teste', crn: 'CRN-0 00000', valor_primeira_consulta_centavos: '15000', valor_retorno_centavos: '10000',
+    regra_retorno_dias: '30', chave_pix: 'teste@exemplo.invalid', nome_recebedor_pix: 'DRA TESTE', cidade_recebedor_pix: 'SAO PAULO',
+    prefixo_evento_consulta: 'Consulta', email_alertas: 'alerta@exemplo.invalid', id_modelo_recibo: '', id_pasta_recibos: '',
+  };
+  const configuracoes = Object.entries({ ...base, ...configuracao });
+  const amb = criarAmbiente({
+    configuracoes,
+    google: {
+      Calendar: {
+        Events: {
+          get: (cal, id) => { if (!eventos.has(id)) throw new Error('404'); return eventos.get(id); },
+          insert: (corpo, cal) => { chamadas.push(['insert', cal]); eventos.set(corpo.id, { ...corpo }); },
+          update: (corpo, cal, id) => { chamadas.push(['update', cal]); eventos.set(id, { ...corpo }); },
+          remove: (cal, id) => { eventos.get(id).status = 'cancelled'; },
+          list: () => ({ items: [...eventos.values()].filter((e) => e.status !== 'cancelled') }),
+        },
       },
     },
-    lerConfiguracoes: () => ({ config: configuracao }),
-  };
-  vm.createContext(contexto);
-  const codigo = ['Esquema.js', 'DadosTeste.js', 'GeradorTeste.js']
-    .map((f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8').replace(/if \(typeof module[\s\S]*$/, ''))
-    .join('\n') + '\n;({ criarDadosDeTeste, apagarDadosDeTeste });';
-  const api = vm.runInContext(codigo, contexto);
-  return { api, eventos, dados: linhasPorAba, chamadas };
+  });
+  amb.carregar('Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Execucao.js', 'LeitorAbas.js', 'DadosTeste.js', 'GeradorTeste.js');
+  amb.abas.get('Pacientes').linhas.push(['P0001', 'Real', 'X.', '', 'real@exemplo.invalid', 'leve', '', true]);
+  const dados = { get Pacientes() { return amb.abas.get('Pacientes').linhas; }, get Consultas() { return amb.abas.get('Consultas').linhas; }, get Pagamentos() { return amb.abas.get('Pagamentos').linhas; } };
+  return { api: { criarDadosDeTeste: () => amb.rodar('criarDadosDeTeste()'), apagarDadosDeTeste: () => amb.rodar('apagarDadosDeTeste()') }, eventos, dados, chamadas, amb };
 }
 
 const CAL = 'teste123@group.calendar.google.com';
@@ -112,7 +125,7 @@ test('gerador: criar duas vezes não duplica; apagar remove só dados de teste',
   assert.equal(eventos.size, 9);
   assert.equal(dados.Pacientes.length, 1 + 1 + 6); // cabeçalho + P0001 + 6 de teste
   api.apagarDadosDeTeste();
-  assert.deepEqual(dados.Pacientes, [['codigo'], ['P0001']]);
+  assert.deepEqual(dados.Pacientes.map((l) => l[0]), ['codigo', 'P0001']);
   assert.equal([...eventos.values()].filter((e) => e.status !== 'cancelled').length, 0);
   api.criarDadosDeTeste(); // recria depois de apagar
   assert.equal([...eventos.values()].filter((e) => e.status !== 'cancelled').length, 9);
@@ -124,4 +137,24 @@ test('gerador: recusa agenda principal antes de tocar em qualquer coisa', () => 
   assert.throws(() => api.apagarDadosDeTeste(), /agenda separada/);
   assert.equal(eventos.size, 0);
   assert.equal(dados.Pacientes.length, 2);
+});
+
+test('R03: apagador preserva P9500 e apaga a consulta fictícia ainda sem paciente identificado', () => {
+  const { api, dados, amb } = carregarGerador({ calendario_id: CAL });
+  api.criarDadosDeTeste();
+  amb.abas.get('Pacientes').linhas.push(['P9500', 'Outra', 'Y.', '', 'outra@exemplo.invalid', 'leve', '', true]);
+  amb.abas.get('Consultas').linhas.push([D.idEventoTeste(8), '2026-10-05', '13:00', 'primeira', '', 'marcada', '']);
+  amb.abas.get('Consultas').linhas.push(['naogerado', '2026-10-06', '13:00', 'primeira', 'P9500', 'marcada', '']);
+  api.apagarDadosDeTeste();
+  assert.ok(dados.Pacientes.some((l) => l[0] === 'P9500'));
+  assert.ok(!dados.Consultas.some((l) => l[0] === D.idEventoTeste(8)));
+  assert.ok(dados.Consultas.some((l) => l[0] === 'naogerado'));
+});
+
+test('R03: criar recusa código de teste que já existe com outros dados', () => {
+  const { api, eventos, dados, amb } = carregarGerador({ calendario_id: CAL });
+  amb.abas.get('Pacientes').linhas.push(['P9001', 'Outra', 'Y.', '', 'outra.pessoa@exemplo.invalid', 'leve', '', true]);
+  assert.throws(() => api.criarDadosDeTeste(), /P9001.*outros dados/);
+  assert.equal(eventos.size, 0);
+  assert.equal(dados.Pacientes.length, 3);
 });

@@ -1,11 +1,11 @@
 // Dados FICTÍCIOS para a planilha e a agenda de TESTE (lógica pura, sem chamadas ao Google).
 // Nada aqui é dado real: nomes, telefones e e-mails são inventados
 // (e-mails no domínio reservado .invalid, telefones no formato de exemplo 55 11 90000-xxxx).
-// Códigos P9001 a P9099 são reservados para teste: o apagador só mexe neles.
+// Só os códigos dos pacientes gerados aqui (P9001 a P9006) e os eventos de id `kitteste..` contam como dado do gerador:
+// o apagador não toca em nenhuma outra linha, mesmo que o código comece com P9 (R03).
 
 const MARCA_TESTE = 'kit_teste'; // propriedade privada gravada nos eventos de teste
 const PREFIXO_ID_EVENTO = 'kitteste'; // ids de evento: só letras a-v e algarismos
-const PADRAO_CODIGO_TESTE = /^P9\d{3}$/;
 const ID_AGENDA_SECUNDARIA = /@group\.calendar\.google\.com$/;
 
 const PACIENTES_TESTE = [
@@ -112,22 +112,42 @@ function pacientesQueFaltam(codigosExistentes) {
   return PACIENTES_TESTE.filter((p) => !jaTem.has(p.codigo)).map(linhaPaciente);
 }
 
-// Números das linhas (1 = cabeçalho) a apagar, de baixo para cima, para que apagar uma
-// linha não desloque as demais. `valores` = coluna inteira, incluindo o cabeçalho.
-function linhasParaApagar(valores, ehDeTeste) {
-  const linhas = [];
-  for (let i = valores.length - 1; i >= 1; i--) {
-    if (ehDeTeste(String(valores[i]))) linhas.push(i + 1);
-  }
-  return linhas;
+const CODIGOS_TESTE = new Set(PACIENTES_TESTE.map((p) => p.codigo));
+
+// A linha de Pacientes é a que o gerador cria? Mesmo código e mesmo e-mail fictício.
+function ehPacienteGerado(linha) {
+  const c = String(linha.codigo);
+  const modelo = PACIENTES_TESTE.find((p) => p.codigo === c);
+  return !!modelo && String(linha.email).trim().toLowerCase() === modelo.email;
 }
 
-const ehCodigoDeTeste = (v) => PADRAO_CODIGO_TESTE.test(v);
+// Códigos de teste que já existem na planilha com dados que NÃO são os do gerador (colisão).
+// Nesse caso o gerador se recusa a criar e o apagador não toca nas linhas desse código.
+function codigosEmColisao(pacientes) {
+  return pacientes.filter((p) => CODIGOS_TESTE.has(String(p.codigo)) && !ehPacienteGerado(p)).map((p) => String(p.codigo));
+}
+
+// Recebe as linhas atuais (objetos com `linha`) de cada aba e devolve, por aba, os números das linhas a apagar
+// (de baixo para cima, para apagar uma não deslocar as outras). Só entra o que o gerador cria:
+// pacientes gerados; consultas com id de evento de teste ou de paciente gerado; pagamentos e pacotes ligados a eles.
+function planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, pacotes }) {
+  const emColisao = new Set(codigosEmColisao(pacientes));
+  const nosso = (codigo) => CODIGOS_TESTE.has(String(codigo)) && !emColisao.has(String(codigo));
+  const consultasNossas = consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)) || nosso(c.codigo_paciente));
+  const idsNossos = new Set(consultasNossas.map((c) => String(c.id_evento)));
+  const descendente = (lista) => lista.map((o) => o.linha).sort((a, b) => b - a);
+  return {
+    Pacientes: descendente(pacientes.filter(ehPacienteGerado)),
+    Consultas: descendente(consultasNossas),
+    Pagamentos: descendente(pagamentos.filter((p) => nosso(p.codigo_paciente) || (String(p.id_evento) !== '' && idsNossos.has(String(p.id_evento))))),
+    Pacotes: descendente(pacotes.filter((p) => nosso(p.codigo_paciente))),
+  };
+}
 
 if (typeof module !== 'undefined') {
   module.exports = {
     MARCA_TESTE, PACIENTES_TESTE, EVENTOS_TESTE, validarAgendaDeTeste, montarEventosTeste,
-    idEventoTeste, idEventoEhDeTeste, linhaPaciente, pacientesQueFaltam, linhasParaApagar,
-    ehCodigoDeTeste,
+    idEventoTeste, idEventoEhDeTeste, linhaPaciente, pacientesQueFaltam, planejarLimpezaDeTeste,
+    codigosEmColisao, ehPacienteGerado,
   };
 }

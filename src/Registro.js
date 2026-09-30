@@ -26,10 +26,10 @@ function neutralizarFormula_(texto) {
   return /^[=+\-@]/.test(texto) ? ` ${texto}` : texto;
 }
 
-// O módulo é um nome fixo do kit (ex.: "sincronizacao"), nunca texto digitado.
+// O módulo é um nome fixo do kit (ex.: "sincronizacao"), nunca texto digitado: só a lista fechada
+// MODULOS_CONHECIDOS vale, no Registro, no e-mail e na mensagem de falha (R01).
 function limparModulo_(modulo) {
-  const texto = String(modulo === undefined || modulo === null ? '' : modulo).trim();
-  return /^[A-Za-z0-9_-]{1,40}$/.test(texto) ? texto : 'desconhecido';
+  return moduloConhecido(typeof modulo === 'string' ? modulo.trim() : modulo);
 }
 
 // Linha na ordem das colunas de Registro: data_hora, modulo, nivel, mensagem.

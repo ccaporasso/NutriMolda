@@ -52,6 +52,12 @@ test('módulo inválido vira "desconhecido" (nunca texto livre)', () => {
   assert.equal(montarLinhaRegistro(DATA, undefined, 'erro', 'a')[1], 'desconhecido');
 });
 
+test('R01: texto simples sem espaço fora da lista fechada também vira "desconhecido", no Registro e no e-mail', () => {
+  assert.equal(montarLinhaRegistro(DATA, 'PessoaFicticia', 'erro', 'a')[1], 'desconhecido');
+  assert.doesNotMatch(JSON.stringify(montarEmailAlerta('PessoaFicticia', DATA)), /PessoaFicticia/);
+  assert.equal(montarLinhaRegistro(DATA, 'sincronizacao', 'erro', 'a')[1], 'sincronizacao');
+});
+
 test('e-mail de alerta traz módulo e horário, nunca a mensagem do erro', () => {
   const email = montarEmailAlerta('sincronizacao', DATA);
   assert.match(email.assunto, /sincronizacao/);

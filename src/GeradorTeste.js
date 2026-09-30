@@ -2,12 +2,7 @@
 // Usa o Serviço Avançado "Calendar" (escopo calendar.events) e só a agenda secundária
 // indicada em `calendario_id`; nunca a agenda principal.
 
-const ABAS_COM_CODIGO = [
-  { aba: 'Pacientes', coluna: 'codigo' },
-  { aba: 'Consultas', coluna: 'codigo_paciente' },
-  { aba: 'Pagamentos', coluna: 'codigo_paciente' },
-  { aba: 'Pacotes', coluna: 'codigo_paciente' },
-];
+const ABAS_DA_LIMPEZA_DE_TESTE = ['Pacientes', 'Consultas', 'Pagamentos', 'Pacotes'];
 
 // Chamada por onOpen (Menu.js) só quando este arquivo existe: na produção o submenu de teste nem aparece.
 function adicionarMenuDeTeste_(ui, menu) {
@@ -33,15 +28,14 @@ function criarDadosDeTeste() {
   const { id, prefixo } = calendarioDeTeste_();
   if (!confirmar_('Vai criar pacientes e eventos INVENTADOS na agenda de teste. Continuar?')) return;
 
-  const planilha = SpreadsheetApp.getActiveSpreadsheet();
-  const folha = planilha.getSheetByName('Pacientes');
-  const codigos = folha.getLastRow() > 1
-    ? folha.getRange(2, 1, folha.getLastRow() - 1, 1).getValues().map((l) => String(l[0]))
-    : [];
-  const novas = pacientesQueFaltam(codigos);
-  if (novas.length > 0) {
-    folha.getRange(folha.getLastRow() + 1, 1, novas.length, novas[0].length).setValues(novas);
+  const existentes = lerAbaComoObjetos('Pacientes');
+  const colisoes = codigosEmColisao(existentes);
+  if (colisoes.length > 0) {
+    throw new Error(`Os códigos ${colisoes.join(', ')} já existem na aba Pacientes com outros dados. `
+      + 'O gerador não mistura dados de teste com esses: nada foi criado. Use outros códigos ou apague essas linhas à mão.');
   }
+  const novas = pacientesQueFaltam(existentes.map((p) => String(p.codigo)));
+  adicionarLinhas('Pacientes', novas);
 
   const hoje = new Date();
   const dataHoje = {
@@ -72,17 +66,18 @@ function criarDadosDeTeste() {
 
 function apagarDadosDeTeste() {
   const { id } = calendarioDeTeste_();
-  if (!confirmar_('Vai apagar os pacientes P9xxx (e suas linhas em Consultas, Pagamentos e Pacotes) '
-    + 'e os eventos de teste da agenda de teste. Dados reais não são tocados. Continuar?')) return;
+  if (!confirmar_('Vai apagar só os pacientes de teste gerados pelo kit (P9001 a P9006) e o que está ligado a eles em Consultas, Pagamentos e Pacotes, '
+    + 'além dos eventos de teste da agenda de teste. Dados reais não são tocados. Continuar?')) return;
 
+  const plano = planejarLimpezaDeTeste({
+    pacientes: lerAbaComoObjetos('Pacientes'), consultas: lerAbaComoObjetos('Consultas'),
+    pagamentos: lerAbaComoObjetos('Pagamentos'), pacotes: lerAbaComoObjetos('Pacotes'),
+  });
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
   let linhasApagadas = 0;
-  for (const { aba, coluna } of ABAS_COM_CODIGO) {
+  for (const aba of ABAS_DA_LIMPEZA_DE_TESTE) {
     const folha = planilha.getSheetByName(aba);
-    if (!folha || folha.getLastRow() < 2) continue;
-    const posicao = ABAS.find((a) => a.nome === aba).cabecalho.indexOf(coluna) + 1;
-    const valores = folha.getRange(1, posicao, folha.getLastRow(), 1).getValues().map((l) => l[0]);
-    for (const linha of linhasParaApagar(valores, ehCodigoDeTeste)) {
+    for (const linha of plano[aba]) {
       folha.deleteRow(linha);
       linhasApagadas++;
     }

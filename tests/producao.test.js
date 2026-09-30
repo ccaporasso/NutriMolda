@@ -31,7 +31,7 @@ test('nada do pacote menciona o gerador, os pacientes P9xxx, e-mails inventados 
 });
 
 test('os nomes que o gerador define são descobertos sozinhos (a conferência não depende de lista escrita à mão)', () => {
-  for (const n of ['MARCA_TESTE', 'PACIENTES_TESTE', 'criarDadosDeTeste', 'apagarDadosDeTeste', 'adicionarMenuDeTeste_', 'linhasParaApagar']) {
+  for (const n of ['MARCA_TESTE', 'PACIENTES_TESTE', 'criarDadosDeTeste', 'apagarDadosDeTeste', 'adicionarMenuDeTeste_', 'planejarLimpezaDeTeste']) {
     assert.ok(pacote.nomesExcluidos.includes(n), `${n} não foi reconhecido como nome de teste`);
   }
 });
