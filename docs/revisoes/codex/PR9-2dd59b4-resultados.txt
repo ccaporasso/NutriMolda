@@ -1,0 +1,308 @@
+PR9 SHA 2dd59b4322c112522f634c7e5777a1554819b98d
+Node v24.19.0 — 2026-09-30
+
+node --test (timeout 15; exit124)
+✔ tests/agenda.test.js (86.145242ms)
+
+Interrupted while running:
+
+⚠ tests/ciclo-revisao.test.js (tests/ciclo-revisao.test.js:1:1)
+⚠ tests/configuracoes.test.js (tests/configuracoes.test.js:1:1)
+⚠ tests/dados-teste.test.js (tests/dados-teste.test.js:1:1)
+⚠ tests/esquema.test.js (tests/esquema.test.js:1:1)
+⚠ tests/estrutura.test.js (tests/estrutura.test.js:1:1)
+⚠ tests/formatos.test.js (tests/formatos.test.js:1:1)
+⚠ tests/instalador.test.js (tests/instalador.test.js:1:1)
+⚠ tests/menu.test.js (tests/menu.test.js:1:1)
+⚠ tests/pagamentos.test.js (tests/pagamentos.test.js:1:1)
+⚠ tests/pix.test.js (tests/pix.test.js:1:1)
+⚠ tests/recibo.test.js (tests/recibo.test.js:1:1)
+⚠ tests/registro.test.js (tests/registro.test.js:1:1)
+⚠ tests/relatorio.test.js (tests/relatorio.test.js:1:1)
+✖ tests/ciclo-revisao.test.js (14950.161894ms)
+✔ tests/configuracoes.test.js (78.4386ms)
+✔ tests/dados-teste.test.js (93.395201ms)
+✔ tests/esquema.test.js (79.498799ms)
+✔ tests/estrutura.test.js (68.916734ms)
+✔ tests/formatos.test.js (87.218038ms)
+✔ tests/instalador.test.js (62.653272ms)
+✔ tests/menu.test.js (92.79966ms)
+✔ tests/pagamentos.test.js (77.682225ms)
+✔ tests/pix.test.js (57.457825ms)
+✔ tests/recibo.test.js (71.542552ms)
+✔ tests/registro.test.js (69.811407ms)
+✔ tests/relatorio.test.js (74.197756ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14972.175851
+
+✖ failing tests:
+
+test at tests/ciclo-revisao.test.js:1:1
+✖ tests/ciclo-revisao.test.js (14950.161894ms)
+  'Promise resolution is still pending but the event loop has already resolved'
+
+node --test com exclusão de um caso de subprocesso (exit0)
+✔ tests/agenda.test.js (159.685924ms)
+✔ tests/ciclo-revisao.test.js (84.802039ms)
+✔ tests/configuracoes.test.js (100.103667ms)
+✔ tests/dados-teste.test.js (87.595264ms)
+✔ tests/esquema.test.js (129.533275ms)
+✔ tests/estrutura.test.js (99.128022ms)
+✔ tests/formatos.test.js (111.945053ms)
+✔ tests/instalador.test.js (88.534469ms)
+✔ tests/menu.test.js (197.694905ms)
+✔ tests/pagamentos.test.js (157.950269ms)
+✔ tests/pix.test.js (144.031799ms)
+✔ tests/recibo.test.js (93.642118ms)
+✔ tests/registro.test.js (101.153115ms)
+✔ tests/relatorio.test.js (152.803923ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 337.102866
+
+node --test --test-isolation=none --test-reporter=spec com mesma seleção (exit0)
+✔ janela: 30 dias para trás, leitura até 120 e cancelamento por ausência até 90 dias (2.637964ms)
+✔ paciente identificado pelo e-mail do convidado, pela descrição ou pelo telefone (0.479009ms)
+✔ contato que bate com dois pacientes ou com paciente inativo não é adivinhado (0.1757ms)
+✔ evento novo vira linha de Consultas; o que não é consulta ou é dia inteiro é ignorado (1.002824ms)
+✔ não grava título nem descrição do evento em nenhuma linha (0.373724ms)
+✔ primeira x retorno: o segundo evento do mesmo paciente é retorno, mesmo vindo antes na lista (6.220457ms)
+✔ consulta anterior já na planilha faz o novo evento ser retorno (0.222159ms)
+✔ sem paciente conhecido vai para a lista "a identificar" (0.385611ms)
+✔ segunda execução com os mesmos eventos não muda nada (idempotente) (0.286453ms)
+✔ remarcação muda data e hora; status e tipo ajustados por ela são preservados (0.462554ms)
+✔ código preenchido à mão por ela nunca é trocado (0.168119ms)
+✔ cancelamento: evento cancelado na agenda vira cancelada; realizada não é desfeita (0.160317ms)
+✔ cancelamento: consulta marcada que sumiu da agenda dentro do período vira cancelada (0.161339ms)
+✔ agenda que volta vazia não cancela nada e avisa (0.095932ms)
+✔ evento cancelado que voltou para a agenda reativa a consulta (0.093699ms)
+✔ Google simulado: duas execuções seguidas não duplicam; cancelamento é tratado (6.623353ms)
+✔ Google simulado: o gatilho automático é criado uma vez só (1.208649ms)
+✔ Google simulado: falha no gatilho vai para o Registro e para o e-mail, sem texto da exceção (1.437157ms)
+✔ extrairLinhaTarefa acha a linha e ignora o cabeçalho (0.160929ms)
+✔ extrairDecisoes devolve só as citadas, em ordem (0.202289ms)
+✔ acharCommit pelo prefixo da tarefa (0.327155ms)
+✔ varrerDados avisa CPF e e-mail fora dos exemplos, sem repetir o valor (0.685725ms)
+✔ cerca cresce quando o texto já tem cercas (0.102381ms)
+✔ pacote traz roteiro, tarefa, testes e diff (0.273104ms)
+✔ lerResposta aceita resposta no formato e conta prioridades (0.90534ms)
+✔ lerResposta aceita "Nenhum." em Problemas (0.522293ms)
+✔ lerResposta recusa formato errado (0.140337ms)
+✔ lerResposta recusa APROVADO com problema ALTA e REPROVADO sem problema (0.197041ms)
+✔ nomes de resposta: próximo e última (0.234517ms)
+✔ o modelo de resposta do roteiro é lido pelo próprio conferidor quando preenchido (0.171013ms)
+✔ comando da área de transferência por sistema (0.570234ms)
+✔ "NÃO APROVADO" e parecer com texto extra não viram APROVADO (0.159497ms)
+✔ APROVADO COM RESSALVAS com problema ALTA é inválido e não aprova (0.083624ms)
+✔ formato válido separa de aprovação técnica: REPROVADO é válido mas não aprovado (0.087119ms)
+✔ as chaves validadas são exatamente as do esquema da planilha (0.161219ms)
+✔ configuração completa: sem erro nem aviso, com valores tipados (0.47278ms)
+✔ a planilha recém-instalada dá erros só nos campos de identidade, Pix e alerta (0.143413ms)
+✔ chave ausente obrigatória: erro dizendo o que fazer (0.117343ms)
+✔ valor obrigatório em branco (ou só espaços): erro (0.190281ms)
+✔ chave ausente opcional: aviso, sem erro; padrões do kit são aplicados (0.102502ms)
+✔ espaços nas pontas são aceitos e removidos (0.066738ms)
+✔ chave repetida: erro (não escolhe uma das linhas sozinho) (0.091546ms)
+✔ preço ausente, em branco ou zero: só aviso, e o valor não vira cobrança (0.147548ms)
+✔ preço aceito como número ou como texto só com algarismos (0.078696ms)
+✔ preço negativo: erro (0.214848ms)
+✔ preço fracionário (inclusive "150,00" e "150.00"): erro, sem ambiguidade (0.241447ms)
+✔ preço em texto inválido: erro (0.488473ms)
+✔ preço pequeno demais dá aviso de que o campo é em centavos (0.096333ms)
+✔ regra_retorno_dias: inteiro maior que zero; em branco só avisa (0.128611ms)
+✔ nome do recebedor Pix: 25 caracteres passa, 26 dá erro (0.090253ms)
+✔ cidade do recebedor Pix: 15 caracteres passa, 16 dá erro (0.080178ms)
+✔ o tamanho do nome Pix conta letras acentuadas como um caractere só (0.055783ms)
+✔ e-mail de alertas inválido: erro (0.161308ms)
+✔ nenhuma mensagem repete o valor digitado (privacidade) (0.253805ms)
+✔ mensagem final lista todos os erros de uma vez (0.114049ms)
+✔ entrada vazia ou nula não quebra (0.159056ms)
+✔ preço válido é devolvido em centavos, por tipo (0.093379ms)
+✔ preço zero, em branco, ausente ou inválido bloqueia a cobrança (0.475253ms)
+✔ a mensagem do bloqueio aponta a chave e a cortesia como escolha explícita (0.110594ms)
+✔ sem configuração ou tipo desconhecido, a cobrança é bloqueada (0.124344ms)
+✔ chave Pix que chega como número é rejeitada, sem corrigir e sem repetir o valor (0.092998ms)
+✔ chave Pix que chega como data ou verdadeiro/falso é rejeitada (0.084174ms)
+✔ todo campo textual rejeita número, data e verdadeiro/falso (0.560941ms)
+✔ zeros à esquerda são preservados quando o valor chega como texto (0.20293ms)
+✔ número no lugar de texto nunca é "consertado" com zeros ou formatação (0.115561ms)
+✔ preço já alterado pelo Planilhas não é multiplicado nem ganha zeros (0.178755ms)
+✔ preço digitado como texto puro mantém "150,00" como erro (sem ambiguidade) (0.110834ms)
+✔ pacientes de teste: códigos P9xxx únicos e só dados inventados (0.219235ms)
+✔ eventos: datas relativas, título mínimo, ids válidos e fixos (0.811972ms)
+✔ há um evento de paciente desconhecido, passado e futuro, primeira e retorno (0.131074ms)
+✔ trava: agenda principal e ids vazios são recusados (0.153067ms)
+✔ pacientesQueFaltam não repete o que já existe (0.10787ms)
+✔ linhasParaApagar pega só P9xxx, de baixo para cima, sem tocar no cabeçalho (0.088582ms)
+✔ gerador: criar duas vezes não duplica; apagar remove só dados de teste (2.494623ms)
+✔ gerador: recusa agenda principal antes de tocar em qualquer coisa (0.739174ms)
+✔ as sete abas da especificação existem, com os nomes esperados (0.077655ms)
+✔ todo cabeçalho aparece na especificação e não há coluna repetida (0.174358ms)
+✔ todas as chaves de Configurações da especificação estão no instalador (0.160207ms)
+✔ valores de exemplo em centavos são inteiros (0.085116ms)
+✔ listas de validação batem com a especificação (0.128019ms)
+✔ validações apontam para colunas que existem, nas posições certas (0.255668ms)
+✔ planilha vazia: cria tudo (0.161359ms)
+✔ rodar duas vezes não duplica nada (0.243891ms)
+✔ não sobrescreve configuração já preenchida e só acrescenta chave faltante (0.343999ms)
+✔ cabeçalho diferente gera aviso e não é reescrito (0.139657ms)
+✔ aba existente com cabeçalho vazio recebe o cabeçalho (0.092637ms)
+✔ cabeçalho estranho em Configurações: não acrescenta chaves (0.083925ms)
+✔ CPF, telefone e códigos ficam como texto (0.126538ms)
+✔ a coluna valor de Configurações também fica como texto (posição B) (0.062031ms)
+✔ fuso horário é America/Sao_Paulo (0.066648ms)
+✔ usa o motor V8 (0.049103ms)
+✔ escopos declarados explicitamente e justificados em DECISOES.md (0.220256ms)
+✔ .clasp.json fica fora do Git e envia só a pasta src (0.151334ms)
+✔ código do Apps Script também carrega no Node (0.25718ms)
+✔ nenhum nome global repetido entre os arquivos de src/ (1.000551ms)
+✔ funções do menu existem em algum arquivo de src/ (1.767646ms)
+✔ datas: soma dias e valida texto (0.188839ms)
+✔ instante do Google Agenda vira data e hora de São Paulo (0.096383ms)
+✔ reais só na saída, a partir de centavos inteiros (0.171884ms)
+✔ CPF: dígitos verificadores e formatação (números inventados de teste) (0.248387ms)
+✔ coluna de valores das Configurações vira texto antes de receber os dados (2.041641ms)
+✔ rodar o instalador duas vezes não duplica chaves e reaplica o formato de texto (2.469546ms)
+✔ pago: só a partir de a_receber, com forma válida e data de hoje (0.231913ms)
+✔ cortesia: valor zero, forma cortesia, só a partir de a_receber (0.104224ms)
+✔ pacote: gasta uma consulta do pacote com sobra e recusa quando não há (0.206426ms)
+✔ consulta: realizada e faltou; cancelada não muda (0.102662ms)
+✔ Pix do pagamento usa o id do pagamento e o valor em centavos; recusa o que não está a receber (0.641018ms)
+✔ o menu tem todos os itens do lote e cada um aponta para uma função existente (2.853724ms)
+✔ marcar como pago (Pix) em duas linhas; repetir não remarca o que já está pago (2.193516ms)
+✔ linha já paga misturada na seleção não impede as outras (1.288588ms)
+✔ cortesia pede confirmação: "não" não muda nada, "sim" zera o valor (4.012699ms)
+✔ pacote: usa a consulta do pacote e, esgotado, recusa a próxima (1.753906ms)
+✔ Pix da linha mostra um texto com CRC correto, valor e nome, sem pagar nada (2.239655ms)
+✔ Pix de pagamento que não está a receber é recusado com mensagem (2.637724ms)
+✔ consulta: marcar faltou avisa do valor a receber; cancelada é recusada (2.158465ms)
+✔ aba errada ou cabeçalho selecionado: mensagem clara, sem e-mail de alerta (1.544426ms)
+✔ erro inesperado no menu vai para o Registro e o e-mail, sem o texto do erro (2.414134ms)
+✔ fluxo completo de ponta a ponta com dados de teste: a receber -> pago -> relatório (7.28288ms)
+✔ consulta marcada ou realizada sem pagamento gera a_receber com o preço do tipo (0.514551ms)
+✔ não duplica: consulta que já tem pagamento (em qualquer status) é pulada (0.177783ms)
+✔ rodar duas vezes seguidas não cria nada na segunda (0.22295ms)
+✔ preço ausente, zero ou inválido nunca gera cobrança de R$ 0,00 e avisa (0.354625ms)
+✔ consulta sem paciente, faltou e cancelada não geram cobrança (0.163562ms)
+✔ tipo inválido é recusado sem quebrar as outras consultas (0.151053ms)
+✔ consulta cancelada que ainda tem valor a receber vira aviso, nunca é apagada (0.145475ms)
+✔ Google simulado: gerarAReceber grava uma vez e a segunda execução não muda nada (3.606448ms)
+✔ CRC16-CCITT: vetor conhecido "123456789" dá 29B1 (0.111064ms)
+✔ CRC sempre tem 4 letras maiúsculas (completa com zeros) (0.138404ms)
+✔ montarCampo: id, tamanho com 2 dígitos e valor (0.099757ms)
+✔ normalizarTextoPix: sem acento e em maiúsculas (0.224623ms)
+✔ gera todos os campos do padrão com os valores certos (0.227487ms)
+✔ o CRC do texto gerado confere (0.088441ms)
+✔ valor em centavos vira reais com ponto e duas casas (0.150293ms)
+✔ sem identificador usa *** (padrão do Pix) (0.083644ms)
+✔ nome e cidade com acento saem sem acento; limites 25 e 15 aceitos (0.13564ms)
+✔ erros claros em português, sem mostrar o valor digitado (0.316358ms)
+✔ recibo completo traz todos os campos obrigatórios (0.510876ms)
+✔ nome do arquivo leva só número do recibo e código do paciente, nunca nome (0.222499ms)
+✔ sem CPF a linha some; pagador igual ao paciente não repete a linha do paciente (1.026399ms)
+✔ recusa pagamento não pago, cortesia, pacote, valor zero, sem pagador, data ruim, CPF inválido (0.431359ms)
+✔ faltando configuração, diz qual chave preencher (0.107149ms)
+✔ recibo já emitido não é gerado de novo em silêncio (0.073349ms)
+✔ cifrão e barra do nome saem, para não virarem comando na troca de texto do Docs (0.046399ms)
+✔ Google simulado: gera o PDF na pasta, apaga a cópia e grava o link (2.096323ms)
+✔ Google simulado: campo desconhecido no modelo dela interrompe e não gera PDF (1.16825ms)
+✔ Google simulado: recibo recusado mostra os problemas em português (1.268338ms)
+✔ Google simulado: cria modelo e pasta só quando os ids estão em branco (1.336278ms)
+✔ linha do Registro segue as colunas: data_hora, modulo, nivel, mensagem (0.26353ms)
+✔ nível inválido é recusado (0.127539ms)
+✔ mensagem longa é cortada (0.748288ms)
+✔ mascara e-mail, telefone e CPF, mas deixa código de paciente (0.159937ms)
+✔ mensagem que começa como fórmula não vira fórmula na planilha (0.127669ms)
+✔ módulo inválido vira "desconhecido" (nunca texto livre) (0.072467ms)
+✔ e-mail de alerta traz módulo e horário, nunca a mensagem do erro (0.095772ms)
+✔ descreverFalha grava só módulo e tipo de listas fechadas (0.11495ms)
+✔ a coluna data_hora do Registro é texto (horário não muda de fuso) (0.062232ms)
+✔ erro forçado aparece no Registro e gera e-mail sem detalhes (1.999238ms)
+✔ sem aba Registro: não lança erro, usa o Logger e ainda envia o e-mail (0.842887ms)
+✔ e-mail de alerta ausente ou inválido: registra aviso e não envia (1.675089ms)
+✔ falha ao enviar e-mail vira aviso no Registro, sem novo erro (1.06745ms)
+✔ regressão: mensagem de exceção com nome, e-mail e saúde fictícios não vai ao Registro, e-mail nem Logger (0.867344ms)
+✔ regressão: falha de gravação com texto sensível não vai ao Logger (0.947482ms)
+✔ regressão: módulo livre e nome de tipo livre viram "desconhecido" (1.760866ms)
+✔ regressão: falha do envio de e-mail com texto sensível não vai ao Registro (0.752654ms)
+✔ registrar com nível inválido não lança erro e não grava (0.799032ms)
+✔ interpretarMes aceita AAAA-MM, MM/AAAA e vazio; recusa o resto (0.306954ms)
+✔ totais batem com a soma feita à mão (R$ 450,00 em 4 recebimentos, 3 pagadores) (0.649391ms)
+✔ fica de fora: cortesia, pacote, a receber, outro mês e sem data válida (com aviso para a data) (0.228739ms)
+✔ outro mês soma só o que é dele (0.129602ms)
+✔ mês sem recebimentos dá total zero, sem erro (0.140728ms)
+✔ verificarTotais barra número adulterado (0.307095ms)
+✔ CPF inválido é tratado como sem CPF e o número digitado nunca aparece em aviso (0.154089ms)
+✔ CSV: separador ponto e vírgula, vírgula decimal, CPF formatado, fórmula neutralizada (0.309317ms)
+✔ CSV: nome com ponto e vírgula ou aspas vai entre aspas (0.116072ms)
+✔ nome do arquivo leva só o mês (0.091936ms)
+✔ aba: título, cabeçalho, total e por forma, retangular (0.316178ms)
+✔ Google simulado: gera a aba e o CSV; repetir refaz a aba e atualiza o mesmo CSV (2.127919ms)
+✔ Google simulado: sem pasta configurada a aba sai e o CSV não, com aviso (1.305312ms)
+✔ Google simulado: mês inválido mostra mensagem e não gera nada (0.948173ms)
+ℹ tests 179
+ℹ suites 0
+ℹ pass 179
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 164.277685
+
+CLI direto por --arquivo (7 retornos conferidos)
+Salvo em docs/revisoes/T05-2026-09-29.md
+Parecer: APROVADO
+Problemas: 0 alta, 0 média, 0 baixa
+Formato ok e tarefa liberada para a validação no Google. Se houver ressalvas, peça ao Claude: "corrija a revisão em ../cli-respostas-9/T05-2026-09-29.md".
+Parecer: APROVADO
+Problemas: 0 alta, 0 média, 0 baixa
+Formato ok e tarefa liberada para a validação no Google. Se houver ressalvas, peça ao Claude: "corrija a revisão em ../cli-respostas-9/T05-2026-09-29.md".
+Salvo em docs/revisoes/T06-2026-09-29.md
+Parecer: REPROVADO
+Problemas: 1 alta, 0 média, 0 baixa
+  P1 [ALTA] src/Agenda.js, exemplo
+Formato ok, mas a tarefa NÃO pode avançar: o parecer é REPROVADO. Registrar a resposta não aprova a tarefa.
+Peça ao Claude: "corrija a revisão em ../cli-respostas-9/T06-2026-09-29.md".
+Parecer: REPROVADO
+Problemas: 1 alta, 0 média, 0 baixa
+  P1 [ALTA] src/Agenda.js, exemplo
+Formato ok, mas a tarefa NÃO pode avançar: o parecer é REPROVADO. Registrar a resposta não aprova a tarefa.
+Peça ao Claude: "corrija a revisão em ../cli-respostas-9/T06-2026-09-29.md".
+Salvo em docs/revisoes/T07-2026-09-29.md
+Parecer: (não identificado)
+Problemas: 0 alta, 0 média, 0 baixa
+A resposta NÃO segue o formato:
+  - Falta a seção "## Parecer".
+  - Falta a seção "## Problemas".
+  - Falta a seção "## Testes".
+  - Falta a seção "## Pontos para validar no Google".
+Peça ao ChatGPT para reenviar só no modelo do roteiro.
+Parecer: (não identificado)
+Problemas: 0 alta, 0 média, 0 baixa
+A resposta NÃO segue o formato:
+  - Falta a seção "## Parecer".
+  - Falta a seção "## Problemas".
+  - Falta a seção "## Testes".
+  - Falta a seção "## Pontos para validar no Google".
+Peça ao ChatGPT para reenviar só no modelo do roteiro.
+Erro: Nenhuma resposta salva para T08 em docs/revisoes/.
+
+CLI direto por stdin (7 retornos conferidos)
+salvar T05: esperado=0 obtido=0
+conferir T05: esperado=0 obtido=0
+salvar T06: esperado=3 obtido=3
+conferir T06: esperado=3 obtido=3
+salvar T07: esperado=1 obtido=1
+conferir T07: esperado=1 obtido=1
+conferir T08: esperado=1 obtido=1
