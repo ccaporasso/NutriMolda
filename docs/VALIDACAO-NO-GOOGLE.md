@@ -28,12 +28,14 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 
 ## Revisão automática (30/09/2026): o que só o Google de verdade confirma
 
-1. **Agenda:** apagar um evento de teste e sincronizar: a consulta vira `cancelada` (a resposta de `Calendar.Events.get` para evento apagado deve trazer `status: cancelled`). Remarcar um evento para 5 meses à frente: a consulta só muda de data. Trocar `calendario_id` por outra agenda: nenhuma consulta é cancelada e aparece o aviso.
+1. **Agenda:** apagar um evento de teste e sincronizar: a consulta vira `cancelada` (a resposta de `Calendar.Events.get` para evento apagado deve trazer `status: cancelled`). Remarcar um evento para 5 meses à frente: a consulta só muda de data. Trocar `calendario_id` por outra agenda: as consultas da agenda antiga ficam como estão (coluna `agenda_origem` preenchida pelo kit) e aparece o aviso, também na segunda sincronização. Planilhas antigas: rodar Instalar/atualizar planilha para completar o cabeçalho da coluna nova.
 2. **Preços:** Configuração > Definir preços das consultas (em reais): `180,00` grava `18000`; `1,50` pede confirmação.
 3. **Cabeçalho:** trocar duas colunas de lugar em Pagamentos e usar qualquer item do menu: mensagem de cabeçalho diferente, nada gravado.
 4. **Pacote:** com `inicio` preenchido em Pacotes, marcar consulta de pacote: pagamento vira pago/pacote e `usadas` sobe uma vez.
 5. **Recibo:** apagar `{{valor}}` do modelo e gerar: mensagem de campo obrigatório, nenhum PDF na pasta, nenhum `rascunho-` fora da lixeira.
-6. **Relatório:** dois pagamentos com o mesmo nome, um com CPF e outro sem: duas linhas e um aviso.
+6. **Gerador de teste:** na primeira vez para a agenda, a pergunta "Esta agenda é só de TESTE?" aparece; Não interrompe sem escrever nada.
+7. **Pacotes:** com dois pacotes do mesmo paciente (início 01/09 e 15/09), a consulta de pacote usa só o de 15/09.
+8. **Relatório:** dois pagamentos com o mesmo nome, um com CPF e outro sem: duas linhas e um aviso.
 
 ## T09 — Recibo em PDF
 

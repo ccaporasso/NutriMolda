@@ -57,7 +57,7 @@ test('pacientesQueFaltam não repete o que já existe', () => {
   assert.equal(D.pacientesQueFaltam(D.PACIENTES_TESTE.map((p) => p.codigo)).length, 0);
 });
 
-test('planejarLimpezaDeTeste pega só o que o gerador cria, de baixo para cima (R03)', () => {
+test('planejarLimpezaDeTeste pega só o que tem prova de vir do gerador, de baixo para cima (R03)', () => {
   const ger = D.PACIENTES_TESTE[0];
   const pacientes = [
     { linha: 2, codigo: 'P0001', email: 'real@exemplo.invalid' },
@@ -69,20 +69,33 @@ test('planejarLimpezaDeTeste pega só o que o gerador cria, de baixo para cima (
     { linha: 3, id_evento: D.idEventoTeste(0), codigo_paciente: ger.codigo },
     { linha: 4, id_evento: D.idEventoTeste(8), codigo_paciente: '' }, // a identificar
     { linha: 5, id_evento: 'xyz', codigo_paciente: 'P9500' },
+    { linha: 6, id_evento: 'eventoalheio', codigo_paciente: ger.codigo }, // do mesmo paciente de teste, mas não é evento gerado
+    { linha: 7, id_evento: 'kittestealheio', codigo_paciente: '' }, // prefixo parecido não vale
   ];
   const pagamentos = [
     { linha: 2, id_evento: 'abc', codigo_paciente: 'P0001' },
     { linha: 3, id_evento: D.idEventoTeste(8), codigo_paciente: '' },
     { linha: 4, id_evento: 'xyz', codigo_paciente: 'P9500' },
+    { linha: 5, id_evento: 'eventoalheio', codigo_paciente: ger.codigo },
   ];
   const plano = D.planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, pacotes: [{ linha: 2, codigo_paciente: 'P9500' }, { linha: 3, codigo_paciente: ger.codigo }] });
   assert.deepEqual(plano, { Pacientes: [3], Consultas: [4, 3], Pagamentos: [3], Pacotes: [3] });
 });
 
+test('R03c/R03d/R03e: código reservado sem prova de origem não autoriza apagar; prefixo parecido não é evento gerado', () => {
+  const p = D.planejarLimpezaDeTeste({
+    pacientes: [], consultas: [{ linha: 2, id_evento: 'eventoalheio', codigo_paciente: 'P9001' }],
+    pagamentos: [{ linha: 2, id_evento: 'eventoalheio', codigo_paciente: 'P9001' }], pacotes: [{ linha: 2, codigo_paciente: 'P9001' }],
+  });
+  assert.deepEqual(p, { Pacientes: [], Consultas: [], Pagamentos: [], Pacotes: [] });
+  assert.equal(D.idEventoEhDeTeste('kittestealheio'), false);
+  assert.equal(D.idEventoEhDeTeste(D.idEventoTeste(3)), true);
+});
+
 test('código de teste já usado com outros dados é colisão: nada dele é apagado', () => {
   const pacientes = [{ linha: 2, codigo: 'P9001', email: 'outra.pessoa@exemplo.invalid' }];
   assert.deepEqual(D.codigosEmColisao(pacientes), ['P9001']);
-  const plano = D.planejarLimpezaDeTeste({ pacientes, consultas: [{ linha: 2, id_evento: 'abc', codigo_paciente: 'P9001' }], pagamentos: [], pacotes: [] });
+  const plano = D.planejarLimpezaDeTeste({ pacientes, consultas: [{ linha: 2, id_evento: 'abc', codigo_paciente: 'P9001' }], pagamentos: [], pacotes: [{ linha: 2, codigo_paciente: 'P9001' }] });
   assert.deepEqual(plano, { Pacientes: [], Consultas: [], Pagamentos: [], Pacotes: [] });
 });
 
@@ -157,4 +170,15 @@ test('R03: criar recusa código de teste que já existe com outros dados', () =>
   assert.throws(() => api.criarDadosDeTeste(), /P9001.*outros dados/);
   assert.equal(eventos.size, 0);
   assert.equal(dados.Pacientes.length, 3);
+});
+
+test('R03: agenda secundária só é usada depois de ela confirmar que é de teste; "não" não escreve nada', () => {
+  const nega = carregarGerador({ calendario_id: CAL });
+  nega.amb.contexto.SpreadsheetApp.getUi = () => ({ ...nega.amb.ui, alert: () => 'NO' });
+  assert.throws(() => nega.api.criarDadosDeTeste(), /não foi confirmada/);
+  assert.equal(nega.eventos.size, 0);
+  assert.equal(nega.dados.Pacientes.length, 2);
+  const ok = carregarGerador({ calendario_id: CAL });
+  ok.api.criarDadosDeTeste();
+  assert.equal(ok.amb.propriedades.get('agenda_de_teste_confirmada'), CAL);
 });

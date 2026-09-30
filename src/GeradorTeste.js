@@ -11,11 +11,27 @@ function adicionarMenuDeTeste_(ui, menu) {
     .addItem('TESTE: apagar dados fictícios', 'apagarDadosDeTeste'));
 }
 
+// O sufixo de agenda secundária não prova que a agenda é de teste (R03): a primeira vez para cada agenda, ela precisa
+// dizer que é só de teste. A resposta fica guardada nas propriedades do documento, junto com o id dessa agenda.
+const CHAVE_AGENDA_DE_TESTE = 'agenda_de_teste_confirmada';
+
+function confirmarAgendaDeTeste_(calendarioId) {
+  const propriedades = PropertiesService.getDocumentProperties();
+  if (propriedades.getProperty(CHAVE_AGENDA_DE_TESTE) === calendarioId) return;
+  const ui = SpreadsheetApp.getUi();
+  const resposta = ui.alert('Esta agenda é só de TESTE?',
+    'O kit vai criar e apagar eventos inventados na agenda cujo ID está em "calendario_id". Responda Sim apenas se ela foi criada só para teste '
+    + 'e NÃO tem consultas de verdade. Na dúvida, responda Não.', ui.ButtonSet.YES_NO);
+  if (resposta !== ui.Button.YES) throw erroDeUso_('Nada foi feito: a agenda não foi confirmada como agenda de teste.');
+  propriedades.setProperty(CHAVE_AGENDA_DE_TESTE, calendarioId);
+}
+
 function calendarioDeTeste_() {
   const cfg = lerConfiguracoes().config;
   const id = cfg.calendario_id;
   const validacao = validarAgendaDeTeste(id);
   if (!validacao.ok) throw new Error(validacao.erro);
+  confirmarAgendaDeTeste_(id);
   return { id, prefixo: cfg.prefixo_evento_consulta || 'Consulta' };
 }
 

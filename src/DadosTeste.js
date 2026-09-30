@@ -75,8 +75,9 @@ function idEventoTeste(indice) {
   return `${PREFIXO_ID_EVENTO}${doisDigitos_(indice + 1)}`;
 }
 
+// Só os ids exatos dos eventos que o gerador cria: um prefixo parecido não prova nada (R03).
 function idEventoEhDeTeste(id) {
-  return typeof id === 'string' && id.startsWith(PREFIXO_ID_EVENTO);
+  return typeof id === 'string' && EVENTOS_TESTE.some((_, i) => id === idEventoTeste(i));
 }
 
 // Monta os eventos com datas relativas a "hoje". Título só com o mínimo ("Consulta — Ana S.").
@@ -128,19 +129,17 @@ function codigosEmColisao(pacientes) {
 }
 
 // Recebe as linhas atuais (objetos com `linha`) de cada aba e devolve, por aba, os números das linhas a apagar
-// (de baixo para cima, para apagar uma não deslocar as outras). Só entra o que o gerador cria:
-// pacientes gerados; consultas com id de evento de teste ou de paciente gerado; pagamentos e pacotes ligados a eles.
+// (de baixo para cima, para apagar uma não deslocar as outras). Só entra o que tem prova de ter vindo do gerador:
+// pacientes com código e e-mail exatos; consultas e pagamentos com id de evento exato dos nove eventos de teste;
+// pacotes de um paciente gerado que ainda está na planilha. Código P9xxx sozinho nunca basta.
 function planejarLimpezaDeTeste({ pacientes, consultas, pagamentos, pacotes }) {
-  const emColisao = new Set(codigosEmColisao(pacientes));
-  const nosso = (codigo) => CODIGOS_TESTE.has(String(codigo)) && !emColisao.has(String(codigo));
-  const consultasNossas = consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)) || nosso(c.codigo_paciente));
-  const idsNossos = new Set(consultasNossas.map((c) => String(c.id_evento)));
+  const geradosPresentes = new Set(pacientes.filter(ehPacienteGerado).map((p) => String(p.codigo)));
   const descendente = (lista) => lista.map((o) => o.linha).sort((a, b) => b - a);
   return {
     Pacientes: descendente(pacientes.filter(ehPacienteGerado)),
-    Consultas: descendente(consultasNossas),
-    Pagamentos: descendente(pagamentos.filter((p) => nosso(p.codigo_paciente) || (String(p.id_evento) !== '' && idsNossos.has(String(p.id_evento))))),
-    Pacotes: descendente(pacotes.filter((p) => nosso(p.codigo_paciente))),
+    Consultas: descendente(consultas.filter((c) => idEventoEhDeTeste(String(c.id_evento)))),
+    Pagamentos: descendente(pagamentos.filter((p) => idEventoEhDeTeste(String(p.id_evento)))),
+    Pacotes: descendente(pacotes.filter((p) => geradosPresentes.has(String(p.codigo_paciente)))),
   };
 }
 

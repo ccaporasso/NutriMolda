@@ -102,6 +102,16 @@ test('aba existente com cabeçalho vazio recebe o cabeçalho', () => {
   assert.deepEqual(planejarInstalacao(estado).escreverCabecalho, ['Pacotes']);
 });
 
+test('planilha de versão anterior (Consultas com 7 colunas): o cabeçalho é completado, sem aviso', () => {
+  const estado = aplicar({}, planejarInstalacao({}));
+  estado.Consultas.cabecalho = estado.Consultas.cabecalho.slice(0, 7).concat(['']);
+  const plano = planejarInstalacao(estado);
+  assert.deepEqual(plano.escreverCabecalho, ['Consultas']);
+  assert.deepEqual(plano.avisos, []);
+  estado.Consultas.cabecalho[2] = 'outra'; // cabeçalho realmente diferente continua sendo aviso
+  assert.match(planejarInstalacao(estado).avisos[0], /Consultas/);
+});
+
 test('cabeçalho estranho em Configurações: não acrescenta chaves', () => {
   const estado = aplicar({}, planejarInstalacao({}));
   estado['Configurações'].cabecalho = ['x', 'y'];
