@@ -10,23 +10,22 @@ function agoraTexto_() {
 
 // Grava uma linha na aba Registro. Devolve true se gravou.
 function registrar(modulo, nivel, mensagem) {
-  let linha;
   try {
-    linha = montarLinhaRegistro(agoraTexto_(), modulo, nivel, mensagem);
+    const linha = montarLinhaRegistro(agoraTexto_(), modulo, nivel, mensagem);
     const folha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro');
     if (!folha) throw new Error('A aba "Registro" não existe.');
     folha.appendRow(linha);
     return true;
   } catch (e) {
-    // Só o nome do erro e a linha já mascarada: nada de dado pessoal no Logger.
-    Logger.log(`Kit do Consultório: não consegui gravar no Registro (${descreverErro(e)}). Linha: ${linha ? linha.join(' | ') : '(não montada)'}`);
+    // Diagnóstico fixo: módulo e tipo de listas fechadas. Nunca a mensagem da exceção nem o texto da linha.
+    Logger.log(`Kit do Consultório: não consegui gravar no Registro (módulo ${moduloConhecido(modulo)}, tipo ${tipoDeErro(e)}).`);
     return false;
   }
 }
 
 // Registra o erro e avisa por e-mail. Devolve { registrado, emailEnviado }.
 function registrarErro(modulo, erro) {
-  const registrado = registrar(modulo, 'erro', descreverErro(erro));
+  const registrado = registrar(modulo, 'erro', descreverFalha(modulo, erro));
   let emailEnviado = false;
   try {
     const para = lerEmailAlertas();
@@ -35,7 +34,7 @@ function registrarErro(modulo, erro) {
     MailApp.sendEmail(para, email.assunto, email.corpo);
     emailEnviado = true;
   } catch (e) {
-    registrar('alertas', 'aviso', `E-mail de alerta não enviado: ${descreverErro(e)}`);
+    registrar('alertas', 'aviso', `E-mail de alerta não enviado (tipo ${tipoDeErro(e)}).`);
   }
   return { registrado, emailEnviado };
 }

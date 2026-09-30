@@ -60,16 +60,30 @@ function montarEmailAlerta(modulo, dataHoraTexto) {
   };
 }
 
-// Texto curto do erro para o Registro: tipo e mensagem, sem a pilha de chamadas.
-function descreverErro(erro) {
-  if (erro && typeof erro === 'object' && (erro.message || erro.name)) {
-    return `${erro.name || 'Error'}: ${erro.message || ''}`.trim();
-  }
-  return String(erro === undefined || erro === null ? 'erro desconhecido' : erro);
+// Valores conhecidos: só eles podem aparecer numa mensagem gerada a partir de uma exceção.
+// Mensagem de exceção (erro.message) pode trazer nome ou dado de saúde e nunca é copiada.
+const MODULOS_CONHECIDOS = [
+  'alertas', 'configuracoes', 'instalador', 'menu', 'pix', 'recibo', 'registro', 'relatorio', 'sincronizacao', 'teste',
+];
+const TIPOS_ERRO_CONHECIDOS = ['Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError'];
+
+function moduloConhecido(modulo) {
+  return MODULOS_CONHECIDOS.includes(modulo) ? modulo : 'desconhecido';
+}
+
+function tipoDeErro(erro) {
+  const nome = erro && typeof erro === 'object' ? erro.name : undefined;
+  return TIPOS_ERRO_CONHECIDOS.includes(nome) ? nome : 'desconhecido';
+}
+
+// Mensagem fixa para o Registro: só módulo e tipo, ambos de listas fechadas.
+function descreverFalha(modulo, erro) {
+  return `Falha no módulo ${moduloConhecido(modulo)} (tipo ${tipoDeErro(erro)})`;
 }
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    MAX_MENSAGEM, TEXTO_OCULTO, mascararDadosPessoais, montarLinhaRegistro, montarEmailAlerta, descreverErro,
+    MAX_MENSAGEM, TEXTO_OCULTO, mascararDadosPessoais, montarLinhaRegistro, montarEmailAlerta,
+    MODULOS_CONHECIDOS, TIPOS_ERRO_CONHECIDOS, moduloConhecido, tipoDeErro, descreverFalha,
   };
 }

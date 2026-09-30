@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const {
-  MAX_MENSAGEM, mascararDadosPessoais, montarLinhaRegistro, montarEmailAlerta, descreverErro,
+  MAX_MENSAGEM, mascararDadosPessoais, montarLinhaRegistro, montarEmailAlerta, descreverFalha, moduloConhecido, tipoDeErro,
 } = require('../src/Registro.js');
 const { ABAS, colunasDeTexto } = require('../src/Esquema.js');
 
@@ -61,11 +61,14 @@ test('e-mail de alerta traz módulo e horário, nunca a mensagem do erro', () =>
   assert.equal(montarEmailAlerta.length, 2);
 });
 
-test('descreverErro usa nome e mensagem, sem a pilha', () => {
-  const e = new Error('deu ruim');
-  assert.equal(descreverErro(e), 'Error: deu ruim');
-  assert.equal(descreverErro('texto solto'), 'texto solto');
-  assert.equal(descreverErro(null), 'erro desconhecido');
+test('descreverFalha grava só módulo e tipo de listas fechadas', () => {
+  assert.equal(descreverFalha('teste', new Error('deu ruim')), 'Falha no módulo teste (tipo Error)');
+  assert.equal(descreverFalha('sincronizacao', new TypeError('x')), 'Falha no módulo sincronizacao (tipo TypeError)');
+  assert.equal(descreverFalha('Ana Souza', 'texto solto'), 'Falha no módulo desconhecido (tipo desconhecido)');
+  assert.equal(moduloConhecido(undefined), 'desconhecido');
+  const falso = new Error('x');
+  falso.name = 'Paciente Ana Souza';
+  assert.equal(tipoDeErro(falso), 'desconhecido');
 });
 
 test('a coluna data_hora do Registro é texto (horário não muda de fuso)', () => {
@@ -114,7 +117,7 @@ test('erro forçado aparece no Registro e gera e-mail sem detalhes', () => {
   vm.runInContext('testarAlertaDeFalha()', a.contexto);
   assert.equal(a.linhasRegistro.length, 1);
   assert.deepEqual(Array.from(a.linhasRegistro[0]).slice(0, 3), [DATA, 'teste', 'erro']);
-  assert.match(a.linhasRegistro[0][3], /Erro de teste forçado/);
+  assert.equal(a.linhasRegistro[0][3], 'Falha no módulo teste (tipo Error)');
   assert.equal(a.emails.length, 1);
   assert.equal(a.emails[0].para, 'alertas@exemplo.com');
   assert.ok(!a.emails[0].corpo.includes('Erro de teste forçado'));
@@ -148,11 +151,52 @@ test('falha ao enviar e-mail vira aviso no Registro, sem novo erro', () => {
   assert.ok(a.linhasRegistro.some((l) => l[1] === 'alertas' && /não enviado/.test(l[3])));
 });
 
-test('dado pessoal na mensagem do erro é mascarado no Registro', () => {
+const SENSIVEIS = ['Ana Souza', 'ana@exemplo.com', 'diabetes', 'tipo 2', '11912345678'];
+
+function nenhumSensivel(textos) {
+  const tudo = JSON.stringify(textos);
+  for (const s of SENSIVEIS) assert.ok(!tudo.includes(s), `vazou: ${s}`);
+}
+
+test('regressão: mensagem de exceção com nome, e-mail e saúde fictícios não vai ao Registro, e-mail nem Logger', () => {
   const a = criarAmbiente();
-  vm.runInContext("registrarErro('sincronizacao', new Error('sem paciente para ana@exemplo.com'))", a.contexto);
-  assert.ok(!a.linhasRegistro[0][3].includes('ana@exemplo.com'));
-  assert.ok(a.linhasRegistro[0][3].includes('[oculto]'));
+  a.contexto.textoErro = 'Paciente Ana Souza, ana@exemplo.com, 11912345678: diabetes tipo 2';
+  const r = vm.runInContext("registrarErro('sincronizacao', new Error(textoErro))", a.contexto);
+  assert.equal(r.registrado, true);
+  assert.equal(a.linhasRegistro[0][3], 'Falha no módulo sincronizacao (tipo Error)');
+  nenhumSensivel([a.linhasRegistro, a.emails, a.logger]);
+});
+
+test('regressão: falha de gravação com texto sensível não vai ao Logger', () => {
+  const a = criarAmbiente();
+  a.contexto.textoErro = 'Paciente Ana Souza, ana@exemplo.com: diabetes tipo 2';
+  a.contexto.SpreadsheetApp.getActiveSpreadsheet = () => ({
+    getSheetByName: (n) => (n === 'Registro'
+      ? { appendRow: () => { throw new Error(a.contexto.textoErro); } }
+      : { getLastRow: () => 2, getRange: () => ({ getValues: () => [['email_alertas', 'alertas@exemplo.com']] }) }),
+  });
+  const r = vm.runInContext("registrarErro('sincronizacao', new Error(textoErro))", a.contexto);
+  assert.equal(r.registrado, false);
+  assert.equal(r.emailEnviado, true);
+  assert.equal(a.logger[0], 'Kit do Consultório: não consegui gravar no Registro (módulo sincronizacao, tipo Error).');
+  nenhumSensivel([a.logger, a.emails]);
+});
+
+test('regressão: módulo livre e nome de tipo livre viram "desconhecido"', () => {
+  const a = criarAmbiente({ comAbaRegistro: false });
+  vm.runInContext("registrarErro('Ana Souza', Object.assign(new Error('x'), { name: 'Ana Souza' }))", a.contexto);
+  assert.equal(a.logger[0], 'Kit do Consultório: não consegui gravar no Registro (módulo desconhecido, tipo Error).');
+  const b = criarAmbiente();
+  vm.runInContext("registrarErro('Ana Souza', Object.assign(new Error('x'), { name: 'Ana Souza' }))", b.contexto);
+  assert.equal(b.linhasRegistro[0][3], 'Falha no módulo desconhecido (tipo desconhecido)');
+});
+
+test('regressão: falha do envio de e-mail com texto sensível não vai ao Registro', () => {
+  const a = criarAmbiente({ falhaEmail: true });
+  a.contexto.MailApp.sendEmail = () => { throw new Error('Paciente Ana Souza: diabetes tipo 2'); };
+  vm.runInContext("registrarErro('sincronizacao', new Error('x'))", a.contexto);
+  nenhumSensivel([a.linhasRegistro, a.logger]);
+  assert.ok(a.linhasRegistro.some((l) => l[3] === 'E-mail de alerta não enviado (tipo Error).'));
 });
 
 test('registrar com nível inválido não lança erro e não grava', () => {
