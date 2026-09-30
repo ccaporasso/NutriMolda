@@ -6,12 +6,12 @@
   "reviews": [
     {
       "pr": 6,
-      "sha": "b12b35e5f03a9a79f3fd12f4af03b6bec02d7a74",
+      "sha": "4682127fc3abfbc21b5f34de08fb445c73a6eae1",
       "status": "REPROVADO",
-      "report": "docs/revisoes/codex/PR6-b12b35e.md",
-      "report_commit": "3d432f662a3b221a90b64e1cd393b1512086ce53",
+      "report": "docs/revisoes/codex/PR6-4682127.md",
+      "report_commit": "7e2342ebcef02905958c03d0eab0a932a11adf84",
       "published": true,
-      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/6#issuecomment-5903331192",
+      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/6#issuecomment-5903648798",
       "reviewed_on": "2026-09-30",
       "resolved": [
         "R01",
@@ -30,6 +30,17 @@
         "N9-02",
         "N9-03"
       ],
+      "previous_cases_confirmed": [
+        "R03c",
+        "R03d",
+        "R03e",
+        "R04b",
+        "R04c",
+        "R07b",
+        "R07c",
+        "R07d",
+        "R11c"
+      ],
       "partially_resolved": [
         "R03",
         "R04",
@@ -37,10 +48,10 @@
         "R11"
       ],
       "unresolved": [
-        "R11:identidade-do-pacote",
-        "R04:origem-da-agenda",
-        "R03:identidade-e-ambiente",
-        "R07:configuracoes-e-largura"
+        "R11:renovacao-no-mesmo-dia-e-identidade",
+        "R04:colisao-confirmada-vinculos-financeiros",
+        "R03:origem-prova-de-geracao-e-colisao",
+        "R07:instalador-largura-real"
       ],
       "findings": {
         "ALTA": 3,
@@ -48,14 +59,16 @@
         "BAIXA": 0
       },
       "tests": {
-        "selected_cases_passed": 304,
-        "independent": {
-          "passed": 17,
-          "failed": 9
+        "selected_cases_passed": 311,
+        "previous_and_n8_cases_passed": 28,
+        "n9_logic_cases_passed": 2,
+        "new_independent": {
+          "passed": 0,
+          "failed": 7
         },
         "cli_checks_passed": 7,
         "package_js": 28,
-        "full_node_test": "TIMEOUT_15S_SUBPROCESS_CASE"
+        "full_node_test": "TIMEOUT_20S_SUBPROCESS_CASE"
       },
       "google_validation": "PENDENTE"
     },
@@ -115,12 +128,67 @@
         "N9-01",
         "N9-02"
       ]
+    },
+    {
+      "pr": 6,
+      "sha": "b12b35e5f03a9a79f3fd12f4af03b6bec02d7a74",
+      "status": "REPROVADO",
+      "report": "docs/revisoes/codex/PR6-b12b35e.md",
+      "report_commit": "3d432f662a3b221a90b64e1cd393b1512086ce53",
+      "published": true,
+      "comment_url": "https://github.com/ccaporasso/NutriMolda/pull/6#issuecomment-5903331192",
+      "reviewed_on": "2026-09-30",
+      "resolved": [
+        "R01",
+        "R02",
+        "R05",
+        "R06",
+        "R08",
+        "R09",
+        "R10",
+        "D17",
+        "N8-01",
+        "N8-02",
+        "N8-03",
+        "N8-04",
+        "N9-01",
+        "N9-02",
+        "N9-03"
+      ],
+      "partially_resolved": [
+        "R03",
+        "R04",
+        "R07",
+        "R11"
+      ],
+      "unresolved": [
+        "R11:identidade-do-pacote",
+        "R04:origem-da-agenda",
+        "R03:identidade-e-ambiente",
+        "R07:configuracoes-e-largura"
+      ],
+      "findings": {
+        "ALTA": 3,
+        "MÉDIA": 1,
+        "BAIXA": 0
+      },
+      "tests": {
+        "selected_cases_passed": 304,
+        "independent": {
+          "passed": 17,
+          "failed": 9
+        },
+        "cli_checks_passed": 7,
+        "package_js": 28,
+        "full_node_test": "TIMEOUT_15S_SUBPROCESS_CASE"
+      },
+      "google_validation": "PENDENTE"
     }
   ],
   "monitored_prs": [
     {
       "pr": 6,
-      "sha": "b12b35e5f03a9a79f3fd12f4af03b6bec02d7a74",
+      "sha": "4682127fc3abfbc21b5f34de08fb445c73a6eae1",
       "state": "open",
       "merged": false
     },
