@@ -175,4 +175,4 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **Mudança de comportamento (decidida aqui, não pedida pelo Caio; decisão DG1 atualizada):** um PDF antigo achado só pelo nome, sem propriedades, deixou de ser religado automaticamente. Intenção preservada: nunca criar um segundo recibo nem ligar o errado. O custo é um passo manual raro (conferir o PDF e mandá-lo para a lixeira ou colar o link).
 - **REGRESSÃO:** `tests/recibo-idempotencia.test.js` (4 casos novos e 2 ajustados); mutações M58 (religar sem conferir o conteúdo) e M59 (impressão sem a forma de pagamento), ambas detectadas. **EVIDÊNCIA:** E2. **N/M:** como o Drive real grava e devolve `appProperties` (itens 5 e 10 de `GOOGLE-REAL.md`).
 - **Limite conhecido:** a impressão não cobre nome e CPF do pagador (não se grava PII nas propriedades). Se só o nome do pagador for corrigido entre uma falha parcial e a nova tentativa, o PDF antigo ainda é religado com o nome velho. O manual manda mandar o PDF antigo para a lixeira ao corrigir o nome.
-- **Corrigido em:** commit do SHA preenchido no fechamento (ver `docs/gate/REAUDITORIA.md`).
+- **Corrigido em:** commit `fa58074`.

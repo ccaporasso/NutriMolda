@@ -11,7 +11,7 @@ Duas observações de método:
 
 | Campo | Valor |
 |---|---|
-| SHA do código congelado | `940700e49ea7018dec1d8d7ce69d50aaea9f6e7f` (curto: `940700e`); o último commit da branch só altera documentos (ver "Fechamento") |
+| SHA do código congelado | `fa58074` (o SHA completo tem uma sequência de 11 dígitos, que o varredor de dados pessoais do kit confundiria com CPF; o Git resolve o curto); o commit seguinte só altera documentos (ver "Fechamento") |
 | Data | 01/10/2026 |
 | Branch | `claude/gate-continuidade-96uxks` (PR #16 contra a `main`; não mesclado) |
 | Base | `4ead36c` (main da auditoria anterior) |
@@ -101,9 +101,10 @@ Resultado de `node scripts/empacotar-producao.js` (conferido pelo gate): "Pacote
 | Primeira execução (workflow **recusado** pelo GitHub: erro de YAML, zero jobs; achado A-19) | `abdc8c2` | falha, corrigida |
 | Pull request nº 16, job **Gate local** (versão anterior do código, 560 testes) | `940700e` | sucesso: gate estrito PASS |
 | Pull request nº 16, job **Mutação manual (consultivo)** (versão anterior, 57 mutações) | `940700e` | sucesso: 57/57 detectadas |
-| Código congelado desta reauditoria (577 testes, 60 mutações, régua aplicada): dois jobs | ver "Fechamento" | ver "Fechamento" |
+| Pull request nº 16, job **Gate local** (código congelado: 577 testes, régua aplicada; job nº 110254526496, 27 s) | `fa58074` | **sucesso**: 577 testes, 577 aprovados, 0 falhas, 0 ignorados; cobertura 100 / 98,67 / 100; gate estrito PASS |
+| Pull request nº 16, job **Mutação manual (consultivo)** (job nº 110254526270, cerca de 4 min) | `fa58074` | **sucesso**: 60/60 mutações detectadas, em segundo ambiente (Linux do GitHub) |
 
-O resultado do commit congelado só entra no documento depois de observado, no commit de fechamento (que só toca em documentos). Onde ver: aba Checks do PR nº 16. Os números de execução do GitHub não são copiados aqui porque têm 11 dígitos e o varredor de dados pessoais do kit (de propósito) não os distingue de CPF. O GitHub avisa que `actions/checkout@v4` e `actions/setup-node@v4` rodam forçadas em Node 24 (informativo; atualizar junto com a decisão de fixar por SHA).
+Onde ver: aba Checks do PR nº 16 ou `https://github.com/ccaporasso/NutriMolda/commit/fa58074/checks`. Os números de execução do GitHub não são copiados aqui porque têm 11 dígitos e o varredor de dados pessoais do kit (de propósito) não os distingue de CPF. O GitHub avisa que `actions/checkout@v4` e `actions/setup-node@v4` rodam forçadas em Node 24 (informativo; atualizar junto com a decisão de fixar por SHA).
 
 Não aplicado: proteção da `main` (só recomendada: exigir o job "Gate local"); ações oficiais fixadas por tag, não por SHA (recomendação aberta). O job de mutação é consultivo.
 
@@ -173,7 +174,7 @@ A régua do Gate v1.0 traz sete eliminatórios: qualquer **SIM** dá "NÃO PASSA
 
 Histórico do eliminador da auditoria anterior (recibo não idempotente depois de falha parcial): **não existe mais, no que o simulador representa** (E2); o comportamento real do Drive é N/M. Evidência: `tests/recibo-idempotencia.test.js` (26 casos), achados A-01 e A-20.
 
-Critérios de liberação do item 42 do roteiro, cruzados como apoio (não substituem a régua): nenhum eliminatório **SIM** (acima); testes locais verdes **SIM** (577/577, seção B); build de produção verde **SIM** (seção F); CI verde **SIM** no commit congelado quando o fechamento o registrar (seção G); falha parcial do recibo corrigida e testada **SIM** (E2); operações críticas com idempotência conhecida **SIM** (seção D); nenhum achado de segurança alto ou crítico **SIM** no que se mede localmente (isolamento entre contas e OAuth real N/M).
+Critérios de liberação do item 42 do roteiro, cruzados como apoio (não substituem a régua): nenhum eliminatório **SIM** (acima); testes locais verdes **SIM** (577/577, seção B); build de produção verde **SIM** (seção F); CI verde **SIM** no commit congelado, dois jobs (seção G); falha parcial do recibo corrigida e testada **SIM** (E2); operações críticas com idempotência conhecida **SIM** (seção D); nenhum achado de segurança alto ou crítico **SIM** no que se mede localmente (isolamento entre contas e OAuth real N/M).
 
 ## K. Nova pontuação
 
@@ -240,7 +241,8 @@ Detalhes e limites: `docs/gate/REPRODUCAO.md`.
 
 | Campo | Valor |
 |---|---|
-| SHA do código congelado | A_PREENCHER |
-| Conferência: `git diff <SHA> HEAD` em código, scripts, testes, CI e Node | A_PREENCHER |
-| CI no commit congelado | A_PREENCHER |
+| SHA do código congelado | `fa58074` |
+| Conferência | `git diff fa58074 HEAD --stat -- src scripts tests .github package.json .nvmrc` não lista nenhum arquivo: depois do congelamento só mudaram documentos (este e `docs/gate/ACHADOS.md`) |
+| Clone limpo | `git clone` e `git checkout fa58074`, depois `node scripts/gate.js --estrito`: 577 testes, 577 aprovados, `RESULTADO: PASS (1 não medido(s))` (o não medido é a mutação, que roda à parte) |
+| CI no commit congelado | sucesso nos dois jobs (seção G) |
 | CI no commit de fechamento | roda como o de qualquer outro push do PR; o resultado aparece na aba Checks (não é copiado aqui para este documento não precisar de outro commit para registrá-lo) |
