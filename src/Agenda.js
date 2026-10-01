@@ -111,12 +111,21 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
   };
 
   // 1) Estado final dos eventos que já têm linha: cancelamento, remarcação, reativação, código do paciente.
+  // Id repetido na resposta da agenda: conta uma vez só, e um evento "cancelado" com o mesmo id de um confirmado NÃO cancela
+  // (na dúvida, não mexe: preferir não agir a agir sobre a consulta errada).
+  const idsConfirmados = new Set(eventos.filter((e) => e && e.id && e.status !== 'cancelled').map((e) => String(e.id)));
+  const idsJaProcessados = new Set();
+  let repetidos = 0;
   const validos = [];
   for (const ev of eventos) {
     if (!ev || !ev.id) { ignorados++; continue; }
     const id = String(ev.id);
     vistos.add(id);
+    const chaveDoItem = `${id}|${ev.status === 'cancelled' ? 'c' : 'v'}`;
+    if (idsJaProcessados.has(chaveDoItem)) { repetidos++; continue; }
+    idsJaProcessados.add(chaveDoItem);
     if (ev.status === 'cancelled') {
+      if (idsConfirmados.has(id)) { repetidos++; continue; }
       if (porId.has(id)) cancelar(porId.get(id));
       continue; // evento cancelado não traz título nem horário: só serve para achar a linha
     }
@@ -152,6 +161,9 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
     avisos.push(`A agenda voltou sem nenhum evento. Por segurança, nenhuma das ${emJanela.length} consultas marcadas foi cancelada. Confira o "calendario_id" na aba Configurações.`);
   } else {
     ausentes = emJanela.map((c) => String(c.id_evento));
+  }
+  if (repetidos > 0) {
+    avisos.push(`${repetidos} evento(s) repetido(s) ou contraditório(s) na resposta da agenda foram contados uma vez só, e nada foi cancelado por causa deles.`);
   }
   if (deOutraAgenda > 0) {
     avisos.push(`${deOutraAgenda} consulta(s) vieram de outra agenda (o "calendario_id" mudou) e foram deixadas como estão: o kit não as cancela nem atualiza pela agenda nova.`);

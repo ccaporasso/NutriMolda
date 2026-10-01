@@ -30,7 +30,8 @@ function textoParaData(texto) {
 // Instante (texto ISO do Google Agenda, com fuso) -> { data: "2026-09-30", hora: "09:00" } em São Paulo.
 // Devolve null se o texto não for um instante válido.
 function dataHoraLocal(instanteIso) {
-  if (typeof instanteIso !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(instanteIso)) return null;
+  // Exige o fuso explícito (Z ou +hh:mm): sem ele o resultado dependeria do fuso da máquina que lê. A API do Google Agenda sempre o envia.
+  if (typeof instanteIso !== 'string' || !/^\d{4}-\d{2}-\d{2}T.*(Z|[+-]\d{2}:?\d{2})$/.test(instanteIso)) return null;
   const ms = Date.parse(instanteIso);
   if (Number.isNaN(ms)) return null;
   const d = new Date(ms - DESLOCAMENTO_SAO_PAULO_MS);

@@ -164,7 +164,7 @@ test('no menu: excesso de consultas pagas por pacote aparece na tela e no Regist
 test('relatório: total original = soma por pagador = soma por forma = total exibido (400 conjuntos gerados, oráculo independente)', () => {
   const rnd = gerador(424242);
   const nomes = ['Ana Teste', 'ana  teste', 'Bruno Exemplo', 'Carla Prova', '', 'ÂNGELA Inventada'];
-  const cpfs = ['', '52998224725', '11144477735', '11111111111', '123'];
+  const cpfs = ['', '52998224725', '12345678909', '11111111111', '123'];
   for (let n = 0; n < 400; n++) {
     const quantos = 1 + Math.floor(rnd() * 12);
     const pagamentos = Array.from({ length: quantos }, (_, i) => {
