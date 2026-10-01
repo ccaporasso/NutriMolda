@@ -8,7 +8,12 @@ const { linhasModeloRecibo } = require('../../src/Recibo.js');
 
 function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {}) {
   const arquivos = new Map();
-  const falhas = { copiar: false, exportarPdf: false, criarArquivo: false, abrirDocumento: false };
+  const falhas = {
+    copiar: false, exportarPdf: false, criarArquivo: false, abrirDocumento: false,
+    trocarCampo: false, salvarDocumento: false, lixeira: false,
+    // O Drive CRIA o PDF e a resposta se perde (a chamada lança erro depois de o arquivo existir): a janela do achado do recibo.
+    criarArquivoRespostaPerdida: false,
+  };
   const chamadas = []; // "Drive.Files.copy", "Drive.Files.create"... para conferir o que o kit realmente chama
   let seq = 0;
 
@@ -44,18 +49,29 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
         if (falhas.criarArquivo) throw new Error('Sem espaço no Drive');
         const pai = (recurso.parents || [])[0];
         if (!pai || !arquivos.get(pai) || !arquivos.get(pai).ehPasta) throw new Error('Pasta não encontrada.');
-        const a = novo(recurso.name, { tipo: recurso.mimeType, pasta: pai, conteudo: blob.conteudo || '', texto: blob.texto || '' });
+        const a = novo(recurso.name, { tipo: recurso.mimeType, pasta: pai, conteudo: blob.conteudo || '', texto: blob.texto || '', appProperties: { ...(recurso.appProperties || {}) } });
+        if (falhas.criarArquivoRespostaPerdida) throw new Error('Tempo esgotado: EXCECAO_FICTICIA_RESPOSTA_PERDIDA_001');
         return { id: a.id, webViewLink: `https://exemplo.invalid/${a.id}` };
       },
+      // Entende só as formas de consulta que o kit monta: pasta, lixeira, nome exato e/ou propriedade (nome OU propriedade).
       list({ q }) {
         chamadas.push('Drive.Files.list');
-        const m = /name = '([^']+)' and '([^']+)' in parents and trashed = false/.exec(q);
-        if (!m) throw new Error('Consulta inválida.');
-        return { files: [...arquivos.values()].filter((a) => a.pasta === m[2] && a.nome === m[1] && !a.lixeira).map((a) => ({ id: a.id })) };
+        const pasta = /'([^']+)' in parents/.exec(q);
+        const nome = /name = '([^']+)'/.exec(q);
+        const prop = /appProperties has \{ key='([^']+)' and value='([^']+)' \}/.exec(q);
+        if (!pasta || !/trashed = false/.test(q)) throw new Error('Consulta inválida.');
+        const bate = (a) => {
+          const porNome = nome && a.nome === nome[1];
+          const porProp = prop && a.appProperties && a.appProperties[prop[1]] === prop[2];
+          return nome || prop ? Boolean(porNome || porProp) : true;
+        };
+        const achados = [...arquivos.values()].filter((a) => a.pasta === pasta[1] && !a.lixeira && bate(a));
+        return { files: achados.map((a) => ({ id: a.id, name: a.nome, appProperties: a.appProperties || {}, webViewLink: `https://exemplo.invalid/${a.id}` })) };
       },
       update(recurso, id, blob) {
         chamadas.push('Drive.Files.update');
         const a = existente(id);
+        if (recurso && recurso.trashed && falhas.lixeira) throw new Error('Lixeira indisponível: EXCECAO_FICTICIA_LIXEIRA_001');
         if (recurso && recurso.trashed) a.lixeira = true;
         if (blob) a.conteudo = blob.conteudo;
         return { id };
@@ -70,7 +86,7 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
       // Como o Docs: findText acha o campo; deleteText/insertText mexem no texto de forma literal (M2).
       // replaceText trata o texto novo como troca por expressão regular ("$" especial): o kit não pode usá-lo.
       const textoDoArquivo = {
-        deleteText(ini, fim) { arq.texto = arq.texto.slice(0, ini) + arq.texto.slice(fim + 1); return textoDoArquivo; },
+        deleteText(ini, fim) { if (falhas.trocarCampo) throw new Error('Falha ao editar: EXCECAO_FICTICIA_CAMPO_001'); arq.texto = arq.texto.slice(0, ini) + arq.texto.slice(fim + 1); return textoDoArquivo; },
         insertText(ini, t) { arq.texto = arq.texto.slice(0, ini) + t + arq.texto.slice(ini); return textoDoArquivo; },
       };
       const corpo = {
@@ -85,7 +101,8 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
         getText: () => arq.texto,
       };
       return {
-        getId: () => arq.id, getBody: () => corpo, getHeader: () => null, getFooter: () => null, saveAndClose() {},
+        getId: () => arq.id, getBody: () => corpo, getHeader: () => null, getFooter: () => null,
+        saveAndClose() { if (falhas.salvarDocumento) throw new Error('Falha ao salvar: EXCECAO_FICTICIA_SALVAR_001'); },
         getAs: (tipo) => {
           if (falhas.exportarPdf) throw new Error('Falha ao exportar: EXCECAO_FICTICIA_PDF_001');
           const blob = { tipo, nome: arq.nome, texto: arq.texto, setName(n) { blob.nome = n; return blob; } };

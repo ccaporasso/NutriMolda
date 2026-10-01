@@ -31,9 +31,11 @@ function driveCopiar(idOrigem, nome, idPasta) {
   return Drive.Files.copy({ name: nome, parents: [idPasta] }, idOrigem, { fields: 'id' }).id;
 }
 
-// Cria um arquivo na pasta a partir de um blob. Devolve { id, url }.
-function driveCriarArquivo(idPasta, nome, tipo, blob) {
-  const criado = Drive.Files.create({ name: nome, mimeType: tipo, parents: [idPasta] }, blob, { fields: 'id,webViewLink' });
+// Cria um arquivo na pasta a partir de um blob. `propriedades` (opcional) ficam gravadas no arquivo (identidade). Devolve { id, url }.
+function driveCriarArquivo(idPasta, nome, tipo, blob, propriedades) {
+  const recurso = { name: nome, mimeType: tipo, parents: [idPasta] };
+  if (propriedades) recurso.appProperties = propriedades;
+  const criado = Drive.Files.create(recurso, blob, { fields: 'id,webViewLink' });
   return { id: criado.id, url: linkDoArquivoDrive_(criado) };
 }
 
@@ -43,6 +45,17 @@ function driveAcharNaPasta(idPasta, nome) {
   const resposta = Drive.Files.list({ q: `name = '${nome}' and '${idPasta}' in parents and trashed = false`, fields: 'files(id)', pageSize: 1 });
   const achados = (resposta && resposta.files) || [];
   return achados.length > 0 ? achados[0].id : null;
+}
+
+// Candidatos a PDF do recibo de um pagamento: na pasta, fora da lixeira, com a identidade gravada OU com o nome do recibo.
+// Quem decide o que serve é escolherReciboExistente (Recibo.js). Devolve [{ id, name, appProperties, url }] (até 10).
+function driveListarRecibosDoPagamento(idPasta, idPagamento, nomeArquivo) {
+  if (!/^[A-Za-z0-9._-]{1,100}$/.test(String(idPagamento)) || !/^[A-Za-z0-9._-]{1,150}$/.test(nomeArquivo)) {
+    throw erroDeUso_('O id do pagamento tem caracteres que o kit não aceita. Nada foi gerado.');
+  }
+  const q = `'${idPasta}' in parents and trashed = false and (appProperties has { key='${PROPRIEDADE_RECIBO_PAGAMENTO}' and value='${idPagamento}' } or name = '${nomeArquivo}')`;
+  const resposta = Drive.Files.list({ q, fields: 'files(id,name,appProperties,webViewLink)', pageSize: 10 });
+  return ((resposta && resposta.files) || []).map((a) => ({ id: a.id, name: a.name, appProperties: a.appProperties || {}, url: linkDoArquivoDrive_(a) }));
 }
 
 function driveSubstituirConteudo(idArquivo, blob) {

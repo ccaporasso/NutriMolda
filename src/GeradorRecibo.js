@@ -1,7 +1,8 @@
 // Recibo em PDF (chamadas ao Google). A lógica está em Recibo.js.
 // Escopos: documents (preencher o modelo e gerar o PDF) e drive.file (copiar o modelo e salvar o PDF, pelo serviço avançado Drive, ver DriveAvancado.js). Com drive.file o script só enxerga arquivos
 // que ele mesmo criou: por isso o menu "Criar modelo e pasta de recibos" cria os dois e grava os ids em Configurações.
-// Fluxo: copia o modelo -> troca os campos -> exporta PDF na pasta -> apaga a cópia -> grava o link no pagamento.
+// Fluxo: (com a trava) relê o pagamento -> se já há PDF dele na pasta, religa o link -> senão copia o modelo -> troca os campos ->
+// exporta o PDF na pasta (com a identidade do pagamento nas propriedades) -> grava o link -> apaga a cópia.
 
 function escaparPadrao_(texto) {
   return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -56,6 +57,20 @@ function gerarRecibo(numeroLinha) {
 
     const idPasta = validarIdDrive_(config.id_pasta_recibos, 'id_pasta_recibos');
     const idModelo = validarIdDrive_(config.id_modelo_recibo, 'id_modelo_recibo');
+
+    // Reconciliar antes de criar (R3/R4): se uma execução anterior criou o PDF e caiu antes de gravar o link, o PDF já está
+    // na pasta. Religa o link em vez de gerar um segundo recibo. Isto roda já com a trava e depois de reler a planilha.
+    const achados = escolherReciboExistente(driveListarRecibosDoPagamento(idPasta, pagamento.id, dados.nomeArquivo), pagamento);
+    if (achados.situacao === 'varios') {
+      throw erroDeUso_(`Já existem ${achados.quantos} PDFs de recibo para o pagamento ${pagamento.id} na pasta de recibos. `
+        + 'Nada foi gerado nem ligado ao pagamento. Mande para a lixeira os que sobram, deixando um só, e tente de novo.');
+    }
+    if (achados.situacao === 'um') {
+      gravarCelula('Pagamentos', numeroLinha, 'link_recibo', achados.arquivo.url, { id: pagamento.id, codigo_paciente: pagamento.codigo_paciente });
+      registrar('recibo', 'info', `Recibo do pagamento ${pagamento.id} já existia no Drive; o link foi religado, sem gerar outro PDF.`);
+      return { link: achados.arquivo.url, reconciliado: true };
+    }
+
     copia = driveCopiar(idModelo, `rascunho-${nomeArquivoRecibo(pagamento).replace('.pdf', '')}`, idPasta);
     const documento = DocumentApp.openById(copia);
     const faltando = camposFaltandoNoModelo(textoDoDocumento_(documento), dados.campos);
@@ -77,8 +92,8 @@ function gerarRecibo(numeroLinha) {
 
     // O PDF sai do próprio Docs (escopo documents); só a gravação na pasta passa pelo Drive.
     const pdf = DocumentApp.openById(copia).getAs('application/pdf').setName(dados.nomeArquivo);
-    const link = driveCriarArquivo(idPasta, dados.nomeArquivo, 'application/pdf', pdf).url;
-    gravarCelula('Pagamentos', numeroLinha, 'link_recibo', link, { id: pagamento.id });
+    const link = driveCriarArquivo(idPasta, dados.nomeArquivo, 'application/pdf', pdf, propriedadesDoRecibo(pagamento)).url;
+    gravarCelula('Pagamentos', numeroLinha, 'link_recibo', link, { id: pagamento.id, codigo_paciente: pagamento.codigo_paciente });
     registrar('recibo', 'info', `Recibo gerado para o pagamento ${pagamento.id}.`);
     resultado = { link };
     return resultado;
@@ -96,7 +111,9 @@ function gerarReciboDaLinhaSelecionada() {
     const r = gerarRecibo(linha);
     SpreadsheetApp.getUi().alert(r.jaTinha
       ? 'Este pagamento já tem recibo (veja a coluna link_recibo). Nada foi gerado de novo.'
-      : `Recibo gerado. O link está na coluna link_recibo:\n${r.link}`
+      : r.reconciliado
+        ? `Este pagamento já tinha um PDF de recibo na pasta (uma tentativa anterior parou antes de gravar o link). O link foi religado, sem gerar outro PDF:\n${r.link}`
+        : `Recibo gerado. O link está na coluna link_recibo:\n${r.link}`
         + (r.rascunhoFicou ? '\n\nA cópia de trabalho ("rascunho-...") não foi para a lixeira: ela tem nome e CPF. Apague à mão na pasta de recibos.' : ''));
   });
 }

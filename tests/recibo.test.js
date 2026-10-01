@@ -147,7 +147,7 @@ test('Google simulado: o recibo só usa o serviço avançado Drive (copiar, cria
   const { amb, drive } = ambienteRecibo();
   assert.equal(amb.contexto.DriveApp, undefined);
   amb.rodar('gerarReciboDaLinhaSelecionada()');
-  assert.deepEqual([...new Set(drive.chamadas)].sort(), ['Drive.Files.copy', 'Drive.Files.create', 'Drive.Files.update']);
+  assert.deepEqual([...new Set(drive.chamadas)].sort(), ['Drive.Files.copy', 'Drive.Files.create', 'Drive.Files.list', 'Drive.Files.update']); // list: reconciliação do recibo (identidade) antes de criar
 });
 
 test('Google simulado: id de pasta ou de modelo com caractere estranho é recusado antes de qualquer chamada ao Drive', () => {
