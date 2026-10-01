@@ -162,4 +162,4 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **Lição:** "CI configurado" não era "CI observado". Um arquivo de CI só vale como evidência depois de uma execução real; por isso o CI aparece como E1 só pelo link da execução do commit auditado.
 - **Limite:** o teste não é um analisador de YAML completo; cobre o erro que aconteceu e os parentes mais próximos.
 - **REGRESSÃO:** `tests/reproducao.test.js` (teste de sintaxe do workflow).
-- **EVIDÊNCIA:** E1 (recusa do GitHub), E2 (teste). **Corrigido em:** commit seguinte ao `abdc8c2` (ver `git log`; SHA preenchido no fechamento).
+- **EVIDÊNCIA:** E1 (recusa do GitHub), E2 (teste). **Corrigido em:** commit `940700e`. **Prova:** no PR, o job "Gate local" e o job de mutação passaram em `940700e` (ver `docs/gate/REAUDITORIA.md`, seção G).

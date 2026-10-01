@@ -11,7 +11,7 @@ Duas observações de método:
 
 | Campo | Valor |
 |---|---|
-| SHA do código congelado | ver "Fechamento" (preenchido no último commit, que só toca em documentos) |
+| SHA do código congelado | `940700e49ea7018dec1d8d7ce69d50aaea9f6e7f` (curto: `940700e`); o último commit da branch só altera documentos (ver "Fechamento") |
 | Data | 01/10/2026 |
 | Branch | `claude/gate-continuidade-96uxks` (PR #16 contra a `main`; não mesclado) |
 | Base | `4ead36c` (main da auditoria anterior) |
@@ -99,7 +99,10 @@ Resultado de `node scripts/empacotar-producao.js` (conferido pelo gate): "Pacote
 | Execução | Commit | Resultado |
 |---|---|---|
 | Primeira execução (workflow **recusado** pelo GitHub: erro de YAML, zero jobs; achado A-19) | `abdc8c2` | falha, corrigida |
-| Execução do commit congelado | ver "Fechamento" | ver "Fechamento" |
+| Pull request nº 16, job **Gate local** (`node --test`, cobertura, `git diff --check`, empacotar produção, segurança com histórico, `node scripts/gate.js --estrito`; job nº 110243719150, 33 s) | `940700e` | **sucesso**: 560 testes, 560 aprovados, 0 falhas, 0 ignorados; gate estrito PASS |
+| Pull request nº 16, job **Mutação manual (consultivo)** (job nº 110243719029, cerca de 4 min) | `940700e` | **sucesso**: 57/57 mutações detectadas, num segundo ambiente (Linux do GitHub) |
+
+Onde ver: aba Checks do PR nº 16 ou `https://github.com/ccaporasso/NutriMolda/commit/940700e49ea7018dec1d8d7ce69d50aaea9f6e7f/checks`. Os números de execução do GitHub não são copiados aqui porque têm 11 dígitos e o varredor de dados pessoais do kit (de propósito) não os distingue de CPF. O GitHub avisa que `actions/checkout@v4` e `actions/setup-node@v4` rodam forçadas em Node 24 (informativo; atualizar junto com a decisão de fixar por SHA).
 
 Não aplicado: proteção da `main` (só recomendada: exigir o job "Gate local"); ações oficiais fixadas por tag, não por SHA (recomendação aberta). O job de mutação é consultivo.
 
@@ -136,6 +139,7 @@ O que isto significa para o eliminador do recibo: a correção depende de o Driv
 | A-13 | `exceptionLogging: STACKDRIVER` mantido (análise feita) | INFORMATIVO | Caio |
 | (info) | Retenção do Registro: política proposta, não decidida (`RETENCAO-REGISTRO.md`) | INFORMATIVO | Caio |
 | (info) | Decisões DG1 a DG6 em `docs/DECISOES.md` são propostas até o Caio aceitar | INFORMATIVO | Caio |
+| (info) | Ações do CI (`checkout@v4`, `setup-node@v4`) rodam forçadas em Node 24: aviso do GitHub | INFORMATIVO | próximo ciclo (junto com fixar por SHA) |
 | (info) | Mutação é lista manual; cobertura não tem "statements"; só Node 22.22.0 em Linux foi usado | INFORMATIVO | próximo ciclo |
 
 Não há achado CRÍTICO nem ALTO conhecido aberto. "Conhecido" quer dizer: encontrado por este trabalho com os meios locais.
@@ -150,7 +154,7 @@ Os sete eliminadores do Gate v1.0 **não estão no repositório nem no roteiro e
 | Item 42: nenhum eliminador | depende da régua; o conhecido: NÃO | acima |
 | Item 42: testes locais integralmente verdes | SIM (560/560; clone limpo) | seção B |
 | Item 42: build de produção verde | SIM | seção F |
-| Item 42: CI verde | ver "Fechamento" | seção G |
+| Item 42: CI verde | SIM no commit congelado (dois jobs, E1) | seção G |
 | Item 42: falha parcial do recibo corrigida e testada | SIM (E2) | seção D |
 | Item 42: operações críticas com idempotência conhecida | SIM (as 12 operações do inventário; o Pix só lê) | seção D |
 | Item 42: nenhum achado de segurança alto ou crítico | SIM no que se mede localmente; isolamento entre contas e OAuth real N/M | seção E |
@@ -163,13 +167,13 @@ Os sete eliminadores do Gate v1.0 **não estão no repositório nem no roteiro e
 
 | Dimensão | E1 | E2 | E3 | E4 | N/M |
 |---|---|---|---|---|---|
-| Correção funcional | gate num clone limpo; CI (ver Fechamento) | 560 testes, fluxo completo agenda → recibo → relatório, regressão de cada achado | inventário de código, sem esqueleto em produção | manuais corrigidos | Google real (seção H) |
+| Correção funcional | gate num clone limpo; CI do GitHub verde | 560 testes, fluxo completo agenda → recibo → relatório, regressão de cada achado | inventário de código, sem esqueleto em produção | manuais corrigidos | Google real (seção H) |
 | Testabilidade | — | cobertura 100% / 98,7% / 100%; 57 mutações detectadas; matriz de integridade | `scripts/cobertura.js --exigir` falha se módulo crítico some da medição | `COBERTURA.md`, `MUTACOES.md` | "statements"; mutação exaustiva |
 | Arquitetura | — | lógica pura separada das chamadas ao Google, testada isoladamente | `COMPLEXIDADE.md` (mistura de responsabilidades medida), `INVENTARIO-CODIGO.md` | `DECISOES.md` | nenhuma refatoração feita só por estética |
 | Integridade | — | seção D; invariantes com cenários gerados; falha injetada em cada passo | trava antes de ler, identidade conferida antes de gravar | `MATRIZ-INTEGRIDADE.md` | Google real: `appProperties`, `LockService`, atomicidade do Planilhas |
 | Segurança | — | seção E: segredos, dados pessoais, escopos, fórmula, logs | lista de escopos e serviços | `SEGURANCA-LOCAL.md`, `SERVICOS-GOOGLE.md` | isolamento entre contas, OAuth concedido, Stackdriver, Excel |
 | Eficiência | — | operações contadas, não cronometradas; n² corrigido (A-18) | `COMPLEXIDADE.md` | `DESEMPENHO.md`, `RETENCAO-REGISTRO.md` | tempo e cota reais no Google (itens 19 e 20) |
-| Disciplina | gate no clone limpo; CI do GitHub | gate com piso de testes; teste de sintaxe do workflow (A-19); todo SHA citado existe | Node fixado, sem dependências, só ações oficiais | `REPRODUCAO.md`, `ACHADOS.md` com histórico | proteção da `main`; fixar ações por SHA; outros Node e sistemas |
+| Disciplina | gate no clone limpo; CI do GitHub (dois jobs verdes no commit congelado) | gate com piso de testes; teste de sintaxe do workflow (A-19); todo SHA citado existe | Node fixado, sem dependências, só ações oficiais | `REPRODUCAO.md`, `ACHADOS.md` com histórico | proteção da `main`; fixar ações por SHA; outros Node e sistemas |
 
 ### Como repetir
 
@@ -185,10 +189,9 @@ Detalhes e limites: `docs/gate/REPRODUCAO.md`.
 
 ## Fechamento
 
-(Preenchido no último commit desta rodada, que só altera documentos.)
-
 | Campo | Valor |
 |---|---|
-| SHA do código congelado | A_PREENCHER |
-| Conferência: `git diff <SHA> HEAD` fora de `docs/` | A_PREENCHER |
-| Execução do CI no commit congelado | A_PREENCHER |
+| SHA do código congelado | `940700e49ea7018dec1d8d7ce69d50aaea9f6e7f` |
+| O que mudou depois dele | só `docs/gate/REAUDITORIA.md` e `docs/gate/ACHADOS.md` (o commit de fechamento); conferido com `git diff 940700e HEAD --stat -- src scripts tests .github package.json .nvmrc`, que não lista nenhum arquivo |
+| CI no commit congelado | sucesso nos dois jobs (seção G) |
+| CI no commit de fechamento | roda como o de qualquer outro push do PR; o resultado aparece na aba Checks (não é copiado aqui para este documento não precisar de outro commit para registrá-lo) |
