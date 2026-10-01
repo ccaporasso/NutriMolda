@@ -1,8 +1,14 @@
 // Relatório mensal (chamadas ao Google). A lógica está em Relatorio.js.
 // Escreve a aba "Relatório AAAA-MM" (refeita a cada vez) e salva o CSV na pasta dos recibos (drive.file).
 
+// Com trava e relendo tudo depois dela: dois relatórios do mesmo mês ao mesmo tempo não se misturam (nem criam dois CSVs).
+// A fonte financeira (Pagamentos) só é lida: nenhuma falha daqui altera dinheiro. Repetir o mês refaz a mesma aba e o mesmo CSV.
 function gerarRelatorioMensal(mes) {
-  const config = lerConfiguracoes().config;
+  return comTrava_(() => gerarRelatorioMensalComTrava_(mes));
+}
+
+function gerarRelatorioMensalComTrava_(mes) {
+  const config = lerConfiguracoes(['relatorio']).config; // só a pasta do CSV
   const resultado = consolidarRecebimentos(lerAbaComoObjetos('Pagamentos'), mes);
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
 

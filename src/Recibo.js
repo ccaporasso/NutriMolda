@@ -41,6 +41,49 @@ function nomeArquivoRecibo(pagamento) {
   return `Recibo-${parte(pagamento.id)}-${parte(pagamento.codigo_paciente)}.pdf`;
 }
 
+// Identidade do recibo no Drive (R1 a R5, docs/MATRIZ-INTEGRIDADE.md): o PDF leva, nas propriedades do arquivo, o id do
+// pagamento e o código do paciente. O nome do arquivo ajuda, mas sozinho não prova de quem é o PDF.
+const PROPRIEDADE_RECIBO_PAGAMENTO = 'kit_recibo_pagamento';
+const PROPRIEDADE_RECIBO_PACIENTE = 'kit_recibo_paciente';
+const PROPRIEDADE_RECIBO_CONTEUDO = 'kit_recibo_conteudo';
+
+// Impressão do que o recibo mostra de não identificador: valor, data e forma. Sem nome, CPF nem dado de saúde (regra 6).
+// Serve para o PDF de uma tentativa anterior só ser religado se ainda disser o mesmo que o pagamento diz hoje (A-20).
+function impressaoDoRecibo(pagamento) {
+  return `${pagamento.valor_centavos}|${pagamento.data_pagamento}|${pagamento.forma}`;
+}
+
+function propriedadesDoRecibo(pagamento) {
+  return {
+    [PROPRIEDADE_RECIBO_PAGAMENTO]: String(pagamento.id),
+    [PROPRIEDADE_RECIBO_PACIENTE]: String(pagamento.codigo_paciente),
+    [PROPRIEDADE_RECIBO_CONTEUDO]: impressaoDoRecibo(pagamento),
+  };
+}
+
+// Entre os arquivos achados na pasta (fora da lixeira), separa os que representam ESTE pagamento.
+// Arquivo com identidade gravada vale só se o pagamento e o paciente baterem; arquivo sem identidade (recibo feito antes
+// desta correção) vale só se o nome for exatamente o do recibo. Um PDF de outro pagamento nunca é aproveitado (R5).
+// Achar UM não basta para religar: ele também precisa dizer o mesmo que o pagamento diz hoje (valor, data e forma). Um PDF
+// sem essa impressão (versão antiga) ou com outra (número de pagamento reaproveitado, dado corrigido depois) é 'divergente':
+// o kit não liga, não cria outro e manda a nutricionista conferir (R5, A-20). Prefere não agir a ligar o recibo errado.
+// Devolve { situacao: 'nenhum' | 'um' | 'varios' | 'divergente', arquivo, quantos }.
+function escolherReciboExistente(arquivos, pagamento) {
+  const nome = nomeArquivoRecibo(pagamento);
+  const dele = (arquivos || []).filter((a) => {
+    const p = (a && a.appProperties) || {};
+    if (p[PROPRIEDADE_RECIBO_PAGAMENTO] !== undefined) {
+      return p[PROPRIEDADE_RECIBO_PAGAMENTO] === String(pagamento.id)
+        && (p[PROPRIEDADE_RECIBO_PACIENTE] === undefined || p[PROPRIEDADE_RECIBO_PACIENTE] === String(pagamento.codigo_paciente));
+    }
+    return a && a.name === nome;
+  });
+  if (dele.length === 0) return { situacao: 'nenhum', arquivo: null, quantos: 0 };
+  if (dele.length > 1) return { situacao: 'varios', arquivo: dele[0], quantos: dele.length };
+  const confere = ((dele[0].appProperties || {})[PROPRIEDADE_RECIBO_CONTEUDO]) === impressaoDoRecibo(pagamento);
+  return { situacao: confere ? 'um' : 'divergente', arquivo: dele[0], quantos: 1 };
+}
+
 // "2026-09-30" -> "30/09/2026".
 function dataBrasileira(texto) {
   const d = formatosRecibo_().textoParaData(texto);
@@ -69,7 +112,7 @@ function montarDadosRecibo({ pagamento, config, paciente, consulta }) {
   if (!pagamento) return { erros: ['Pagamento não encontrado.'], dados: null };
 
   if (pagamento.link_recibo) {
-    erros.push(`O pagamento ${id} já tem recibo. Para gerar de novo, apague o link na coluna link_recibo.`);
+    erros.push(`O pagamento ${id} já tem recibo. Para gerar de novo, apague o link na coluna link_recibo e mande o PDF antigo para a lixeira.`);
     return { erros, dados: null, jaTem: true };
   }
   if (pagamento.status !== 'pago') erros.push(`O pagamento ${id} não está pago. Só se emite recibo de pagamento recebido.`);
@@ -132,5 +175,6 @@ if (typeof module !== 'undefined') {
     CAMPOS_OBRIGATORIOS_RECIBO, CAMPOS_CONDICIONAIS_RECIBO, camposFaltandoNoModelo,
     FORMAS_COM_RECIBO, linhasModeloRecibo, textoSeguroParaDocs, nomeArquivoRecibo, dataBrasileira,
     montarDadosRecibo, camposSobrando,
+    PROPRIEDADE_RECIBO_PAGAMENTO, PROPRIEDADE_RECIBO_PACIENTE, PROPRIEDADE_RECIBO_CONTEUDO, impressaoDoRecibo, propriedadesDoRecibo, escolherReciboExistente,
   };
 }

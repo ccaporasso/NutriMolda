@@ -13,6 +13,11 @@ const PASTA_SAIDA = path.join(RAIZ, 'dist', 'producao');
 // Arquivos que só existem para a conta de TESTE (T04).
 const ARQUIVOS_SOMENTE_TESTE = ['DadosTeste.js', 'GeradorTeste.js'];
 
+// Esqueletos da fase 2b, T20 a T24 (D24): lógica pura testada, sem ponto de entrada (nenhum menu, gatilho ou aba os chama) e com valores
+// que ainda dependem da nutricionista (PENDENTE Pn). Ficam só no pacote de TESTE (src/); a produção só leva o que a nutricionista usa.
+// Quando uma tarefa virar funcionalidade de verdade, o arquivo sai desta lista no mesmo commit que ligar o menu (Gate, item 35).
+const ARQUIVOS_ESQUELETO = ['FilaAjustes.js', 'Frases.js', 'Modos.js', 'Presenca.js', 'Respostas.js'];
+
 // Escopo de teste -> escopo que a produção usa no lugar. Criar e apagar eventos fictícios exige escrever
 // na agenda; ler os eventos (sincronização, T05) só exige leitura. Ver D23 em docs/DECISOES.md.
 const ESCOPO_AGENDA_TESTE = 'https://www.googleapis.com/auth/calendar.events';
@@ -50,7 +55,7 @@ const MARCAS_DE_TESTE = [
 // Lê src/ e devolve o pacote em memória: { arquivos: [{ nome, conteudo }], manifesto, excluidos }.
 function montarPacoteProducao(pastaSrc = PASTA_SRC) {
   const todos = fs.readdirSync(pastaSrc).filter((a) => a.endsWith('.js')).sort();
-  const excluidos = todos.filter((a) => ARQUIVOS_SOMENTE_TESTE.includes(a));
+  const excluidos = todos.filter((a) => ARQUIVOS_SOMENTE_TESTE.includes(a) || ARQUIVOS_ESQUELETO.includes(a));
   const arquivos = todos.filter((a) => !excluidos.includes(a))
     .map((nome) => ({ nome, conteudo: fs.readFileSync(path.join(pastaSrc, nome), 'utf8') }));
   const manifesto = JSON.parse(fs.readFileSync(path.join(pastaSrc, 'appsscript.json'), 'utf8'));
@@ -64,10 +69,11 @@ function verificarPacoteProducao(pacote) {
   const problemas = [];
   for (const a of pacote.arquivos) {
     if (ARQUIVOS_SOMENTE_TESTE.includes(a.nome)) problemas.push(`O pacote de produção leva o arquivo de teste ${a.nome}.`);
+    if (ARQUIVOS_ESQUELETO.includes(a.nome)) problemas.push(`O pacote de produção leva o esqueleto ${a.nome} (T20 a T24 ainda não são funcionalidade).`);
     const semGancho = a.conteudo.replace(GANCHO_OPCIONAL_DO_MENU, '');
     for (const nome of pacote.nomesExcluidos) {
       if (new RegExp(`(?<![\\w$])${nome.replace(/\$/g, '\\$')}(?![\\w$])`).test(semGancho)) {
-        problemas.push(`${a.nome} usa "${nome}", que só existe nos arquivos de teste.`);
+        problemas.push(`${a.nome} usa "${nome}", que só existe nos arquivos de teste ou de esqueleto (fora do pacote de produção).`);
       }
     }
     for (const marca of MARCAS_DE_TESTE) {
@@ -107,6 +113,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  ARQUIVOS_SOMENTE_TESTE, ESCOPOS_DE_PRODUCAO, ESCOPO_AGENDA_TESTE, ESCOPO_AGENDA_PRODUCAO, MARCAS_DE_TESTE,
+  ARQUIVOS_SOMENTE_TESTE, ARQUIVOS_ESQUELETO, ESCOPOS_DE_PRODUCAO, ESCOPO_AGENDA_TESTE, ESCOPO_AGENDA_PRODUCAO, MARCAS_DE_TESTE,
   nomesGlobais, montarPacoteProducao, verificarPacoteProducao, escreverPacote,
 };

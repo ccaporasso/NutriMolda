@@ -99,36 +99,49 @@ function montarPixDoPagamento(pagamento, config) {
 // nunca falta uma consulta contada a mais, só a menos. Pagamento de pacote sem `pacote_inicio` (versão antiga) não é atribuído
 // a ninguém e pacotes com o mesmo paciente e início não são corrigidos (ambíguos).
 function consumidasPorPacote(pacotes, pagamentos) {
+  // Contagens montadas uma vez (antes, cada pacote percorria todos os pacotes e todos os pagamentos: crescimento pacotes x pagamentos).
+  const chave = (codigo, inicio) => `${codigo}\u0000${inicio}`;
+  const copias = new Map();
+  for (const p of pacotes) {
+    const k = chave(String(p.codigo_paciente), String(p.inicio || ''));
+    copias.set(k, (copias.get(k) || 0) + 1);
+  }
+  const pagos = new Map();
+  for (const g of pagamentos) {
+    if (g.status !== 'pago' || g.forma !== 'pacote') continue;
+    const k = chave(String(g.codigo_paciente), String(g.pacote_inicio || ''));
+    pagos.set(k, (pagos.get(k) || 0) + 1);
+  }
   return pacotes.map((p) => {
-    const codigo = String(p.codigo_paciente);
     const inicio = String(p.inicio || '');
-    if (inicio === '' || pacotes.filter((x) => String(x.codigo_paciente) === codigo && String(x.inicio || '') === inicio).length > 1) return 0;
-    return pagamentos.filter((g) => String(g.codigo_paciente) === codigo && g.status === 'pago' && g.forma === 'pacote'
-      && String(g.pacote_inicio || '') === inicio).length;
+    const k = chave(String(p.codigo_paciente), inicio);
+    return inicio === '' || copias.get(k) > 1 ? 0 : (pagos.get(k) || 0);
   });
 }
 
-// Devolve { pacotes, corrigidos } com `usadas` nunca menor que o número de consultas pagas por pacote.
-// `corrigidos` são os pacotes cuja coluna `usadas` precisa ser regravada.
+// Devolve { pacotes, corrigidos, excedentes }: `usadas` sobe até o número de consultas pagas por pacote, nunca desce e nunca passa
+// de `total_consultas` (propriedade 0 <= usadas <= total, docs/MATRIZ-INTEGRIDADE.md). `corrigidos` são os pacotes cuja coluna
+// `usadas` precisa ser regravada. `excedentes` são os pacotes com MAIS consultas pagas do que o total: o kit não grava um valor
+// impossível nem esconde o excesso, e quem chama avisa a nutricionista. Pacote com total inválido não é mexido.
 function reconciliarPacotes(pacotes, pagamentos) {
   const consumidas = consumidasPorPacote(pacotes, pagamentos);
   const corrigidos = [];
+  const excedentes = [];
   const resultado = pacotes.map((p, i) => {
-    if (!Number.isSafeInteger(p.usadas) || consumidas[i] <= p.usadas) return p;
-    const novo = { ...p, usadas: consumidas[i] };
+    if (!Number.isSafeInteger(p.usadas) || !Number.isSafeInteger(p.total_consultas) || p.total_consultas < 0 || consumidas[i] <= p.usadas) return p;
+    if (consumidas[i] > p.total_consultas) excedentes.push({ ...p, consumidas: consumidas[i] });
+    const alvo = Math.min(consumidas[i], p.total_consultas);
+    if (alvo <= p.usadas) return p;
+    const novo = { ...p, usadas: alvo };
     corrigidos.push(novo);
     return novo;
   });
-  return { pacotes: resultado, corrigidos };
-}
-
-function linhaPacoteAtualizada(p) {
-  return [p.codigo_paciente, p.total_consultas, p.usadas, p.valor_centavos, p.inicio || ''];
+  return { pacotes: resultado, corrigidos, excedentes };
 }
 
 if (typeof module !== 'undefined') {
   module.exports = {
     aplicarPagamentoRecebido, aplicarCortesia, aplicarPacote, aplicarStatusConsulta, montarPixDoPagamento,
-    linhaPacoteAtualizada, consumidasPorPacote, reconciliarPacotes,
+    consumidasPorPacote, reconciliarPacotes,
   };
 }

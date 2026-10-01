@@ -30,7 +30,8 @@ function textoParaData(texto) {
 // Instante (texto ISO do Google Agenda, com fuso) -> { data: "2026-09-30", hora: "09:00" } em São Paulo.
 // Devolve null se o texto não for um instante válido.
 function dataHoraLocal(instanteIso) {
-  if (typeof instanteIso !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(instanteIso)) return null;
+  // Exige o fuso explícito (Z ou +hh:mm): sem ele o resultado dependeria do fuso da máquina que lê. A API do Google Agenda sempre o envia.
+  if (typeof instanteIso !== 'string' || !/^\d{4}-\d{2}-\d{2}T.*(Z|[+-]\d{2}:?\d{2})$/.test(instanteIso)) return null;
   const ms = Date.parse(instanteIso);
   if (Number.isNaN(ms)) return null;
   const d = new Date(ms - DESLOCAMENTO_SAO_PAULO_MS);
@@ -38,6 +39,15 @@ function dataHoraLocal(instanteIso) {
     data: dataParaTexto({ ano: d.getUTCFullYear(), mes: d.getUTCMonth() + 1, dia: d.getUTCDate() }),
     hora: `${preencher2(d.getUTCHours())}:${preencher2(d.getUTCMinutes())}`,
   };
+}
+
+// Proteção CENTRAL contra injeção de fórmula (Planilhas e CSV aberto no Excel): texto que começa com = + - @ (ou que começa com
+// tabulação ou retorno de carro, ou com espaços invisíveis seguidos desses sinais) ganha um espaço na frente e vira só texto.
+// Todo texto que o kit escreve numa planilha ou num CSV e que veio de alguém passa por aqui (Registro, Relatório, Respostas, LeitorAbas).
+// Não trata o sinal "＝" de largura total: nem o Planilhas nem o Excel o leem como fórmula.
+function neutralizarFormula(texto) {
+  const t = String(texto === undefined || texto === null ? '' : texto);
+  return /^[\s\u00A0\u200B-\u200D\u2060\uFEFF]*[=+\-@]/.test(t) || /^[\t\r]/.test(t) ? ` ${t}` : t;
 }
 
 const LIMITE_PRECO_CENTAVOS = 10000000;
@@ -58,7 +68,7 @@ function lerReais(texto) {
   if (!m) m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(bruto); // 150.50 (ponto decimal)
   if (!m) return { ok: false, motivo: 'Não entendi o valor. Use só números, com vírgula para os centavos (por exemplo 150,00).' };
   const reais = Number(m[1].replace(/\./g, ''));
-  const centavos = reais * 100 + Number((m[2] || '').padEnd(2, '0') || 0);
+  const centavos = reais * 100 + Number((m[2] || '').padEnd(2, '0'));
   if (!Number.isSafeInteger(centavos) || centavos <= 0) return { ok: false, motivo: 'O valor precisa ser maior que zero. Consulta gratuita é cortesia, marcada à parte.' };
   if (centavos > LIMITE_PRECO_CENTAVOS) return { ok: false, motivo: 'O valor está alto demais (acima de R$ 100.000,00). Confira.' };
   return { ok: true, centavos };
@@ -95,6 +105,6 @@ function formatarCpf(texto) {
 if (typeof module !== 'undefined') {
   module.exports = {
     dataParaTexto, somarDiasNaData, textoParaData, dataHoraLocal,
-    formatarReais, formatarReaisSimples, lerReais, apenasDigitos, cpfValido, formatarCpf,
+    formatarReais, formatarReaisSimples, lerReais, apenasDigitos, cpfValido, formatarCpf, neutralizarFormula,
   };
 }

@@ -118,20 +118,21 @@ test('erro do Google na agenda: nada é gravado pela metade, vai ao Registro e a
 
 // ---------- configuração incompleta ----------
 
+// Desde o Gate (item 33), cada funcionalidade só valida as configurações que usa: a sincronização da agenda olha o calendário, não o Pix.
 test('configuração incompleta: cita a chave que falta, não grava nada e não manda e-mail (é problema de uso)', () => {
-  const c = criarConsultorio({ configuracoes: comConfig({ chave_pix: '', nome_profissional: '' }) });
+  const c = criarConsultorio({ configuracoes: comConfig({ calendario_id: 12345 }) });
   c.rodar('sincronizarAgendaPeloMenu()');
-  assert.match(c.ultimoAlerta(), /"chave_pix"/);
-  assert.match(c.ultimoAlerta(), /"nome_profissional"/);
+  assert.match(c.ultimoAlerta(), /"calendario_id"/);
+  assert.doesNotMatch(c.ultimoAlerta(), /12345/);
   assert.equal(c.linhas('Consultas').length, 0);
   assert.equal(c.amb.emails.length, 0);
 });
 
 test('configuração incompleta: no gatilho automático a falha vai ao Registro e ao e-mail, sem o valor digitado', () => {
-  const c = criarConsultorio({ configuracoes: comConfig({ chave_pix: '' }) });
+  const c = criarConsultorio({ configuracoes: comConfig({ calendario_id: 12345 }) });
   c.rodar('sincronizarAgendaAutomatica()');
   assert.match(c.registroTexto(), /configuração está em branco ou inválida/);
-  assert.doesNotMatch(c.registroTexto(), /teste@exemplo/);
+  assert.doesNotMatch(c.registroTexto(), /12345|teste@exemplo/);
   assert.equal(c.amb.emails.length, 1);
   assert.equal(c.linhas('Consultas').length, 0);
   // M4: na hora seguinte a causa continua no Registro, mas o e-mail não se repete no mesmo dia

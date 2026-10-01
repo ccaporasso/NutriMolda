@@ -9,8 +9,23 @@ const MIME_DOCUMENTO_DRIVE = 'application/vnd.google-apps.document';
 
 // Cria o modelo pelo mesmo app da API Drive que depois o copia com drive.file.
 // DocumentApp fica responsável por preencher o Docs, não por criar o arquivo.
-function driveCriarDocumento(nome) {
-  return Drive.Files.create({ name: nome, mimeType: MIME_DOCUMENTO_DRIVE }, null, { fields: 'id' }).id;
+function driveCriarDocumento(nome, propriedades) {
+  const recurso = { name: nome, mimeType: MIME_DOCUMENTO_DRIVE };
+  if (propriedades) recurso.appProperties = propriedades;
+  return Drive.Files.create(recurso, null, { fields: 'id' }).id;
+}
+
+// Papel de um arquivo do kit (modelo ou pasta de recibos), gravado nas propriedades ao criar. Serve para reconciliar:
+// se uma execução criou o arquivo e caiu antes de gravar o id em Configurações, a próxima o encontra em vez de criar outro.
+const PROPRIEDADE_PAPEL_KIT = 'kit_papel';
+const PAPEL_MODELO_RECIBO = 'modelo_recibo';
+const PAPEL_PASTA_RECIBOS = 'pasta_recibos';
+
+// Ids dos arquivos ativos (fora da lixeira) que o kit criou com esse papel. Com drive.file só aparecem os que o próprio kit criou.
+function driveAcharPorPapel(papel) {
+  if (![PAPEL_MODELO_RECIBO, PAPEL_PASTA_RECIBOS].includes(papel)) throw new Error('Papel de arquivo inválido para busca.');
+  const resposta = Drive.Files.list({ q: `appProperties has { key='${PROPRIEDADE_PAPEL_KIT}' and value='${papel}' } and trashed = false`, fields: 'files(id)', pageSize: 10 });
+  return ((resposta && resposta.files) || []).map((a) => a.id);
 }
 
 // Id de arquivo ou pasta do Drive: só letras, números, hífen e sublinhado. Vira parte de uma consulta (q), então
@@ -31,9 +46,11 @@ function driveCopiar(idOrigem, nome, idPasta) {
   return Drive.Files.copy({ name: nome, parents: [idPasta] }, idOrigem, { fields: 'id' }).id;
 }
 
-// Cria um arquivo na pasta a partir de um blob. Devolve { id, url }.
-function driveCriarArquivo(idPasta, nome, tipo, blob) {
-  const criado = Drive.Files.create({ name: nome, mimeType: tipo, parents: [idPasta] }, blob, { fields: 'id,webViewLink' });
+// Cria um arquivo na pasta a partir de um blob. `propriedades` (opcional) ficam gravadas no arquivo (identidade). Devolve { id, url }.
+function driveCriarArquivo(idPasta, nome, tipo, blob, propriedades) {
+  const recurso = { name: nome, mimeType: tipo, parents: [idPasta] };
+  if (propriedades) recurso.appProperties = propriedades;
+  const criado = Drive.Files.create(recurso, blob, { fields: 'id,webViewLink' });
   return { id: criado.id, url: linkDoArquivoDrive_(criado) };
 }
 
@@ -45,6 +62,17 @@ function driveAcharNaPasta(idPasta, nome) {
   return achados.length > 0 ? achados[0].id : null;
 }
 
+// Candidatos a PDF do recibo de um pagamento: na pasta, fora da lixeira, com a identidade gravada OU com o nome do recibo.
+// Quem decide o que serve é escolherReciboExistente (Recibo.js). Devolve [{ id, name, appProperties, url }] (até 10).
+function driveListarRecibosDoPagamento(idPasta, idPagamento, nomeArquivo) {
+  if (!/^[A-Za-z0-9._-]{1,100}$/.test(String(idPagamento)) || !/^[A-Za-z0-9._-]{1,150}$/.test(nomeArquivo)) {
+    throw erroDeUso_('O id do pagamento tem caracteres que o kit não aceita. Nada foi gerado.');
+  }
+  const q = `'${idPasta}' in parents and trashed = false and (appProperties has { key='${PROPRIEDADE_RECIBO_PAGAMENTO}' and value='${idPagamento}' } or name = '${nomeArquivo}')`;
+  const resposta = Drive.Files.list({ q, fields: 'files(id,name,appProperties,webViewLink)', pageSize: 10 });
+  return ((resposta && resposta.files) || []).map((a) => ({ id: a.id, name: a.name, appProperties: a.appProperties || {}, url: linkDoArquivoDrive_(a) }));
+}
+
 function driveSubstituirConteudo(idArquivo, blob) {
   Drive.Files.update({}, idArquivo, blob, { fields: 'id' });
 }
@@ -53,6 +81,8 @@ function driveMandarParaLixeira(idArquivo) {
   Drive.Files.update({ trashed: true }, idArquivo, null, { fields: 'id' });
 }
 
-function driveCriarPasta(nome) {
-  return Drive.Files.create({ name: nome, mimeType: MIME_PASTA_DRIVE }, null, { fields: 'id' }).id;
+function driveCriarPasta(nome, propriedades) {
+  const recurso = { name: nome, mimeType: MIME_PASTA_DRIVE };
+  if (propriedades) recurso.appProperties = propriedades;
+  return Drive.Files.create(recurso, null, { fields: 'id' }).id;
 }

@@ -66,7 +66,7 @@ function sincronizarAgenda() {
   const trava = LockService.getScriptLock();
   if (!trava.tryLock(30000)) throw erroDeUso_('Outra sincronização está em andamento. Tente de novo em um minuto.');
   try {
-    const cfg = lerConfiguracoes().config;
+    const cfg = lerConfiguracoes(['agenda']).config; // só a agenda: Pix em branco não trava a sincronização
     const janela = calcularJanelaAgenda(hojeSaoPaulo_());
     const origemAtual = marcaDaAgenda(cfg.calendario_id);
     const ultima = PropertiesService.getDocumentProperties().getProperty(CHAVE_ORIGEM_AGENDA);
@@ -93,16 +93,22 @@ function sincronizarAgenda() {
     const idsNaFolha = folha.getLastRow() >= 2 ? folha.getRange(1, 1, folha.getLastRow(), 1).getValues().map((l) => String(l[0])) : [];
     const aindaEhAMesma = (linha, id) => idsNaFolha[linha - 1] === String(id);
     let mudaram = 0;
+    // Linhas vizinhas são gravadas juntas (uma chamada por faixa, não por linha): 1.000 linhas a atualizar eram 1.000 chamadas à planilha.
+    const existentePorLinha = new Map(existentes.map((c) => [c.linha, c]));
+    const completas = [];
     for (const a of plano.atualizar) {
       if (!aindaEhAMesma(a.linha, a.valores[0])) { mudaram++; continue; }
-      const antiga = existentes.find((c) => c.linha === a.linha);
-      folha.getRange(a.linha, 1, 1, a.valores.length + 1).setValues([a.valores.concat([antiga ? antiga.origem : origemAtual])]);
+      const antiga = existentePorLinha.get(a.linha);
+      completas.push({ linha: a.linha, valores: a.valores.concat([antiga ? antiga.origem : origemAtual]) });
     }
+    for (const f of agruparEmFaixas(completas)) folha.getRange(f.linha, 1, f.valores.length, f.valores[0].length).setValues(f.valores);
+    const marcas = [];
     for (const c of existentes) { // linha antiga sem marca: passa a ter, sem mudar mais nada
       if (!c.semMarca || gravadas.has(c.linha)) continue;
       if (!aindaEhAMesma(c.linha, c.id_evento)) { mudaram++; continue; }
-      folha.getRange(c.linha, colunaOrigem, 1, 1).setValues([[c.origem]]);
+      marcas.push({ linha: c.linha, valores: [c.origem] });
     }
+    for (const f of agruparEmFaixas(marcas)) folha.getRange(f.linha, colunaOrigem, f.valores.length, 1).setValues(f.valores);
     if (mudaram > 0) {
       plano.avisos.push(`${mudaram} linha(s) da aba Consultas mudaram de lugar durante a sincronização e não foram atualizadas desta vez. `
         + 'Nada foi gravado nelas; a próxima sincronização confere de novo.');
@@ -131,13 +137,13 @@ function sincronizarAgendaPeloMenu() {
 
 // Cria o gatilho de hora em hora, uma única vez (idempotente). Escopo script.scriptapp.
 function ativarSincronizacaoAutomatica() {
-  executarNoMenu_('sincronizacao', () => { // erro inesperado vai ao Registro e ao e-mail (B6)
+  executarNoMenu_('sincronizacao', () => comTrava_(() => { // erro inesperado vai ao Registro e ao e-mail (B6); trava: nunca dois gatilhos
     const jaTem = ScriptApp.getProjectTriggers().some((g) => g.getHandlerFunction() === NOME_GATILHO_SINCRONIZACAO);
     if (!jaTem) ScriptApp.newTrigger(NOME_GATILHO_SINCRONIZACAO).timeBased().everyHours(1).create();
     SpreadsheetApp.getUi().alert(jaTem
       ? 'A sincronização automática (a cada hora) já estava ativa. Nada foi duplicado.'
       : 'Pronto: a agenda será sincronizada a cada hora.');
-  });
+  }));
 }
 
 // Gatilho: falha vira Registro e e-mail de alerta.

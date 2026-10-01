@@ -10,7 +10,7 @@ const SEM_NOME = '(sem nome)';
 
 function formatosRelatorio_() {
   return typeof formatarReais !== 'undefined'
-    ? { formatarReais, formatarReaisSimples, cpfValido, formatarCpf, apenasDigitos, textoParaData, dataParaTexto }
+    ? { formatarReais, formatarReaisSimples, cpfValido, formatarCpf, apenasDigitos, textoParaData, dataParaTexto, neutralizarFormula }
     : require('./Formatos.js');
 }
 
@@ -35,9 +35,9 @@ function chaveNome_(nome) {
   return String(nome).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-// Texto que começa com = + - @ viraria fórmula no Planilhas ou no Excel: um espaço na frente evita.
+// Texto que começa com = + - @ viraria fórmula no Planilhas ou no Excel: a proteção é central (Formatos.js, neutralizarFormula).
 function neutralizarFormulaRelatorio_(texto) {
-  return /^[=+\-@]/.test(texto) ? ` ${texto}` : texto;
+  return formatosRelatorio_().neutralizarFormula(texto);
 }
 
 // pagamentos: objetos de Pagamentos. mes: "AAAA-MM".

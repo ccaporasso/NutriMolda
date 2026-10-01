@@ -6,7 +6,7 @@ function gerarAReceber(primeirasAprovadas = []) {
   const trava = LockService.getScriptLock();
   if (!trava.tryLock(30000)) throw erroDeUso_('Outra operação está em andamento. Tente de novo em um minuto.');
   try {
-    const config = lerConfiguracoes().config;
+    const config = lerConfiguracoes(['pagamento']).config; // só preços: Pix e recibo não participam do fluxo
     const plano = planejarAReceber({
       consultas: lerAbaComoObjetos('Consultas'),
       pagamentos: lerAbaComoObjetos('Pagamentos'),
@@ -25,7 +25,7 @@ function gerarAReceber(primeirasAprovadas = []) {
 function gerarAReceberPeloMenu() {
   executarNoMenu_('pagamentos', () => {
     const ui = SpreadsheetApp.getUi();
-    const config = lerConfiguracoes().config;
+    const config = lerConfiguracoes(['pagamento']).config; // só preços: Pix e recibo não participam do fluxo
     const aviso = textoPrecoSuspeito(config);
     if (aviso && ui.alert('Conferir o preço', aviso, ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
     // A1: "primeira" de quem já tem consulta anterior só é cobrada como primeira se ela confirmar (senão, fica para ela corrigir o tipo).

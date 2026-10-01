@@ -21,7 +21,7 @@ function perguntarPreco_(ui, titulo, chave, atualCentavos) {
 
 // Item do menu: Configuração > Definir preços das consultas.
 function definirPrecosDasConsultas() {
-  executarNoMenu_('configuracoes', () => {
+  executarNoMenu_('configuracoes', () => comTrava_(() => {
     const ui = SpreadsheetApp.getUi();
     const atual = validarConfiguracoes(lerLinhasConfiguracoes_()).config;
     const primeira = perguntarPreco_(ui, 'Preço da primeira consulta', 'valor_primeira_consulta_centavos', atual.valor_primeira_consulta_centavos);
@@ -30,7 +30,7 @@ function definirPrecosDasConsultas() {
     if (primeira !== null) { atualizarConfiguracao_('valor_primeira_consulta_centavos', primeira); feito.push(`primeira consulta ${formatarReais(primeira)}`); }
     if (retorno !== null) { atualizarConfiguracao_('valor_retorno_centavos', retorno); feito.push(`retorno ${formatarReais(retorno)}`); }
     ui.alert('Preços', feito.length > 0 ? `Gravado: ${feito.join(' e ')}. A aba Configurações guarda em centavos.` : 'Nenhum preço foi mudado.', ui.ButtonSet.OK);
-  });
+  }));
 }
 
 // Antes de gerar cobranças: preço abaixo de R$ 10,00 é quase sempre reais digitados no campo de centavos (150 = R$ 1,50).

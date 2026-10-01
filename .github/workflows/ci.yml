@@ -1,0 +1,76 @@
+# Integração contínua do Kit do Consultório (Gate, item 17).
+# Roda a cada pull request e a cada push na main. Sem dependências para instalar (o projeto não usa nenhuma),
+# sem segredos e com permissão só de leitura. Não envia nada ao Google e não usa clasp.
+name: Gate local
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Gate local
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Código (histórico completo, para varrer o histórico e comparar com a base)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Node fixo (versão de .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Versão
+        run: node --version
+
+      - name: Testes
+        run: node --test
+
+      - name: Cobertura (piso por módulo crítico)
+        run: node scripts/cobertura.js --exigir
+
+      - name: Espaços e marcas de conflito (git diff --check)
+        run: |
+          if [ -n "${GITHUB_BASE_REF}" ]; then
+            git fetch --no-tags origin "${GITHUB_BASE_REF}"
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^ HEAD
+          fi
+
+      - name: Empacotar produção e verificar o pacote
+        run: node scripts/empacotar-producao.js
+
+      - name: Segurança local (PII, segredos, escopos, histórico)
+        run: node scripts/seguranca.js --historico
+
+      - name: "Gate completo (estrito: aviso também reprova)"
+        run: node scripts/gate.js --estrito
+
+  mutacao:
+    name: Mutação manual (consultivo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Leva alguns minutos. Recomenda-se exigir só o job "Gate local" na proteção da main; este job mostra buracos de teste.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Mutações
+        run: node scripts/mutacoes.js

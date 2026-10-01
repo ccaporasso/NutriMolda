@@ -14,6 +14,18 @@ const CHAVES_OBRIGATORIAS = [
   'nome_profissional', 'crn', 'chave_pix', 'nome_recebedor_pix', 'cidade_recebedor_pix', 'email_alertas',
 ];
 
+// Quem precisa de quê (item 33 do roteiro do Gate): uma configuração errada só trava a funcionalidade que a usa.
+// Ex.: a chave Pix em branco não pode impedir a sincronização da agenda. As regras de validação continuam num lugar só
+// (validarConfiguracoes); aqui só se escolhe, entre os erros, os que pertencem ao domínio pedido.
+const DOMINIOS_CONFIGURACAO = {
+  agenda: ['calendario_id', 'prefixo_evento_consulta'],
+  pagamento: ['valor_primeira_consulta_centavos', 'valor_retorno_centavos', 'regra_retorno_dias'],
+  pix: ['chave_pix', 'nome_recebedor_pix', 'cidade_recebedor_pix'],
+  recibo: ['nome_profissional', 'crn', 'id_modelo_recibo', 'id_pasta_recibos'],
+  relatorio: ['id_pasta_recibos'],
+  alertas: ['email_alertas'],
+};
+
 const LIMITES_PIX = { nome_recebedor_pix: 25, cidade_recebedor_pix: 15 };
 
 // Preço por tipo de consulta (valores da lista tipo_consulta em Esquema.js).
@@ -158,7 +170,9 @@ function validarConfiguracoes(linhas) {
     else valores.set(chave, linha[1]);
   }
 
+  const errosPorChave = {};
   for (const chave of CHAVES_CONFIGURACAO) {
+    const antes = erros.length;
     if (repetidas.has(chave)) {
       erros.push(`A configuração "${chave}" aparece mais de uma vez. Deixe só uma linha.`);
       config[chave] = null;
@@ -180,8 +194,21 @@ function validarConfiguracoes(linhas) {
     } else {
       config[chave] = validarTexto_(chave, valores.get(chave), erros, avisos);
     }
+    if (erros.length > antes) errosPorChave[chave] = erros.slice(antes);
   }
-  return { config, erros, avisos };
+  return { config, erros, avisos, errosPorChave };
+}
+
+// Erros que pertencem aos domínios pedidos (nomes de DOMINIOS_CONFIGURACAO). Domínio desconhecido é erro de programação.
+// Resultado sem a separação por chave não pode ser filtrado: devolve todos os erros (na dúvida, interrompe; nunca deixa passar).
+function errosDosDominios(resultado, dominios) {
+  if (!resultado.errosPorChave) return resultado.erros || [];
+  const chaves = new Set();
+  for (const d of dominios) {
+    if (!DOMINIOS_CONFIGURACAO[d]) throw new Error(`Domínio de configuração desconhecido: ${d}`);
+    for (const c of DOMINIOS_CONFIGURACAO[d]) chaves.add(c);
+  }
+  return Object.entries(resultado.errosPorChave).filter(([c]) => chaves.has(c)).flatMap(([, e]) => e);
 }
 
 // Trava antes de qualquer cobrança: só devolve preço inteiro e maior que zero.
@@ -209,7 +236,7 @@ function montarMensagemErros(resultado) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    CHAVES_CONFIGURACAO, CHAVES_OBRIGATORIAS, LIMITES_PIX, CHAVE_PRECO_POR_TIPO,
+    CHAVES_CONFIGURACAO, CHAVES_OBRIGATORIAS, LIMITES_PIX, CHAVE_PRECO_POR_TIPO, DOMINIOS_CONFIGURACAO, errosDosDominios,
     validarConfiguracoes, precoParaCobranca, montarMensagemErros,
   };
 }

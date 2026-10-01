@@ -17,7 +17,7 @@ const nomesDe = (itens) => itens.flatMap((i) => (i[0] === '>' ? [i[1], ...nomesD
 test('o pacote de produção não tem os arquivos do gerador de dados fictícios', () => {
   const nomes = pacote.arquivos.map((a) => a.nome);
   for (const proibido of ['DadosTeste.js', 'GeradorTeste.js']) assert.ok(!nomes.includes(proibido), `${proibido} está no pacote`);
-  assert.deepEqual(pacote.excluidos.sort(), ['DadosTeste.js', 'GeradorTeste.js']);
+  assert.deepEqual(pacote.excluidos.sort(), ['DadosTeste.js', 'FilaAjustes.js', 'Frases.js', 'GeradorTeste.js', 'Modos.js', 'Presenca.js', 'Respostas.js']);
   assert.ok(nomes.length >= 15, 'o pacote perdeu arquivos demais');
 });
 
