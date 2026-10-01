@@ -21,6 +21,7 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 | A-13 | `exceptionLogging: STACKDRIVER` mantido: nenhuma função de menu ou gatilho deixa a exceção escapar | INFORMATIVO | Analisado; decisão do Caio pendente |
 | A-14 | Configuração acoplada: chave Pix em branco travava sincronização da agenda, "gerar a receber", relatório e recibo | MÉDIO | Corrigido (E2) |
 | A-15 | Pix aceitava valor que estoura o campo de 13 caracteres e gerava payload inválido | BAIXO | Corrigido (E2); leitura por banco real N/M |
+| A-16 | Esqueletos T20 a T24 (sem ponto de entrada) iam no pacote de produção | BAIXO | Corrigido (E2/E3) |
 
 ---
 
@@ -122,3 +123,10 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **REGRESSÃO:** `tests/limites-pix.test.js`; mutação M44 (detectada). `Number.isSafeInteger` no lugar de `Number.isInteger` é defesa em profundidade: o teste de tamanho já barra os mesmos valores, então trocá-lo não é detectável (mutante equivalente, não contado).
 - **EVIDÊNCIA:** E2. **N/M:** aceitação do código por um aplicativo de banco real (roteiro em `GOOGLE-REAL.md`, item sobre Pix).
 - **Corrigido em:** commit da etapa B/D (ver `git log`).
+
+## A-16 Esqueletos T20 a T24 no pacote de produção
+
+- **Encontrado em:** roteiro, item 35. `FilaAjustes.js`, `Frases.js`, `Modos.js`, `Presenca.js` e `Respostas.js` (lógica pura, sem menu, gatilho ou aba, com valores `PENDENTE Pn`) iam para o Google da nutricionista no pacote de produção, ao lado do que ela realmente usa.
+- **CORREÇÃO:** `ARQUIVOS_ESQUELETO` em `scripts/empacotar-producao.js` deixa os cinco fora do pacote de produção (o projeto de TESTE continua com `src/` inteiro); o verificador recusa um pacote que os leve ou use seus nomes. Inventário e classificação em `docs/gate/INVENTARIO-CODIGO.md`.
+- **REGRESSÃO:** `tests/inventario-codigo.test.js` (9 casos) e `tests/producao.test.js`; mutação M45 (esvaziar a lista) detectada. **EVIDÊNCIA:** E2/E3. **Impacto:** nenhum para a nutricionista (nada os chamava); quando uma tarefa T20 a T24 virar funcionalidade, o arquivo sai da lista no mesmo commit que liga o menu.
+- **Corrigido em:** commit da etapa F (ver `git log`).

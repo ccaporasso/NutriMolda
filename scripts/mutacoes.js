@@ -58,6 +58,7 @@ const MUTACOES = [
   ['M40', 'src/Acoes.js', "if (consulta.status === 'cancelada') return recusa_('Consulta cancelada", "if (false) return recusa_('Consulta cancelada", 'consulta cancelada marcada como realizada', 'falhas / menu'],
   ['M43', 'src/LeitorConfiguracoes.js', 'const erros = dominios ? errosDosDominios(resultado, dominios) : resultado.erros;', 'const erros = resultado.erros;', 'configuração: erro de um domínio volta a travar os outros (Pix em branco bloqueia a agenda)', 'configuracao-dominios / falhas'],
   ['M44', 'src/Pix.js', 'if (valorTexto.length > LIMITE_VALOR_PIX) throw', 'if (false) throw', 'Pix: aceitar valor que estoura o campo de 13 caracteres', 'limites-pix'],
+  ['M45', 'scripts/empacotar-producao.js', "const ARQUIVOS_ESQUELETO = ['FilaAjustes.js', 'Frases.js', 'Modos.js', 'Presenca.js', 'Respostas.js'];", 'const ARQUIVOS_ESQUELETO = [];', 'produção: levar os esqueletos T20 a T24 para o Google da nutricionista', 'inventario-codigo / producao'],
 ];
 
 function copiarProjeto() {
