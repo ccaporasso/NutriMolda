@@ -38,7 +38,7 @@ A medida não existia antes desta rodada (N/M); no começo, o código carregado 
 | Modos.js | 100.0% (39/39) | 100.0% (21/21) | 100.0% (3/3) | normal |
 | Pagamentos.js | 100.0% (143/143) | 100.0% (78/78) | 100.0% (20/20) | crítica |
 | Pix.js | 100.0% (108/108) | 100.0% (63/63) | 100.0% (6/6) | crítica |
-| Precos.js | 100.0% (51/51) | 100.0% (30/30) | 100.0% (5/5) | crítica |
+| Precos.js | 100.0% (51/51) | 100.0% (31/31) | 100.0% (5/5) | crítica |
 | Presenca.js | 100.0% (72/72) | 95.7% (44/46) | 100.0% (15/15) | normal |
 | Principal.js | 100.0% (9/9) | 100.0% (1/1) | 100.0% (0/0) | normal |
 | Recibo.js | 100.0% (164/164) | 100.0% (73/73) | 100.0% (17/17) | crítica |
@@ -46,7 +46,7 @@ A medida não existia antes desta rodada (N/M); no começo, o código carregado 
 | Relatorio.js | 100.0% (175/175) | 100.0% (95/95) | 100.0% (26/26) | crítica |
 | Respostas.js | 100.0% (61/61) | 86.7% (26/30) | 100.0% (5/5) | normal |
 | SincronizarAgenda.js | 100.0% (166/166) | 100.0% (82/82) | 100.0% (24/24) | crítica |
-| **Total src/** | **100.0%** (3366/3366) | **98.7%** (1546/1567) | **100.0%** (402/402) | |
+| **Total src/** | **100.0%** (3366/3366) | **98.7%** (1547/1568) | **100.0%** (402/402) | |
 
 ## Pisos do gate
 

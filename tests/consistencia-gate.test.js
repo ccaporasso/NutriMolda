@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 const M = require('../scripts/mutacoes.js');
 
 const raiz = path.join(__dirname, '..');
@@ -99,6 +100,18 @@ test('nenhum documento do Gate afirma execução no Google real (E1) sem registr
     for (const linha of texto.split('\n')) {
       if (!/\bE1\b/.test(linha)) continue;
       assert.match(linha, /(\*\*E1\*\*|E1 somente|nenhuma|Nenhuma|N\/M|não|só vira|E1 = |E1, E2|E1\)|E1 (é|\(|execução)|E1 e|\bE1:)/i, `${doc}: linha menciona E1 sem ser legenda ou ressalva: ${linha.slice(0, 90)}`);
+    }
+  }
+});
+
+test('todo commit citado nos documentos do Gate existe no histórico (nada de SHA inventado ou esquecido)', (t) => {
+  const git = (...a) => execFileSync('git', a, { cwd: raiz, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  let raso;
+  try { raso = git('rev-parse', '--is-shallow-repository'); } catch (e) { t.skip('sem repositório Git (cópia usada pela mutação)'); return; }
+  if (raso === 'true') { t.skip('clone raso: não dá para conferir os commits (N/M)'); return; }
+  for (const [doc, texto] of textoDosDocs) {
+    for (const m of texto.matchAll(/`([0-9a-f]{7,40})`/g)) {
+      assert.doesNotThrow(() => git('cat-file', '-e', `${m[1]}^{commit}`), `${doc} cita o commit ${m[1]}, que não existe no histórico`);
     }
   }
 });

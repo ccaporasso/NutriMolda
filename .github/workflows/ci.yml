@@ -57,7 +57,7 @@ jobs:
       - name: Segurança local (PII, segredos, escopos, histórico)
         run: node scripts/seguranca.js --historico
 
-      - name: Gate completo (estrito: aviso também reprova)
+      - name: "Gate completo (estrito: aviso também reprova)"
         run: node scripts/gate.js --estrito
 
   mutacao:

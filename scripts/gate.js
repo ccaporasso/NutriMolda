@@ -12,7 +12,7 @@ const { spawnSync } = require('node:child_process');
 const RAIZ = path.join(__dirname, '..');
 const MINIMO_NODE_MAJOR = 22;
 // Piso do número de testes: apagar teste sem decidir isso aqui faz o gate falhar. Suba o piso quando a suíte crescer de propósito.
-const MINIMO_TESTES = 556;
+const MINIMO_TESTES = 560;
 
 const ARQUIVOS_OBRIGATORIOS = [
   'CLAUDE.md', 'README.md', 'CHANGELOG.md', '.nvmrc', 'package.json', '.github/workflows/ci.yml', 'src/appsscript.json',

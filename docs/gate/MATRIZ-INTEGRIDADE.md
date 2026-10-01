@@ -21,7 +21,7 @@ Ordem de prioridade: agenda, pagamentos, pacotes, recibos, relatórios, configur
 | criar modelo/pasta de recibos | Sim (nunca troca id preenchido) | Sim (nesta rodada), relendo Configurações | Sim: reaproveita o arquivo já criado (propriedade `kit_papel`) | Sim: falha ao gravar o id, ao criar, duplicado (`modelo-pasta-idempotencia`) |
 | instalar/atualizar planilha | Sim | Sim (nesta rodada) | Sim: só cria o que falta | Paralelo e repetido (`operacoes-idempotentes`, `instalador`) |
 | ativar sincronização automática | Sim (um gatilho só) | Sim (nesta rodada) | Sim: confere os gatilhos existentes | Paralelo e repetido (`operacoes-idempotentes`) |
-| definir preços (menu) | Sim (regrava o mesmo valor) | Sim (nesta rodada) | Sim | Paralelo testado; falha entre as duas gravações deixa um preço mudado e o outro não, avisado na tela (N/M como teste de falha) |
+| definir preços (menu) | Sim (regrava o mesmo valor) | Sim (nesta rodada) | Sim | Paralelo testado; falha entre as duas gravações deixa o primeiro preço mudado e o segundo como estava, vai ao Registro e ao e-mail sem o texto do erro, e repetir o menu termina o serviço (`precos-falha-parcial`) |
 
 ## 2. Fluxos, um por um
 

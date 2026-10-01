@@ -24,6 +24,7 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 | A-16 | Esqueletos T20 a T24 (sem ponto de entrada) iam no pacote de produção | BAIXO | Corrigido (E2/E3) |
 | A-17 | Erro inesperado no gatilho manda um e-mail por execução (sem limite por dia) | BAIXO | Aberto (decisão do Caio) |
 | A-18 | Laços dentro de laços na lógica (agenda x pacientes, a receber x consultas, pacotes x pagamentos) e uma chamada à planilha por linha na sincronização | MÉDIO | Corrigido (E2) |
+| A-19 | O arquivo do CI (`ci.yml`) tinha erro de sintaxe YAML e o GitHub o recusou na primeira execução real | MÉDIO | Corrigido (E1: o GitHub recusou; E2: teste de sintaxe); resultado verde do CI: ver `docs/gate/REAUDITORIA.md` |
 
 ---
 
@@ -151,3 +152,14 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **DEPOIS (medido):** a receber, 5.000 consultas de pacientes distintos: 38 leituras por consulta (n log n, só da ordenação); agenda 5.000 x 5.000: **56 ms**; pacotes: 1 leitura por pacote, plana; escritas da sincronização: **2** para 5.000 linhas sem marca, **2** para 5.000 consultas novas, **1** para 300 linhas vizinhas remarcadas.
 - **Resíduo (aceito, documentado):** linhas **não vizinhas** continuam com uma escrita por faixa; 500 linhas isoladas = 500 escritas. A alternativa (reescrever o intervalo inteiro) tocaria em células que a nutricionista pode estar editando no mesmo instante. A Agenda devolve 250 eventos por página: 5.000 eventos são 20 chamadas `Calendar.Events.list`, inevitável. Tempo real de cada chamada no Google: N/M.
 - **REGRESSÃO:** `tests/desempenho.test.js` (15 casos, contagem e não tempo: 8 ficam vermelhos no código anterior); mutações M46 a M50. Simulador agora recusa `setValues` com tamanho diferente do intervalo, como o Planilhas. **EVIDÊNCIA:** E2. **Corrigido em:** commit `2c44ccd`.
+
+## A-19 O arquivo do CI tinha erro de sintaxe YAML
+
+- **Encontrado em:** primeira execução real do CI (E1), depois do push do commit `abdc8c2`: a execução terminou em falha, em zero segundos e **sem nenhum job** (execução nº 1 do workflow, na aba Actions do GitHub). O gate local, o clone limpo e os 556 testes estavam todos verdes: nenhum deles lia o YAML.
+- **ANTES:** o passo `name: Gate completo (estrito: aviso também reprova)` tinha ": " dentro de um texto sem aspas, o que o YAML trata como início de outro campo ("mapping values are not allowed here", linha 60). Confirmado também com um leitor de YAML local, só como conferência (não faz parte do projeto). O `tests/reproducao.test.js` anterior só procurava palavras no texto do arquivo.
+- **CORREÇÃO:** o nome do passo ganhou aspas. Novo teste em `tests/reproducao.test.js` que recusa tabulação e valor sem aspas com ": " ou " #" dentro (checagem mínima, sem biblioteca: regra 7).
+- **DEPOIS:** o teste novo falha com o arquivo antigo (verificado: 6 passam e 1 falha) e passa com o corrigido. A prova definitiva é a execução do CI no GitHub (ver `docs/gate/REAUDITORIA.md`).
+- **Lição:** "CI configurado" não era "CI observado". Um arquivo de CI só vale como evidência depois de uma execução real; por isso o CI aparece como E1 só pelo link da execução do commit auditado.
+- **Limite:** o teste não é um analisador de YAML completo; cobre o erro que aconteceu e os parentes mais próximos.
+- **REGRESSÃO:** `tests/reproducao.test.js` (teste de sintaxe do workflow).
+- **EVIDÊNCIA:** E1 (recusa do GitHub), E2 (teste). **Corrigido em:** commit seguinte ao `abdc8c2` (ver `git log`; SHA preenchido no fechamento).

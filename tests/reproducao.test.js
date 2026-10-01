@@ -45,6 +45,26 @@ test('workflow: a cada pull request, Node fixo, testes, cobertura, git diff, pro
   assert.match(workflow, /fetch-depth: 0/, 'sem histórico completo a varredura do histórico e a comparação com a base não funcionam');
 });
 
+// O primeiro CI real recusou este arquivo ("mapping values are not allowed", achado A-19): um valor sem aspas com ": " dentro não é YAML válido.
+// Sem biblioteca de YAML (regra 7), esta é uma checagem mínima do erro mais comum; a prova definitiva é o CI rodar.
+test('workflow: YAML sem os erros de sintaxe simples (tabulação, valor sem aspas com ": " ou " #" dentro)', () => {
+  assert.doesNotMatch(workflowCompleto, /\t/, 'YAML não aceita tabulação');
+  const linhas = workflowCompleto.split('\n');
+  let blocoAte = -1; // linhas mais recuadas que a chave de um bloco literal (run: |) não são lidas como chave
+  linhas.forEach((linha, i) => {
+    if (linha.trim() === '' || linha.trim().startsWith('#')) return;
+    const recuo = linha.length - linha.trimStart().length;
+    if (recuo <= blocoAte) blocoAte = -1;
+    if (blocoAte >= 0) return;
+    const m = /^\s*(?:- )?[A-Za-z0-9_-]+: (.+)$/.exec(linha);
+    if (!m) return;
+    const valor = m[1].trim();
+    if (/^[|>]/.test(valor)) { blocoAte = recuo; return; }
+    if (/^["'\[{]/.test(valor) || valor.startsWith('${{')) return;
+    assert.ok(!valor.includes(': ') && !valor.includes(' #'), `linha ${i + 1}: valor sem aspas com ": " ou " #" (ponha entre aspas): ${linha.trim()}`);
+  });
+});
+
 test('workflow: sem segredo, sem permissão de escrita, sem pull_request_target, sem instalar pacote e sem tocar no Google', () => {
   assert.match(workflow, /^permissions:\n  contents: read$/m);
   assert.doesNotMatch(workflow, /secrets\./);
