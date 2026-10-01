@@ -108,18 +108,24 @@ function consumidasPorPacote(pacotes, pagamentos) {
   });
 }
 
-// Devolve { pacotes, corrigidos } com `usadas` nunca menor que o número de consultas pagas por pacote.
-// `corrigidos` são os pacotes cuja coluna `usadas` precisa ser regravada.
+// Devolve { pacotes, corrigidos, excedentes }: `usadas` sobe até o número de consultas pagas por pacote, nunca desce e nunca passa
+// de `total_consultas` (propriedade 0 <= usadas <= total, docs/MATRIZ-INTEGRIDADE.md). `corrigidos` são os pacotes cuja coluna
+// `usadas` precisa ser regravada. `excedentes` são os pacotes com MAIS consultas pagas do que o total: o kit não grava um valor
+// impossível nem esconde o excesso, e quem chama avisa a nutricionista. Pacote com total inválido não é mexido.
 function reconciliarPacotes(pacotes, pagamentos) {
   const consumidas = consumidasPorPacote(pacotes, pagamentos);
   const corrigidos = [];
+  const excedentes = [];
   const resultado = pacotes.map((p, i) => {
-    if (!Number.isSafeInteger(p.usadas) || consumidas[i] <= p.usadas) return p;
-    const novo = { ...p, usadas: consumidas[i] };
+    if (!Number.isSafeInteger(p.usadas) || !Number.isSafeInteger(p.total_consultas) || p.total_consultas < 0 || consumidas[i] <= p.usadas) return p;
+    if (consumidas[i] > p.total_consultas) excedentes.push({ ...p, consumidas: consumidas[i] });
+    const alvo = Math.min(consumidas[i], p.total_consultas);
+    if (alvo <= p.usadas) return p;
+    const novo = { ...p, usadas: alvo };
     corrigidos.push(novo);
     return novo;
   });
-  return { pacotes: resultado, corrigidos };
+  return { pacotes: resultado, corrigidos, excedentes };
 }
 
 function linhaPacoteAtualizada(p) {

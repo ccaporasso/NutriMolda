@@ -113,6 +113,7 @@ function marcarCortesia() {
 function marcarConsultaDePacote() {
   executarNoMenu_('pagamentos', () => {
     const hoje = hojeTexto_();
+    let excedentes = [];
     const r = aplicarNasLinhas_('Pagamentos', (p, ctx) => {
       const a = aplicarPacote(p, ctx.pacotes, hoje);
       if (a.ok) {
@@ -126,10 +127,15 @@ function marcarConsultaDePacote() {
       return a;
     }, () => {
       const lidos = lerAbaComoObjetos('Pacotes');
-      const { pacotes, corrigidos } = reconciliarPacotes(lidos, lerAbaComoObjetos('Pagamentos'));
-      for (const c of corrigidos) gravarCelula('Pacotes', c.linha, 'usadas', c.usadas, chavePacote_(c));
-      return { pacotes };
+      const reconciliado = reconciliarPacotes(lidos, lerAbaComoObjetos('Pagamentos'));
+      for (const c of reconciliado.corrigidos) gravarCelula('Pacotes', c.linha, 'usadas', c.usadas, chavePacote_(c));
+      excedentes = reconciliado.excedentes;
+      return { pacotes: reconciliado.pacotes };
     });
+    for (const e of excedentes) {
+      r.motivos.push(`Atenção: o pacote de ${e.codigo_paciente} (início ${e.inicio}) tem ${e.consumidas} consulta(s) paga(s) por pacote, mais que o total de ${e.total_consultas}. Confira as abas Pacotes e Pagamentos.`);
+      registrar('pagamentos', 'aviso', `Pacote de ${e.codigo_paciente}: mais consultas pagas por pacote (${e.consumidas}) do que o total (${e.total_consultas}).`);
+    }
     mostrarResultado_('Consulta de pacote', r);
   });
 }
