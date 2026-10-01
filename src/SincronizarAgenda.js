@@ -131,13 +131,13 @@ function sincronizarAgendaPeloMenu() {
 
 // Cria o gatilho de hora em hora, uma única vez (idempotente). Escopo script.scriptapp.
 function ativarSincronizacaoAutomatica() {
-  executarNoMenu_('sincronizacao', () => { // erro inesperado vai ao Registro e ao e-mail (B6)
+  executarNoMenu_('sincronizacao', () => comTrava_(() => { // erro inesperado vai ao Registro e ao e-mail (B6); trava: nunca dois gatilhos
     const jaTem = ScriptApp.getProjectTriggers().some((g) => g.getHandlerFunction() === NOME_GATILHO_SINCRONIZACAO);
     if (!jaTem) ScriptApp.newTrigger(NOME_GATILHO_SINCRONIZACAO).timeBased().everyHours(1).create();
     SpreadsheetApp.getUi().alert(jaTem
       ? 'A sincronização automática (a cada hora) já estava ativa. Nada foi duplicado.'
       : 'Pronto: a agenda será sincronizada a cada hora.');
-  });
+  }));
 }
 
 // Gatilho: falha vira Registro e e-mail de alerta.

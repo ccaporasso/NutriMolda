@@ -13,6 +13,7 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
     trocarCampo: false, salvarDocumento: false, lixeira: false,
     // O Drive CRIA o PDF e a resposta se perde (a chamada lança erro depois de o arquivo existir): a janela do achado do recibo.
     criarArquivoRespostaPerdida: false,
+    criarPapel: false, // criar modelo ou pasta (menu) recusado
   };
   const chamadas = []; // "Drive.Files.copy", "Drive.Files.create"... para conferir o que o kit realmente chama
   let seq = 0;
@@ -44,8 +45,11 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
       },
       create(recurso, blob) {
         chamadas.push('Drive.Files.create');
-        if (recurso.mimeType === 'application/vnd.google-apps.folder') return { id: novo(recurso.name, { ehPasta: true }).id };
-        if (recurso.mimeType === 'application/vnd.google-apps.document') return { id: novo(recurso.name, { tipo: recurso.mimeType }).id };
+        const props = { appProperties: { ...(recurso.appProperties || {}) } };
+        const ehPapel = recurso.mimeType === 'application/vnd.google-apps.folder' || recurso.mimeType === 'application/vnd.google-apps.document';
+        if (ehPapel && falhas.criarPapel) throw new Error('Falha ao criar: EXCECAO_FICTICIA_PAPEL_001');
+        if (recurso.mimeType === 'application/vnd.google-apps.folder') return { id: novo(recurso.name, { ehPasta: true, ...props }).id };
+        if (recurso.mimeType === 'application/vnd.google-apps.document') return { id: novo(recurso.name, { tipo: recurso.mimeType, ...props }).id };
         if (falhas.criarArquivo) throw new Error('Sem espaço no Drive');
         const pai = (recurso.parents || [])[0];
         if (!pai || !arquivos.get(pai) || !arquivos.get(pai).ehPasta) throw new Error('Pasta não encontrada.');
@@ -59,13 +63,13 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
         const pasta = /'([^']+)' in parents/.exec(q);
         const nome = /name = '([^']+)'/.exec(q);
         const prop = /appProperties has \{ key='([^']+)' and value='([^']+)' \}/.exec(q);
-        if (!pasta || !/trashed = false/.test(q)) throw new Error('Consulta inválida.');
+        if (!/trashed = false/.test(q) || (!pasta && !prop)) throw new Error('Consulta inválida.');
         const bate = (a) => {
           const porNome = nome && a.nome === nome[1];
           const porProp = prop && a.appProperties && a.appProperties[prop[1]] === prop[2];
           return nome || prop ? Boolean(porNome || porProp) : true;
         };
-        const achados = [...arquivos.values()].filter((a) => a.pasta === pasta[1] && !a.lixeira && bate(a));
+        const achados = [...arquivos.values()].filter((a) => (!pasta || a.pasta === pasta[1]) && !a.lixeira && bate(a));
         return { files: achados.map((a) => ({ id: a.id, name: a.nome, appProperties: a.appProperties || {}, webViewLink: `https://exemplo.invalid/${a.id}` })) };
       },
       update(recurso, id, blob) {

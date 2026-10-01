@@ -5,7 +5,7 @@ const DESCRICAO_PROTECAO = 'Kit do Consultório: cabeçalho';
 
 // Item do menu: erro inesperado vai ao Registro e ao e-mail, com mensagem clara na tela (B6).
 function instalarPlanilha() {
-  executarNoMenu_('instalador', instalarPlanilha_);
+  executarNoMenu_('instalador', () => comTrava_(instalarPlanilha_)); // com trava: duas instalações ao mesmo tempo não criam a mesma aba duas vezes
 }
 
 // Fuso do kit (D13). As datas digitadas em células de data (Pacotes.inicio, Despesas.data) são lidas no fuso de

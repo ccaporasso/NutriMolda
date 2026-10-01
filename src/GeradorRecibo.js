@@ -76,7 +76,7 @@ function gerarRecibo(numeroLinha) {
     const faltando = camposFaltandoNoModelo(textoDoDocumento_(documento), dados.campos);
     if (faltando.length > 0) {
       throw erroDeUso_(`O modelo do recibo não tem o(s) campo(s) obrigatório(s): ${faltando.map((c) => `{{${c}}}`).join(', ')}. `
-        + 'Nada foi gerado. Corrija o modelo (ou crie outro em Configuração > Criar modelo e pasta de recibos, com o id em branco) e tente de novo.');
+        + 'Nada foi gerado. Corrija o modelo (ou mande o modelo antigo para a lixeira, apague o id em Configurações e use Configuração > Criar modelo e pasta de recibos) e tente de novo.');
     }
     for (const [campo, valor] of Object.entries(dados.campos)) {
       const padrao = escaparPadrao_(`{{${campo}}}`);
@@ -127,26 +127,59 @@ function atualizarConfiguracao_(chave, valor) {
   folha.getRange(i + 2, 2, 1, 1).setValues([[valor]]);
 }
 
+// Id de modelo/pasta já guardado, se houver. Linha repetida ou valor que o Planilhas transformou (número, data) NÃO conta como
+// "em branco": criar outro e sobrescrever esconderia o problema. Devolve '' só quando a célula está de fato vazia.
+function idJaConfigurado_(resultado, chave) {
+  const problemas = resultado.erros.filter((e) => e.includes(`"${chave}"`));
+  if (problemas.length > 0) throw erroDeUso_(`A configuração "${chave}" está repetida ou com um valor que o kit não entende. Corrija na aba Configurações antes de criar o modelo e a pasta.`);
+  return resultado.config[chave] || '';
+}
+
+// Acha o arquivo que uma execução anterior criou e não chegou a registrar. Mais de um: para, sem escolher por conta própria.
+function reaproveitarOuNada_(papel, rotulo) {
+  const achados = driveAcharPorPapel(papel);
+  if (achados.length > 1) {
+    throw erroDeUso_(`Já existem ${achados.length} ${rotulo} criados pelo kit e nenhum está em Configurações. Mande para a lixeira os que sobram e tente de novo.`);
+  }
+  return achados[0] || null;
+}
+
 // Cria o modelo (Docs) e a pasta (Drive) só se os ids ainda estiverem em branco; nunca troca um id já preenchido.
+// Tudo dentro da trava e relendo as Configurações depois dela: duas execuções não criam dois modelos nem duas pastas.
+// Se uma execução anterior criou o arquivo e caiu antes de gravar o id, o arquivo é reaproveitado (reconciliação por papel).
 function criarModeloEPastaDeRecibos() {
-  executarNoMenu_('recibo', () => {
-    const cfg = validarConfiguracoes(lerLinhasConfiguracoes_()).config;
+  executarNoMenu_('recibo', () => comTrava_(() => {
+    const resultado = validarConfiguracoes(lerLinhasConfiguracoes_());
     const feito = [];
-    if (!cfg.id_modelo_recibo) {
-      const documento = DocumentApp.openById(driveCriarDocumento('Modelo de recibo - Kit do Consultório'));
-      const corpo = documento.getBody();
-      corpo.clear();
-      for (const linha of linhasModeloRecibo()) corpo.appendParagraph(linha);
-      documento.saveAndClose();
-      atualizarConfiguracao_('id_modelo_recibo', documento.getId());
-      feito.push('modelo do recibo (Google Docs)');
+    const reaproveitado = [];
+    if (!idJaConfigurado_(resultado, 'id_modelo_recibo')) {
+      let id = reaproveitarOuNada_(PAPEL_MODELO_RECIBO, 'modelos de recibo');
+      if (id) {
+        reaproveitado.push('modelo do recibo');
+      } else {
+        id = driveCriarDocumento('Modelo de recibo - Kit do Consultório', { [PROPRIEDADE_PAPEL_KIT]: PAPEL_MODELO_RECIBO });
+        const documento = DocumentApp.openById(id);
+        const corpo = documento.getBody();
+        corpo.clear();
+        for (const linha of linhasModeloRecibo()) corpo.appendParagraph(linha);
+        documento.saveAndClose();
+        feito.push('modelo do recibo (Google Docs)');
+      }
+      atualizarConfiguracao_('id_modelo_recibo', id);
     }
-    if (!cfg.id_pasta_recibos) {
-      atualizarConfiguracao_('id_pasta_recibos', driveCriarPasta('Recibos - Kit do Consultório'));
-      feito.push('pasta dos recibos (Drive)');
+    if (!idJaConfigurado_(resultado, 'id_pasta_recibos')) {
+      let id = reaproveitarOuNada_(PAPEL_PASTA_RECIBOS, 'pastas de recibos');
+      if (id) {
+        reaproveitado.push('pasta dos recibos');
+      } else {
+        id = driveCriarPasta('Recibos - Kit do Consultório', { [PROPRIEDADE_PAPEL_KIT]: PAPEL_PASTA_RECIBOS });
+        feito.push('pasta dos recibos (Drive)');
+      }
+      atualizarConfiguracao_('id_pasta_recibos', id);
     }
-    SpreadsheetApp.getUi().alert(feito.length > 0
-      ? `Criado: ${feito.join(' e ')}. Os ids já foram gravados em Configurações. Você pode editar o modelo à vontade, mantendo os campos entre {{ }}.`
-      : 'O modelo e a pasta já estão configurados. Nada foi criado.');
-  });
+    const partes = [];
+    if (feito.length > 0) partes.push(`Criado: ${feito.join(' e ')}. Os ids já foram gravados em Configurações. Você pode editar o modelo à vontade, mantendo os campos entre {{ }}.`);
+    if (reaproveitado.length > 0) partes.push(`Já existia (uma tentativa anterior parou antes de gravar o id): ${reaproveitado.join(' e ')}. O id foi gravado em Configurações, sem criar outro.`);
+    SpreadsheetApp.getUi().alert(partes.length > 0 ? partes.join('\n') : 'O modelo e a pasta já estão configurados. Nada foi criado.');
+  }));
 }

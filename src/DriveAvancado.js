@@ -9,8 +9,23 @@ const MIME_DOCUMENTO_DRIVE = 'application/vnd.google-apps.document';
 
 // Cria o modelo pelo mesmo app da API Drive que depois o copia com drive.file.
 // DocumentApp fica responsável por preencher o Docs, não por criar o arquivo.
-function driveCriarDocumento(nome) {
-  return Drive.Files.create({ name: nome, mimeType: MIME_DOCUMENTO_DRIVE }, null, { fields: 'id' }).id;
+function driveCriarDocumento(nome, propriedades) {
+  const recurso = { name: nome, mimeType: MIME_DOCUMENTO_DRIVE };
+  if (propriedades) recurso.appProperties = propriedades;
+  return Drive.Files.create(recurso, null, { fields: 'id' }).id;
+}
+
+// Papel de um arquivo do kit (modelo ou pasta de recibos), gravado nas propriedades ao criar. Serve para reconciliar:
+// se uma execução criou o arquivo e caiu antes de gravar o id em Configurações, a próxima o encontra em vez de criar outro.
+const PROPRIEDADE_PAPEL_KIT = 'kit_papel';
+const PAPEL_MODELO_RECIBO = 'modelo_recibo';
+const PAPEL_PASTA_RECIBOS = 'pasta_recibos';
+
+// Ids dos arquivos ativos (fora da lixeira) que o kit criou com esse papel. Com drive.file só aparecem os que o próprio kit criou.
+function driveAcharPorPapel(papel) {
+  if (![PAPEL_MODELO_RECIBO, PAPEL_PASTA_RECIBOS].includes(papel)) throw new Error('Papel de arquivo inválido para busca.');
+  const resposta = Drive.Files.list({ q: `appProperties has { key='${PROPRIEDADE_PAPEL_KIT}' and value='${papel}' } and trashed = false`, fields: 'files(id)', pageSize: 10 });
+  return ((resposta && resposta.files) || []).map((a) => a.id);
 }
 
 // Id de arquivo ou pasta do Drive: só letras, números, hífen e sublinhado. Vira parte de uma consulta (q), então
@@ -66,6 +81,8 @@ function driveMandarParaLixeira(idArquivo) {
   Drive.Files.update({ trashed: true }, idArquivo, null, { fields: 'id' });
 }
 
-function driveCriarPasta(nome) {
-  return Drive.Files.create({ name: nome, mimeType: MIME_PASTA_DRIVE }, null, { fields: 'id' }).id;
+function driveCriarPasta(nome, propriedades) {
+  const recurso = { name: nome, mimeType: MIME_PASTA_DRIVE };
+  if (propriedades) recurso.appProperties = propriedades;
+  return Drive.Files.create(recurso, null, { fields: 'id' }).id;
 }

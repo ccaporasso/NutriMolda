@@ -78,7 +78,7 @@ function criarPlanilhaSimulada() {
 }
 
 function instalar(simulada) {
-  const contexto = vm.createContext({ SpreadsheetApp: simulada.SpreadsheetApp });
+  const contexto = vm.createContext({ SpreadsheetApp: simulada.SpreadsheetApp, LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) } });
   vm.runInContext(src('Esquema.js'), contexto);
   vm.runInContext(src('Execucao.js'), contexto);
   vm.runInContext(src('Instalador.js'), contexto);
