@@ -6,6 +6,7 @@ const LIMITE_NOME_PIX = 25;
 const LIMITE_CIDADE_PIX = 15;
 const LIMITE_ID_TRANSACAO = 25;
 const LIMITE_CHAVE_PIX = 77; // 99 do campo 26 menos "br.gov.bcb.pix" e os cabeçalhos
+const LIMITE_VALOR_PIX = 13; // o campo 54 (valor) do padrão tem no máximo 13 caracteres: dez algarismos de reais cabem, onze não
 
 // CRC16-CCITT (polinômio 0x1021, valor inicial 0xFFFF). Devolve 4 letras hexadecimais maiúsculas.
 function calcularCrc16(texto) {
@@ -73,7 +74,7 @@ function gerarPixCopiaECola({ chave, nome, cidade, valorCentavos, idTransacao })
   if (cidadeNorm.length > LIMITE_CIDADE_PIX) {
     throw new Error('"cidade_recebedor_pix" passa de ' + LIMITE_CIDADE_PIX + ' caracteres. Encurte na aba Configurações.');
   }
-  if (!Number.isInteger(valorCentavos) || valorCentavos <= 0) {
+  if (!Number.isSafeInteger(valorCentavos) || valorCentavos <= 0) {
     throw new Error('O valor do Pix precisa ser maior que zero, em centavos inteiros.');
   }
   let idTx = '***'; // padrão para "sem identificador"
@@ -85,13 +86,15 @@ function gerarPixCopiaECola({ chave, nome, cidade, valorCentavos, idTransacao })
   }
   const reais = Math.floor(valorCentavos / 100);
   const centavos = String(valorCentavos % 100).padStart(2, '0');
+  const valorTexto = reais + '.' + centavos;
+  if (valorTexto.length > LIMITE_VALOR_PIX) throw new Error('O valor do Pix é alto demais para o padrão (limite de R$ 9.999.999.999,99). Confira o valor.');
 
   const semCrc =
     montarCampo('00', '01') +
     montarCampo('26', montarCampo('00', 'br.gov.bcb.pix') + montarCampo('01', chaveLimpa)) +
     montarCampo('52', '0000') +
     montarCampo('53', '986') +
-    montarCampo('54', reais + '.' + centavos) +
+    montarCampo('54', valorTexto) +
     montarCampo('58', 'BR') +
     montarCampo('59', nomeNorm) +
     montarCampo('60', cidadeNorm) +

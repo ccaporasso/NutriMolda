@@ -8,7 +8,7 @@ function gerarRelatorioMensal(mes) {
 }
 
 function gerarRelatorioMensalComTrava_(mes) {
-  const config = lerConfiguracoes().config;
+  const config = lerConfiguracoes(['relatorio']).config; // só a pasta do CSV
   const resultado = consolidarRecebimentos(lerAbaComoObjetos('Pagamentos'), mes);
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
 

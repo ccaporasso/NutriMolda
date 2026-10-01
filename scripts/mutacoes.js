@@ -56,6 +56,8 @@ const MUTACOES = [
   ['M38', 'src/Pix.js', '(crc << 1) ^ 0x1021', '(crc << 1) ^ 0x1020', 'Pix: polinômio do CRC errado', 'pix'],
   ['M39', 'scripts/empacotar-producao.js', 'const SUBSTITUICAO_DE_ESCOPOS = { [ESCOPO_AGENDA_TESTE]: ESCOPO_AGENDA_PRODUCAO };', 'const SUBSTITUICAO_DE_ESCOPOS = {};', 'produção: manter a escrita na agenda', 'producao'],
   ['M40', 'src/Acoes.js', "if (consulta.status === 'cancelada') return recusa_('Consulta cancelada", "if (false) return recusa_('Consulta cancelada", 'consulta cancelada marcada como realizada', 'falhas / menu'],
+  ['M43', 'src/LeitorConfiguracoes.js', 'const erros = dominios ? errosDosDominios(resultado, dominios) : resultado.erros;', 'const erros = resultado.erros;', 'configuração: erro de um domínio volta a travar os outros (Pix em branco bloqueia a agenda)', 'configuracao-dominios / falhas'],
+  ['M44', 'src/Pix.js', 'if (valorTexto.length > LIMITE_VALOR_PIX) throw', 'if (false) throw', 'Pix: aceitar valor que estoura o campo de 13 caracteres', 'limites-pix'],
 ];
 
 function copiarProjeto() {

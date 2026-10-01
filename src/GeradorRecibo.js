@@ -45,7 +45,7 @@ function gerarRecibo(numeroLinha) {
   let copia = null;
   let resultado = null;
   try {
-    const config = lerConfiguracoes().config;
+    const config = lerConfiguracoes(['recibo']).config;
     const pagamento = lerAbaComoObjetos('Pagamentos').find((p) => p.linha === numeroLinha);
     if (!pagamento) throw erroDeUso_('Não achei o pagamento nessa linha.');
     const paciente = lerAbaComoObjetos('Pacientes').find((p) => String(p.codigo) === String(pagamento.codigo_paciente));

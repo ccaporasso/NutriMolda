@@ -20,8 +20,11 @@ function lerEmailAlertas() {
 }
 
 // Devolve { config, avisos }. Se houver erro, interrompe com a lista completa em português.
-function lerConfiguracoes() {
+// `dominios` (opcional, nomes de DOMINIOS_CONFIGURACAO): só os erros desses domínios interrompem; erro em configuração de outra
+// funcionalidade não derruba esta. Sem `dominios`, vale a regra antiga (qualquer erro interrompe).
+function lerConfiguracoes(dominios) {
   const resultado = validarConfiguracoes(lerLinhasConfiguracoes_());
-  if (resultado.erros.length > 0) throw Object.assign(new Error(montarMensagemErros(resultado)), { name: 'ErroDeUso' });
+  const erros = dominios ? errosDosDominios(resultado, dominios) : resultado.erros;
+  if (erros.length > 0) throw Object.assign(new Error(montarMensagemErros({ erros })), { name: 'ErroDeUso' });
   return { config: resultado.config, avisos: resultado.avisos };
 }

@@ -66,7 +66,7 @@ function sincronizarAgenda() {
   const trava = LockService.getScriptLock();
   if (!trava.tryLock(30000)) throw erroDeUso_('Outra sincronização está em andamento. Tente de novo em um minuto.');
   try {
-    const cfg = lerConfiguracoes().config;
+    const cfg = lerConfiguracoes(['agenda']).config; // só a agenda: Pix em branco não trava a sincronização
     const janela = calcularJanelaAgenda(hojeSaoPaulo_());
     const origemAtual = marcaDaAgenda(cfg.calendario_id);
     const ultima = PropertiesService.getDocumentProperties().getProperty(CHAVE_ORIGEM_AGENDA);

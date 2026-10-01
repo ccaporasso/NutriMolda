@@ -19,6 +19,8 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 | A-11 | Proteção contra fórmula em três cópias, sem tabulação/CR/espaço invisível, e texto regravado dependia do formato da célula | MÉDIO | Corrigido (E2); efeito real no Excel/Sheets N/M |
 | A-12 | Mensagem crua de erro inesperado aparece na tela da nutricionista | BAIXO | Aberto (decisão do Caio) |
 | A-13 | `exceptionLogging: STACKDRIVER` mantido: nenhuma função de menu ou gatilho deixa a exceção escapar | INFORMATIVO | Analisado; decisão do Caio pendente |
+| A-14 | Configuração acoplada: chave Pix em branco travava sincronização da agenda, "gerar a receber", relatório e recibo | MÉDIO | Corrigido (E2) |
+| A-15 | Pix aceitava valor que estoura o campo de 13 caracteres e gerava payload inválido | BAIXO | Corrigido (E2); leitura por banco real N/M |
 
 ---
 
@@ -100,3 +102,23 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 ## A-13 Registro de exceções (Stackdriver)
 
 - Ver `docs/gate/SEGURANCA-LOCAL.md`, seção "Registro de exceções". Resultado: com erro fictício contendo nome, CPF e condição lançado em 11 pontos do Google simulado e 20 funções de menu mais o gatilho, nenhuma exceção crua escapou e nenhum texto fictício chegou a Registro, e-mail, nome de arquivo ou `Logger`. O que escapa por desenho são funções internas chamadas direto pelo editor do Apps Script e o `onOpen`.
+
+## A-14 Configuração acoplada entre funcionalidades
+
+- **Encontrado em:** roteiro, item 33. `lerConfiguracoes()` interrompia com QUALQUER erro de configuração, em todas as funcionalidades. Pix com chave em branco impedia sincronizar a agenda, gerar "a receber", montar o relatório e gerar recibo.
+- **ANTES:** `tests/configuracao-dominios.test.js` (e os ajustes em `falhas.test.js`) exercitam cada funcionalidade com uma configuração alheia errada: contra o código anterior, a funcionalidade parava.
+- **CORREÇÃO:** `DOMINIOS_CONFIGURACAO` (agenda, pagamento, pix, recibo, relatório, alertas) em `src/Configuracoes.js` e `lerConfiguracoes(dominios)` em `src/LeitorConfiguracoes.js`: só os erros das chaves do domínio da funcionalidade interrompem. A regra de validação continua em um lugar só (`validarConfiguracoes`); os chamadores informam o que usam. Sem argumento vale a regra antiga (qualquer erro interrompe).
+- **DEPOIS:** cada funcionalidade só para por configuração que ela própria usa; a mensagem lista só os erros do domínio.
+- **REGRESSÃO:** `tests/configuracao-dominios.test.js`; mutação M43 (volta ao acoplamento antigo, detectada). **EVIDÊNCIA:** E2.
+- **Intenção preservada:** `falhas.test.js` tinha testes que codificavam o acoplamento antigo (Pix inválido bloqueia a sincronização); foram atualizados mantendo o objetivo (a configuração do domínio continua sendo exigida) usando `calendario_id` numérico no lugar da chave Pix. Esta mudança é consequência direta do item 33 do roteiro.
+- **Corrigido em:** commit da etapa B/D (ver `git log`).
+
+## A-15 Pix aceitava valor que estoura o campo do padrão
+
+- **Encontrado em:** roteiro, itens 25 e 32: sonda com valores extremos. `valorCentavos` de 10 elevado a 12 em diante, `Number.MAX_SAFE_INTEGER`, `2 ** 53` e `1e21` geravam payload com o campo 54 (valor) de 14 a 23 caracteres, acima dos 13 que o padrão permite; o CRC fechava, mas o banco recusaria o código.
+- **ANTES:** `tests/limites-pix.test.js` rodado contra o `src/Pix.js` anterior: 3 dos 14 casos falham (valor máximo, valores absurdos, mensagem sem valor).
+- **CORREÇÃO:** `Number.isSafeInteger` e teste do tamanho do texto do valor (`LIMITE_VALOR_PIX = 13`, até R$ 9.999.999.999,99). A mensagem diz o limite, não repete o valor digitado. Na prática o preço do kit já tem teto de R$ 100.000,00 (`lerReais`); o guarda do Pix é a segunda barreira.
+- **DEPOIS:** os 14 casos passam (1 centavo, valor máximo, absurdos, nome 25/26, acento, caractere não aceito, cidade 15/16, chave em cada formato e formatos inválidos, id da transação, CRC adulterado em cada posição, 300 payloads aleatórios com semente fixa).
+- **REGRESSÃO:** `tests/limites-pix.test.js`; mutação M44 (detectada). `Number.isSafeInteger` no lugar de `Number.isInteger` é defesa em profundidade: o teste de tamanho já barra os mesmos valores, então trocá-lo não é detectável (mutante equivalente, não contado).
+- **EVIDÊNCIA:** E2. **N/M:** aceitação do código por um aplicativo de banco real (roteiro em `GOOGLE-REAL.md`, item sobre Pix).
+- **Corrigido em:** commit da etapa B/D (ver `git log`).

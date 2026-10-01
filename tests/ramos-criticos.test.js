@@ -196,7 +196,7 @@ test('Gatilho automático: operação em andamento só registra; problema de con
   assert.equal(c.amb.emails.length, 0);
   assert.match(c.registroTexto(), /adiada: outra operação/);
   c.amb.contexto.LockService = { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) };
-  c.amb.abas.get('Configurações').linhas.find((l) => l[0] === 'nome_profissional')[1] = '';
+  c.amb.abas.get('Configurações').linhas.find((l) => l[0] === 'calendario_id')[1] = 12345;
   c.rodar('sincronizarAgendaAutomatica()');
   c.rodar('sincronizarAgendaAutomatica()');
   assert.equal(c.amb.emails.length, 1, 'um e-mail por dia por causa');

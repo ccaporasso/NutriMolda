@@ -145,7 +145,7 @@ function gerarPixDaLinha() {
     const [linha] = linhasSelecionadas('Pagamentos', 1);
     const pagamento = lerAbaComoObjetos('Pagamentos').find((p) => p.linha === linha);
     if (!pagamento) throw erroDeUso_('Essa linha está vazia.');
-    const r = montarPixDoPagamento(pagamento, lerConfiguracoes().config);
+    const r = montarPixDoPagamento(pagamento, lerConfiguracoes(['pix']).config);
     if (!r.ok) throw erroDeUso_(r.motivo);
     SpreadsheetApp.getUi().alert('Pix copia e cola',
       `Selecione todo o texto abaixo, copie e mande ao paciente. Antes de mandar, confira o valor e o nome no app do seu banco (sem pagar).\n\n${r.texto}`,
