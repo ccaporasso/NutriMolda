@@ -68,7 +68,7 @@ Depois de marcar como pago, preencha na linha de Pagamentos:
 - `pagador_cpf`: opcional; se preencher, confira os 11 números;
 - `data_pagamento` já vem preenchida (formato AAAA-MM-DD).
 
-Clique na linha e use **Gerar recibo em PDF**. O PDF vai para a pasta de recibos e o link aparece na coluna `link_recibo`. Recibo já feito não é feito de novo.
+Clique na linha e use **Gerar recibo em PDF**. O PDF vai para a pasta de recibos e o link aparece na coluna `link_recibo`. Recibo já feito não é feito de novo: se você apagar só o link e o PDF antigo continuar na pasta, o kit **religa** o PDF antigo em vez de criar outro. Para gerar um recibo novo do mesmo pagamento (por exemplo, para corrigir o nome), mande o PDF antigo para a lixeira do Drive **e** apague o link em `link_recibo`. Se aparecer o aviso de que já existem dois PDFs do mesmo pagamento, deixe só um na pasta e tente de novo; o kit nunca cria um terceiro.
 
 ### 6. Relatório do mês
 Menu **Relatório do mês (aba e CSV)**. Digite o mês (`2026-09`) ou deixe em branco para o mês atual. O kit cria a aba "Relatório AAAA-MM" e o arquivo `Relatorio-AAAA-MM.csv` na pasta de recibos, para mandar ao contador. Confira o total antes de enviar. Se aparecer aviso de "sem CPF", é porque falta o CPF de algum pagador.

@@ -82,12 +82,29 @@ function resumirTudo(modulos) {
   return { modulos: linhas, total: { linhas: pct(...soma.linhas), ramos: pct(...soma.ramos), funcoes: pct(...soma.funcoes), n: soma } };
 }
 
+// Módulo crítico que não aparece na medição: sem isso, um arquivo que deixasse de ser contado (como na A-10) passaria batido pelo piso.
+function criticosSemMedicao(r) {
+  const medidos = new Set(r.modulos.map((m) => m.arquivo));
+  return CRITICOS.filter((c) => !medidos.has(c));
+}
+
 function tabelaMarkdown(r) {
   const cab = '| Módulo | Linhas | Ramos (branches) | Funções | Criticidade |\n|---|---|---|---|---|';
   const lin = r.modulos.map((m) => `| ${m.arquivo} | ${m.linhas.toFixed(1)}% (${m.nLinhas.join('/')}) | ${m.ramos.toFixed(1)}% (${m.nRamos.join('/')}) | ${m.funcoes.toFixed(1)}% (${m.nFuncoes.join('/')}) | ${m.criticidade} |`);
   const t = r.total;
   lin.push(`| **Total src/** | **${t.linhas.toFixed(1)}%** (${t.n.linhas.join('/')}) | **${t.ramos.toFixed(1)}%** (${t.n.ramos.join('/')}) | **${t.funcoes.toFixed(1)}%** (${t.n.funcoes.join('/')}) | |`);
   return [cab].concat(lin).join('\n');
+}
+
+// Troca só a tabela (do cabeçalho "| Módulo |" até a última linha seguida que começa com "|"): o texto escrito à mão em volta não some.
+function escreverTabela(arquivo, tabela) {
+  const atual = fs.existsSync(arquivo) ? fs.readFileSync(arquivo, 'utf8') : '';
+  const linhas = atual.split('\n');
+  const inicio = linhas.findIndex((l) => l.startsWith('| Módulo |'));
+  if (inicio < 0) { fs.writeFileSync(arquivo, `${atual ? `${atual.trimEnd()}\n\n` : ''}${tabela}\n`); return; }
+  let fim = inicio;
+  while (fim + 1 < linhas.length && linhas[fim + 1].startsWith('|')) fim++;
+  fs.writeFileSync(arquivo, linhas.slice(0, inicio).concat(tabela.split('\n'), linhas.slice(fim + 1)).join('\n'));
 }
 
 function principal() {
@@ -109,9 +126,10 @@ function principal() {
     }
   }
   const i = args.indexOf('--escrever');
-  if (i >= 0) fs.writeFileSync(path.resolve(RAIZ, args[i + 1]), `${tabelaMarkdown(r)}\n`);
+  if (i >= 0) escreverTabela(path.resolve(RAIZ, args[i + 1]), tabelaMarkdown(r));
   let ruim = codigo !== 0;
   if (args.includes('--exigir')) {
+    for (const f of criticosSemMedicao(r)) { console.error(`MÓDULO CRÍTICO SEM MEDIÇÃO: ${f} (a cobertura não o contou)`); ruim = true; }
     for (const m of r.modulos.filter((x) => x.criticidade === 'crítica')) {
       const faltas = [];
       if (m.linhas < PISO_LINHAS) faltas.push(`linhas ${m.linhas.toFixed(1)} < ${PISO_LINHAS}`);
@@ -124,4 +142,4 @@ function principal() {
 }
 
 if (require.main === module) principal();
-module.exports = { lerLcov, medir, resumirTudo, tabelaMarkdown, CRITICOS, PISO_LINHAS, PISO_RAMOS, PISO_FUNCOES };
+module.exports = { lerLcov, medir, resumirTudo, tabelaMarkdown, escreverTabela, criticosSemMedicao, CRITICOS, PISO_LINHAS, PISO_RAMOS, PISO_FUNCOES };

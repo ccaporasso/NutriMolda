@@ -79,3 +79,8 @@ test('sem informar domínio, lerConfiguracoes continua estrito (qualquer erro in
   assert.throws(() => c.rodar('lerConfiguracoes()'), /"chave_pix"/);
   assert.doesNotThrow(() => c.rodar("lerConfiguracoes(['agenda'])"));
 });
+
+test('resultado sem a separação por chave não é filtrado: todos os erros valem (na dúvida, interrompe)', () => {
+  assert.deepEqual(C.errosDosDominios({ erros: ['erro qualquer'] }, ['agenda']), ['erro qualquer']);
+  assert.deepEqual(C.errosDosDominios({}, ['agenda']), []);
+});

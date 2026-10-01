@@ -89,14 +89,14 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 
 ## A-10 Cobertura não contava o código carregado no Google simulado
 
-- **Encontrado em:** etapa C: a cobertura nativa do Node ignorava os arquivos de `src/` carregados com `vm` sem nome de arquivo (`GeradorRecibo.js`, `SincronizarAgenda.js` etc. nem apareciam). **CORREÇÃO:** `filename` como URL de arquivo no simulador. **Corrigido em:** `4a10c69`.
+- **Encontrado em:** etapa C: a cobertura nativa do Node ignorava os arquivos de `src/` carregados com `vm` sem nome de arquivo (`GeradorRecibo.js`, `SincronizarAgenda.js` etc. nem apareciam). **CORREÇÃO:** `filename` como URL de arquivo no simulador. **REGRESSÃO:** `tests/cobertura-ferramenta.test.js`; `node scripts/cobertura.js --exigir` agora falha se um módulo crítico não aparece na medição (mutação M56). **Corrigido em:** `4a10c69`.
 
 ## A-11 Proteção contra fórmula incompleta e duplicada
 
 - **Encontrado em:** roteiro, item 24. Três cópias da regra `/^[=+\-@]/` (Registro, Relatório, Respostas), nenhuma cobrindo tabulação, retorno de carro ou espaço invisível antes do sinal; texto digitado e regravado pelo kit em Pagamentos (`gravarLinha`) dependia só do formato texto da célula.
 - **CORREÇÃO:** `neutralizarFormula` em `src/Formatos.js` é a única regra; Registro, Relatório (aba e CSV), Respostas e a camada de escrita de `LeitorAbas.js` (`adicionarLinhas`, `gravarLinha`, `gravarCelula`) passam por ela. `＝` de largura total não é fórmula em nenhum dos dois leitores e não é alterado.
 - **REGRESSÃO:** `tests/seguranca-local.test.js`; mutações M29, M29b, M37. **EVIDÊNCIA:** E2. **N/M:** como o Excel e o Google Planilhas tratam um valor que começa com espaço seguido de `=` (o kit mantém a escolha anterior, o espaço) só se vê abrindo o CSV nos programas (roteiro em `GOOGLE-REAL.md`, item 14).
-- **Corrigido em:** commit da etapa D (ver `git log`).
+- **Corrigido em:** commit `454515a`.
 
 ## A-12 Mensagem crua de erro na tela (ABERTO, BAIXO)
 
@@ -114,7 +114,7 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **DEPOIS:** cada funcionalidade só para por configuração que ela própria usa; a mensagem lista só os erros do domínio.
 - **REGRESSÃO:** `tests/configuracao-dominios.test.js`; mutação M43 (volta ao acoplamento antigo, detectada). **EVIDÊNCIA:** E2.
 - **Intenção preservada:** `falhas.test.js` tinha testes que codificavam o acoplamento antigo (Pix inválido bloqueia a sincronização); foram atualizados mantendo o objetivo (a configuração do domínio continua sendo exigida) usando `calendario_id` numérico no lugar da chave Pix. Esta mudança é consequência direta do item 33 do roteiro.
-- **Corrigido em:** commit da etapa B/D (ver `git log`).
+- **Corrigido em:** commit `770fcb1`.
 
 ## A-15 Pix aceitava valor que estoura o campo do padrão
 
@@ -124,14 +124,14 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **DEPOIS:** os 14 casos passam (1 centavo, valor máximo, absurdos, nome 25/26, acento, caractere não aceito, cidade 15/16, chave em cada formato e formatos inválidos, id da transação, CRC adulterado em cada posição, 300 payloads aleatórios com semente fixa).
 - **REGRESSÃO:** `tests/limites-pix.test.js`; mutação M44 (detectada). `Number.isSafeInteger` no lugar de `Number.isInteger` é defesa em profundidade: o teste de tamanho já barra os mesmos valores, então trocá-lo não é detectável (mutante equivalente, não contado).
 - **EVIDÊNCIA:** E2. **N/M:** aceitação do código por um aplicativo de banco real (roteiro em `GOOGLE-REAL.md`, item sobre Pix).
-- **Corrigido em:** commit da etapa B/D (ver `git log`).
+- **Corrigido em:** commit `770fcb1`.
 
 ## A-16 Esqueletos T20 a T24 no pacote de produção
 
 - **Encontrado em:** roteiro, item 35. `FilaAjustes.js`, `Frases.js`, `Modos.js`, `Presenca.js` e `Respostas.js` (lógica pura, sem menu, gatilho ou aba, com valores `PENDENTE Pn`) iam para o Google da nutricionista no pacote de produção, ao lado do que ela realmente usa.
 - **CORREÇÃO:** `ARQUIVOS_ESQUELETO` em `scripts/empacotar-producao.js` deixa os cinco fora do pacote de produção (o projeto de TESTE continua com `src/` inteiro); o verificador recusa um pacote que os leve ou use seus nomes. Inventário e classificação em `docs/gate/INVENTARIO-CODIGO.md`.
 - **REGRESSÃO:** `tests/inventario-codigo.test.js` (9 casos) e `tests/producao.test.js`; mutação M45 (esvaziar a lista) detectada. **EVIDÊNCIA:** E2/E3. **Impacto:** nenhum para a nutricionista (nada os chamava); quando uma tarefa T20 a T24 virar funcionalidade, o arquivo sai da lista no mesmo commit que liga o menu.
-- **Corrigido em:** commit da etapa F (ver `git log`).
+- **Corrigido em:** commit `2febbc1`.
 
 ## A-17 Erro inesperado no gatilho manda um e-mail por execução
 
@@ -150,4 +150,4 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **CORREÇÃO:** índices montados uma vez (`indexarPacientesAgenda`, `primeiraConsultaPorPaciente_`, conjuntos de ids com cobrança aberta, contagens por (paciente, início)) e `agruparEmFaixas`, que junta só linhas consecutivas e do mesmo tamanho e grava cada faixa com uma chamada. O resultado das regras é o mesmo (testes de equivalência contra a definição por varredura, com dados aleatórios de semente fixa).
 - **DEPOIS (medido):** a receber, 5.000 consultas de pacientes distintos: 38 leituras por consulta (n log n, só da ordenação); agenda 5.000 x 5.000: **56 ms**; pacotes: 1 leitura por pacote, plana; escritas da sincronização: **2** para 5.000 linhas sem marca, **2** para 5.000 consultas novas, **1** para 300 linhas vizinhas remarcadas.
 - **Resíduo (aceito, documentado):** linhas **não vizinhas** continuam com uma escrita por faixa; 500 linhas isoladas = 500 escritas. A alternativa (reescrever o intervalo inteiro) tocaria em células que a nutricionista pode estar editando no mesmo instante. A Agenda devolve 250 eventos por página: 5.000 eventos são 20 chamadas `Calendar.Events.list`, inevitável. Tempo real de cada chamada no Google: N/M.
-- **REGRESSÃO:** `tests/desempenho.test.js` (15 casos, contagem e não tempo: 8 ficam vermelhos no código anterior); mutações M46 a M50. Simulador agora recusa `setValues` com tamanho diferente do intervalo, como o Planilhas. **EVIDÊNCIA:** E2. **Corrigido em:** commit da etapa F (ver `git log`).
+- **REGRESSÃO:** `tests/desempenho.test.js` (15 casos, contagem e não tempo: 8 ficam vermelhos no código anterior); mutações M46 a M50. Simulador agora recusa `setValues` com tamanho diferente do intervalo, como o Planilhas. **EVIDÊNCIA:** E2. **Corrigido em:** commit `2c44ccd`.

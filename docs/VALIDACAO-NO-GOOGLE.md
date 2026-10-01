@@ -55,7 +55,7 @@ Legenda: **Implementado** = código e testes prontos · **Validar no Google** = 
 3. Confira que o nome do arquivo é `Recibo-PG000001-P9001.pdf` e que não sobrou o arquivo `rascunho-...` fora da lixeira.
 4. A troca literal de campos no Docs (`findText`/`deleteText`/`insertText`) foi conferida em PDFs reais com acentos e R$ 150,00/R$ 1.234,56, inclusive campos no cabeçalho; novos modelos exigem sua própria conferência.
 5. O visual do PDF (fonte, margens) é do modelo: ajuste no Docs; os campos `{{...}}` precisam ficar.
-6. Rodar de novo na mesma linha não gera outro PDF; apagar o link em `link_recibo` libera um novo.
+6. Rodar de novo na mesma linha não gera outro PDF; apagar só o link em `link_recibo` religa o PDF antigo; para liberar um novo, mande o PDF para a lixeira **e** apague o link. A identidade do PDF fica nas propriedades do arquivo (`kit_recibo_pagamento`, `kit_recibo_paciente`); o que o Drive real faz com elas é N/M até `docs/gate/GOOGLE-REAL.md`.
 
 ## T10 — Relatório mensal e CSV
 

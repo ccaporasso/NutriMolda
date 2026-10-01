@@ -18,7 +18,7 @@ Resultado atual (todas as mutações da lista):
 | M04 | recibo: religar PDF de OUTRO pagamento | recibo-idempotencia (identidade) | detectada (1 teste(s) falharam); ex.: "identidade: PDF de OUTRO pagamento com o mesmo nome nunca é religado (" |
 | M05 | recibo: gravar o link sem conferir a linha (atualizar linha errada) | recibo-idempotencia (linha mudou) | detectada (1 teste(s) falharam); ex.: "a linha do pagamento mudou durante a reconciliação: o link não é grava" |
 | M06 | recibo: ignorar link já gravado (gerar de novo) | recibo / integracao | detectada (5 teste(s) falharam); ex.: "rodar tudo de novo não duplica nada (consulta, cobrança, pagamento, re" |
-| M07 | recibo: deixar a cópia de trabalho (com nome e CPF) no Drive | falhas / recibo-idempotencia | detectada (9 teste(s) falharam); ex.: "falha ao exportar o PDF: sem recibo pela metade, cópia na lixeira, ale" |
+| M07 | recibo: deixar a cópia de trabalho (com nome e CPF) no Drive | falhas / recibo-idempotencia | detectada (10 teste(s) falharam); ex.: "recibo e pagamento de uma linha: chamadas ao Drive e à planilha consta" |
 | M08 | recibo: aceitar CPF inválido | recibo | detectada (2 teste(s) falharam); ex.: "recibo sem pagador, sem data ou com CPF inválido: lista o que falta, s" |
 | M09 | pagamento: permitir valor zero/negativo | invariantes-financeiros | detectada (2 teste(s) falharam); ex.: "valor inválido (0, negativo, NaN, Infinity, texto, nulo, fracionário, " |
 | M10 | pagamento: pagar duas vezes (remover verificação de status) | invariantes-financeiros | detectada (6 teste(s) falharam); ex.: "um pagamento que saiu de a_receber nunca volta nem é pago de novo por " |
@@ -30,17 +30,18 @@ Resultado atual (todas as mutações da lista):
 | M16 | pacote: reconciliação passa do total | invariantes-financeiros | detectada (3 teste(s) falharam); ex.: "a reconciliação nunca diminui consumo (legítimo ou digitado) e não toc" |
 | M17 | menu: remover o lock das ações em linhas (pacote, pagamento) | regressoes-revisao (R11b) / menu | detectada (2 teste(s) falharam); ex.: "trava ocupada: sincronizar, cobrar e recibo avisam em português, sem m" |
 | M18 | planilha: gravar sem conferir a identidade da linha | agenda-adversa / regressoes-revisao | detectada (7 teste(s) falharam); ex.: "identidade: linha movida (outra inserida antes) entre ler e gravar => " |
-| M19 | planilha: não conferir o cabeçalho | regressoes-revisao (R07) | detectada (7 teste(s) falharam); ex.: "identidade: cabeçalho alterado, coluna acrescentada ou removida => nen" |
-| M20 | a receber: ignorar o id_evento (cobrar de novo) | pagamentos / operacoes-idempotentes | detectada (9 teste(s) falharam); ex.: "rodar tudo de novo não duplica nada (consulta, cobrança, pagamento, re" |
-| M21 | ids de pagamento repetidos | invariantes-financeiros | detectada (1 teste(s) falharam); ex.: "ids de pagamento são únicos, crescentes e não reaproveitados por lacun" |
+| M19 | planilha: não conferir o cabeçalho | regressoes-revisao (R07) | detectada (8 teste(s) falharam); ex.: "identidade: cabeçalho alterado, coluna acrescentada ou removida => nen" |
+| M20 | a receber: ignorar o id_evento (cobrar de novo) | pagamentos / operacoes-idempotentes | detectada (10 teste(s) falharam); ex.: "a receber: primeira com histórico e cancelada com cobrança aberta bate" |
+| M21 | ids de pagamento repetidos | invariantes-financeiros | detectada (2 teste(s) falharam); ex.: "ids de pagamento são únicos, crescentes e não reaproveitados por lacun" |
 | M22 | agenda: cancelar consulta já realizada | falhas / agenda | detectada (1 teste(s) falharam); ex.: "cancelamento: evento cancelado na agenda vira cancelada; realizada não" |
 | M23 | agenda: cancelar no evento contraditório | agenda-adversa | detectada (1 teste(s) falharam); ex.: "mesmo id confirmado e cancelado na mesma resposta: não cancela a consu" |
 | M24 | agenda: id repetido gera duas consultas | agenda-adversa | detectada (1 teste(s) falharam); ex.: "id repetido na resposta da agenda gera uma linha só (antes gerava duas" |
-| M25 | fuso: aceitar instante sem fuso explícito | agenda-adversa | detectada (2 teste(s) falharam); ex.: "fuso: instante sem fuso explícito, evento de dia inteiro e texto estra" |
+| M25 | fuso: aceitar instante sem fuso explícito | agenda-adversa | detectada (3 teste(s) falharam); ex.: "fuso: instante sem fuso explícito, evento de dia inteiro e texto estra" |
 | M26 | relatório: contar cortesia como receita | invariantes-financeiros / relatorio | detectada (1 teste(s) falharam); ex.: "fica de fora: cortesia, pacote, a receber, outro mês e sem data válida" |
 | M27 | relatório: contar consulta de pacote como receita | invariantes-financeiros / relatorio | detectada (1 teste(s) falharam); ex.: "fica de fora: cortesia, pacote, a receber, outro mês e sem data válida" |
-| M28 | relatório: total por pagador errado | invariantes-financeiros / relatorio | detectada (24 teste(s) falharam); ex.: "cancelamento: consulta cancelada não gera cobrança nova e a já paga co" |
-| M29 | CSV/planilha: fórmula injetada pelo nome do pagador | relatorio / seguranca-local | detectada (1 teste(s) falharam); ex.: "CSV: separador ponto e vírgula, vírgula decimal, CPF formatado, fórmul" |
+| M28 | relatório: total por pagador errado | invariantes-financeiros / relatorio | detectada (30 teste(s) falharam); ex.: "Pix em branco só trava o Pix; o recibo e o relatório seguem funcionand" |
+| M29 | fórmula: esquecer tabulação e retorno de carro iniciais | seguranca-local | detectada (1 teste(s) falharam); ex.: "neutralizarFormula: tudo que um leitor de planilha poderia executar ga" |
+| M29b | fórmula: não neutralizar = + - @ | seguranca-local / relatorio | detectada (8 teste(s) falharam); ex.: "mensagem que começa como fórmula não vira fórmula na planilha" |
 | M30 | relatório: remover o lock | relatorio-integridade | detectada (2 teste(s) falharam); ex.: "I3: a execução que esperava a trava relê os pagamentos e produz o resu" |
 | M31 | modelo/pasta: remover o lock | modelo-pasta-idempotencia | detectada (2 teste(s) falharam); ex.: "concorrência: a segunda execução, que esperava a trava, relê as Config" |
 | M32 | modelo: não reconciliar (criar segundo modelo) | modelo-pasta-idempotencia | detectada (2 teste(s) falharam); ex.: "falha ao gravar id_modelo_recibo depois de criar o arquivo: a nova ten" |
@@ -48,7 +49,23 @@ Resultado atual (todas as mutações da lista):
 | M34 | agenda: remover o lock | operacoes-idempotentes | detectada (2 teste(s) falharam); ex.: "trava ocupada: sincronizar, cobrar e recibo avisam em português, sem m" |
 | M35 | gatilho: criar um gatilho a cada vez | operacoes-idempotentes | detectada (3 teste(s) falharam); ex.: "Google simulado: o gatilho automático é criado uma vez só" |
 | M36 | registro: não mascarar e-mail | registro | detectada (2 teste(s) falharam); ex.: "mascara e-mail, telefone e CPF, mas deixa código de paciente" |
-| M37 | registro: fórmula injetada na aba Registro | registro | detectada (1 teste(s) falharam); ex.: "mensagem que começa como fórmula não vira fórmula na planilha" |
+| M37 | planilha: texto regravado pelo kit vira fórmula | seguranca-local | detectada (1 teste(s) falharam); ex.: "Planilha: texto digitado pela usuária que o kit regrava (pagador_nome)" |
+| M41 | menu: deixar a exceção crua escapar (Stackdriver) | seguranca-local (experimento de exceções) | detectada (68 teste(s) falharam); ex.: "a lista falha na segunda página: nada é gravado, erro vai ao Registro " |
+| M42 | log: texto da exceção vai ao Logger | registro | detectada (3 teste(s) falharam); ex.: "regressão: falha de gravação com texto sensível não vai ao Logger" |
 | M38 | Pix: polinômio do CRC errado | pix | detectada (1 teste(s) falharam); ex.: "CRC16-CCITT: vetor conhecido "123456789" dá 29B1" |
-| M39 | produção: manter a escrita na agenda | producao | detectada (4 teste(s) falharam); ex.: "nada do pacote menciona o gerador, os pacientes P9xxx, e-mails inventa" |
+| M39 | produção: manter a escrita na agenda | producao | detectada (6 teste(s) falharam); ex.: "os passos baratos do gate passam neste repositório (estrutura, escopos" |
 | M40 | consulta cancelada marcada como realizada | falhas / menu | detectada (2 teste(s) falharam); ex.: "consulta: realizada e faltou; cancelada não muda" |
+| M43 | configuração: erro de um domínio volta a travar os outros (Pix em branco bloqueia a agenda) | configuracao-dominios / falhas | detectada (5 teste(s) falharam); ex.: "Pix, nome ou e-mail em branco não derrubam a sincronização da agenda n" |
+| M44 | Pix: aceitar valor que estoura o campo de 13 caracteres | limites-pix | detectada (3 teste(s) falharam); ex.: "valor máximo que cabe no campo (13 caracteres) é aceito; um centavo a " |
+| M45 | produção: levar os esqueletos T20 a T24 para o Google da nutricionista | inventario-codigo / producao | detectada (6 teste(s) falharam); ex.: "o documento de inventário lista cada arquivo de src/ com a mesma class" |
+| M46 | faixas: juntar linhas com lacuna (gravaria em linhas que não eram para mexer) | desempenho (agruparEmFaixas) | detectada (2 teste(s) falharam); ex.: "agruparEmFaixas: junta só linhas consecutivas do mesmo tamanho e não t" |
+| M47 | índice de pacientes: incluir paciente inativo | desempenho (equivalência do índice) | detectada (3 teste(s) falharam); ex.: "paciente inativo não é associado; ativo com o mesmo e-mail sim" |
+| M48 | a receber: a própria consulta conta como "anterior" (todo retorno cobrado vira conferência) | desempenho (equivalência) / pagamentos | detectada (22 teste(s) falharam); ex.: "a receber: primeira com histórico e cancelada com cobrança aberta bate" |
+| M49 | pacote: contar consumo de pacote duplicado (ambíguo) | desempenho (equivalência) / invariantes-financeiros | detectada (2 teste(s) falharam); ex.: "consumidas por pacote = contagem direta por (paciente, início), com in" |
+| M50 | marca de agenda: faixa gravada com o tamanho errado | desempenho (chamadas) / simulador estrito | detectada (3 teste(s) falharam); ex.: "sincronizar (primeira vez depois da atualização, todas as linhas sem m" |
+| M51 | gate: ignorar teste que falhou | gate | detectada (1 teste(s) falharam); ex.: "testes: passa só com tudo verde, nada pulado, nada pendente e acima do" |
+| M52 | gate: aceitar teste pulado (skip) | gate | detectada (1 teste(s) falharam); ex.: "testes: passa só com tudo verde, nada pulado, nada pendente e acima do" |
+| M53 | gate: aceitar suíte com testes apagados (piso) | gate | detectada (1 teste(s) falharam); ex.: "testes: passa só com tudo verde, nada pulado, nada pendente e acima do" |
+| M54 | gate: nunca falhar (exit code sempre zero) | gate | detectada (2 teste(s) falharam); ex.: "resultado final: FAIL derruba; WARN e N/M passam mas aparecem; estrito" |
+| M55 | gate: aceitar CSV (dado exportado) no Git | gate | detectada (1 teste(s) falharam); ex.: "estrutura: falta de arquivo obrigatório, dado rastreado, credencial lo" |
+| M56 | cobertura: módulo crítico sem medição passa batido | cobertura-ferramenta | detectada (1 teste(s) falharam); ex.: "módulo crítico ausente da medição é apontado (um arquivo que deixa de " |

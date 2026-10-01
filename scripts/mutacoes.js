@@ -64,6 +64,12 @@ const MUTACOES = [
   ['M48', 'src/Pagamentos.js', 'primeiraConsulta.get(String(c.codigo_paciente)) < `${c.data}${c.hora}`', 'primeiraConsulta.get(String(c.codigo_paciente)) <= `${c.data}${c.hora}`', 'a receber: a própria consulta conta como "anterior" (todo retorno cobrado vira conferência)', 'desempenho (equivalência) / pagamentos'],
   ['M49', 'src/Acoes.js', 'return inicio === \'\' || copias.get(k) > 1 ? 0 : (pagos.get(k) || 0);', 'return inicio === \'\' ? 0 : (pagos.get(k) || 0);', 'pacote: contar consumo de pacote duplicado (ambíguo)', 'desempenho (equivalência) / invariantes-financeiros'],
   ['M50', 'src/SincronizarAgenda.js', 'folha.getRange(f.linha, colunaOrigem, f.valores.length, 1).setValues(f.valores);', 'folha.getRange(f.linha, colunaOrigem, 1, 1).setValues(f.valores);', 'marca de agenda: faixa gravada com o tamanho errado', 'desempenho (chamadas) / simulador estrito'],
+  ['M51', 'scripts/gate.js', 'if (r.falhos > 0) problemas.push(', 'if (false) problemas.push(', 'gate: ignorar teste que falhou', 'gate'],
+  ['M52', 'scripts/gate.js', 'if (r.pulados > 0) problemas.push(', 'if (false) problemas.push(', 'gate: aceitar teste pulado (skip)', 'gate'],
+  ['M53', 'scripts/gate.js', 'if (minimo !== undefined && r.testes < minimo)', 'if (false)', 'gate: aceitar suíte com testes apagados (piso)', 'gate'],
+  ['M54', 'scripts/gate.js', "const falhou = passos.some((p) => p.estado === 'FAIL' || (estrito && p.estado === 'WARN'));", 'const falhou = false;', 'gate: nunca falhar (exit code sempre zero)', 'gate'],
+  ['M55', 'scripts/gate.js', 'const PROIBIDOS_NO_GIT = [/\\.csv$/i, ', 'const PROIBIDOS_NO_GIT = [', 'gate: aceitar CSV (dado exportado) no Git', 'gate'],
+  ['M56', 'scripts/cobertura.js', 'return CRITICOS.filter((c) => !medidos.has(c));', 'return [];', 'cobertura: módulo crítico sem medição passa batido', 'cobertura-ferramenta'],
 ];
 
 function copiarProjeto() {
@@ -75,10 +81,24 @@ function copiarProjeto() {
   }
 }
 
+// Fora da medição: testes que conferem os DOCUMENTOS gerados por este próprio script (o relatório de mutação só fica completo depois da medição)
+// e que não protegem comportamento do kit. Todo o resto da suíte roda.
+const FORA_DA_MEDICAO = ['consistencia-gate.test.js'];
+
 function rodarSuite() {
-  const r = spawnSync(process.execPath, ['--test'], { cwd: TRABALHO, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const testes = fs.readdirSync(path.join(TRABALHO, 'tests')).filter((a) => a.endsWith('.test.js') && !FORA_DA_MEDICAO.includes(a)).map((a) => path.join('tests', a));
+  const r = spawnSync(process.execPath, ['--test', ...testes], { cwd: TRABALHO, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   const falhas = [...(r.stdout || '').matchAll(/^not ok \d+ - (.*)$/gm)].map((m) => m[1]);
   return { passou: r.status === 0, falhas };
+}
+
+// Mantém o texto escrito à mão que vem antes da linha de marca (histórico das rodadas, explicações); troca só a tabela depois dela.
+const MARCA_DA_TABELA = 'Resultado atual (todas as mutações da lista):';
+function escreverRelatorio(arquivo, tabela) {
+  const atual = fs.existsSync(arquivo) ? fs.readFileSync(arquivo, 'utf8') : '';
+  const i = atual.indexOf(MARCA_DA_TABELA);
+  const cabeca = i >= 0 ? atual.slice(0, i + MARCA_DA_TABELA.length) : MARCA_DA_TABELA;
+  fs.writeFileSync(arquivo, `${cabeca}\n\n${tabela}\n`);
 }
 
 function principal() {
@@ -105,11 +125,11 @@ function principal() {
   const tabela = ['| Id | Mutação | Teste que deveria detectar | Detectou? |', '|---|---|---|---|']
     .concat(linhas.map((l) => `| ${l.id} | ${l.descricao} | ${l.esperado} | ${l.resultado}${l.primeiro ? `; ex.: "${l.primeiro.slice(0, 70)}"` : ''} |`)).join('\n');
   const i = args.indexOf('--escrever');
-  if (i >= 0) fs.writeFileSync(path.resolve(RAIZ, args[i + 1]), `${tabela}\n`);
+  if (i >= 0) escreverRelatorio(path.resolve(RAIZ, args[i + 1]), tabela);
   fs.rmSync(TRABALHO, { recursive: true, force: true });
   console.log(`\n${lista.length - sobreviveram}/${lista.length} mutações detectadas.`);
   process.exit(sobreviveram > 0 ? 1 : 0);
 }
 
 if (require.main === module) principal();
-module.exports = { MUTACOES };
+module.exports = { MUTACOES, MARCA_DA_TABELA, FORA_DA_MEDICAO, escreverRelatorio };

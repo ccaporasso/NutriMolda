@@ -200,13 +200,15 @@ function validarConfiguracoes(linhas) {
 }
 
 // Erros que pertencem aos domínios pedidos (nomes de DOMINIOS_CONFIGURACAO). Domínio desconhecido é erro de programação.
+// Resultado sem a separação por chave não pode ser filtrado: devolve todos os erros (na dúvida, interrompe; nunca deixa passar).
 function errosDosDominios(resultado, dominios) {
+  if (!resultado.errosPorChave) return resultado.erros || [];
   const chaves = new Set();
   for (const d of dominios) {
     if (!DOMINIOS_CONFIGURACAO[d]) throw new Error(`Domínio de configuração desconhecido: ${d}`);
     for (const c of DOMINIOS_CONFIGURACAO[d]) chaves.add(c);
   }
-  return Object.entries(resultado.errosPorChave || {}).filter(([c]) => chaves.has(c)).flatMap(([, e]) => e);
+  return Object.entries(resultado.errosPorChave).filter(([c]) => chaves.has(c)).flatMap(([, e]) => e);
 }
 
 // Trava antes de qualquer cobrança: só devolve preço inteiro e maior que zero.

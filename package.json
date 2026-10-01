@@ -1,0 +1,18 @@
+{
+  "name": "kit-do-consultorio",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Kit do Consultório: automações em Google Apps Script. Sem dependências: o package.json só fixa a versão do Node e dá nomes curtos aos comandos.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "cobertura": "node scripts/cobertura.js --exigir",
+    "producao": "node scripts/empacotar-producao.js",
+    "seguranca": "node scripts/seguranca.js --historico",
+    "gate": "node scripts/gate.js",
+    "gate:completo": "node scripts/gate.js --mutacao --estrito",
+    "mutacao": "node scripts/mutacoes.js"
+  }
+}

@@ -35,7 +35,7 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 
 | # | Sintoma | Causa provável | Como resolver |
 |---|---|---|---|
-| 1 | "Há problemas na aba Configurações" ao usar qualquer item | Chave em branco, preço em formato de reais, nome Pix acima do limite, ou chave Pix que o Planilhas transformou em número | Corrigir a linha citada. Chave Pix ou CPF que perdeu zero à esquerda: o kit **não** conserta sozinho (D18); digitar de novo. |
+| 1 | "Há problemas na aba Configurações" ao usar um item (cada item exige só as configurações que usa, ver falha 11) | Chave em branco, preço em formato de reais, nome Pix acima do limite, ou chave Pix que o Planilhas transformou em número | Corrigir a linha citada. Chave Pix ou CPF que perdeu zero à esquerda: o kit **não** conserta sozinho (D18); digitar de novo. |
 | 2 | Google pede autorização de novo, ou "Você não tem permissão" | Escopo novo numa atualização, ou autorização recusada | Rodar qualquer item do menu e aceitar. Conferir os escopos em `src/appsscript.json`. |
 | 3 | Sincronização traz 0 consultas, ou avisa que "a agenda voltou vazia" | `calendario_id` errado, prefixo do título diferente, sem acesso à agenda, período (30 dias atrás a 120 à frente) | Conferir `calendario_id` e `prefixo_evento_consulta`. Por segurança, agenda vazia **não** cancela consultas. |
 | 4 | Consultas com `codigo_paciente` em branco ("a identificar") | E-mail ou telefone da marcação não bate com **um** paciente ativo (ou bate com dois) | Cadastrar o contato em Pacientes ou digitar o código à mão (o kit nunca troca código digitado). |
@@ -43,6 +43,9 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 | 6 | Não chega e-mail de alerta | `email_alertas` errado ou cota diária de e-mails do Google | O erro continua no Registro. Conferir `email_alertas`; cotas em contas gratuitas são menores. |
 | 7 | Não gera cobrança | Preço em branco ou zero (D17), consulta sem paciente, consulta `faltou` ou `cancelada` | Usar Configuração > Definir preços das consultas (em reais) e rodar **Gerar valores a receber**. Preço abaixo de R$ 10,00 pede confirmação (quase sempre é 150 digitado no campo de centavos). |
 | 8 | "Outra operação está em andamento" | Duas ações ao mesmo tempo (menu e gatilho) | Esperar um minuto e repetir. |
+| 9 | "Já existem N PDFs de recibo para o pagamento ..." | Dois PDFs do mesmo pagamento na pasta de recibos (por exemplo, cópia feita à mão) | Mandar para a lixeira os que sobram, deixando um só, e gerar de novo. O kit não escolhe qual apagar. |
+| 10 | "O valor do Pix é alto demais para o padrão" | Preço acima de R$ 9.999.999.999,99 (o padrão do Pix limita o campo a 13 caracteres) | Corrigir o preço em Configuração > Definir preços (o teto do kit já é R$ 100.000,00). |
+| 11 | Só uma funcionalidade reclama de configuração | Desde o Gate, cada funcionalidade só exige as configurações que usa: a chave Pix em branco não trava a sincronização da agenda, mas trava "Gerar Pix" | Corrigir só a linha citada na mensagem. |
 
 ## 5. Escopos de permissão (resumo; a justificativa completa está em `docs/DECISOES.md`)
 
@@ -76,6 +79,6 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 ## 8. Pacote de teste e pacote de produção
 
 - **Teste** = a pasta `src/` inteira (é o que o `clasp` envia ao projeto de TESTE). Tem o gerador de dados fictícios e o escopo `calendar.events`.
-- **Produção** = `node scripts/empacotar-producao.js` monta `dist/producao/` (fora do Git). Não tem `DadosTeste.js`, `GeradorTeste.js` nem o submenu "Somente na conta de TESTE", e troca `calendar.events` por `calendar.events.readonly`. O script recusa montar o pacote se sobrar qualquer marca de teste.
+- **Produção** = `node scripts/empacotar-producao.js` monta `dist/producao/` (fora do Git). Não tem `DadosTeste.js`, `GeradorTeste.js`, os cinco esqueletos T20 a T24 (`Respostas.js`, `Presenca.js`, `FilaAjustes.js`, `Frases.js`, `Modos.js`: lógica pura que nada chama ainda) nem o submenu "Somente na conta de TESTE", e troca `calendar.events` por `calendar.events.readonly`. O script recusa montar o pacote se sobrar qualquer marca de teste.
 - `node --test` já confere isso (`tests/producao.test.js`). O script só monta arquivos: não usa `clasp` e não envia nada.
 - Só use o pacote de produção depois de cumprir o que a D12 e `docs/SEGURANCA-LGPD.md` exigem. Para enviá-lo à conta da cliente, faça um `.clasp.json` **separado** (fora do Git) com `rootDir` apontando para `dist/producao`, e só com a sua confirmação (regra 8).
