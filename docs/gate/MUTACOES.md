@@ -1,3 +1,15 @@
+# Mutação manual dos fluxos críticos
+
+`node scripts/mutacoes.js` aplica uma troca de texto por vez numa cópia temporária do projeto, roda a suíte inteira e exige que ela
+FALHE (mutação detectada). Mutação que sobrevive é buraco de teste. Não altera os arquivos reais. Evidência: E2 (execução local da suíte).
+
+Histórico (não apagado): na primeira rodada, 38 de 40 mutações foram detectadas. Duas sobreviveram:
+
+- **M21 (ids de pagamento repetidos):** buraco real. O teste só tinha ids em ordem crescente, então trocar "maior id" por "último id" passava. Corrigido com casos fora de ordem em `tests/invariantes-financeiros.test.js`.
+- **M15 (reconciliação diminui consumo), versão original:** mutante **equivalente**: a guarda `consumidas <= usadas` é redundante com a guarda `alvo <= usadas` logo depois, então tirar só uma não muda o comportamento. A mutação foi redefinida para remover as duas guardas, e essa é detectada.
+
+Resultado atual (todas as mutações da lista):
+
 | Id | Mutação | Teste que deveria detectar | Detectou? |
 |---|---|---|---|
 | M01 | recibo: remover a reconciliação por identidade (duplicar recibo) | recibo-idempotencia | detectada (7 teste(s) falharam); ex.: "ACHADO P0: PDF criado e gravação do link falha; a nova tentativa relig" |
