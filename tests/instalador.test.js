@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { pathToFileURL } = require('node:url');
 
 const src = (arquivo) => fs.readFileSync(path.join(__dirname, '..', 'src', arquivo), 'utf8');
 
@@ -79,9 +80,9 @@ function criarPlanilhaSimulada() {
 
 function instalar(simulada) {
   const contexto = vm.createContext({ SpreadsheetApp: simulada.SpreadsheetApp, LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) } });
-  vm.runInContext(src('Esquema.js'), contexto);
-  vm.runInContext(src('Execucao.js'), contexto);
-  vm.runInContext(src('Instalador.js'), contexto);
+  vm.runInContext(src('Esquema.js'), contexto, { filename: pathToFileURL(path.join(__dirname, '..', 'src', 'Esquema.js')).href }); // URL: a cobertura conta estas linhas
+  vm.runInContext(src('Execucao.js'), contexto, { filename: pathToFileURL(path.join(__dirname, '..', 'src', 'Execucao.js')).href }); // URL: a cobertura conta estas linhas
+  vm.runInContext(src('Instalador.js'), contexto, { filename: pathToFileURL(path.join(__dirname, '..', 'src', 'Instalador.js')).href }); // URL: a cobertura conta estas linhas
   vm.runInContext('instalarPlanilha()', contexto);
 }
 

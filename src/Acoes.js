@@ -128,13 +128,9 @@ function reconciliarPacotes(pacotes, pagamentos) {
   return { pacotes: resultado, corrigidos, excedentes };
 }
 
-function linhaPacoteAtualizada(p) {
-  return [p.codigo_paciente, p.total_consultas, p.usadas, p.valor_centavos, p.inicio || ''];
-}
-
 if (typeof module !== 'undefined') {
   module.exports = {
     aplicarPagamentoRecebido, aplicarCortesia, aplicarPacote, aplicarStatusConsulta, montarPixDoPagamento,
-    linhaPacoteAtualizada, consumidasPorPacote, reconciliarPacotes,
+    consumidasPorPacote, reconciliarPacotes,
   };
 }

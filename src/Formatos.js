@@ -59,7 +59,7 @@ function lerReais(texto) {
   if (!m) m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(bruto); // 150.50 (ponto decimal)
   if (!m) return { ok: false, motivo: 'Não entendi o valor. Use só números, com vírgula para os centavos (por exemplo 150,00).' };
   const reais = Number(m[1].replace(/\./g, ''));
-  const centavos = reais * 100 + Number((m[2] || '').padEnd(2, '0') || 0);
+  const centavos = reais * 100 + Number((m[2] || '').padEnd(2, '0'));
   if (!Number.isSafeInteger(centavos) || centavos <= 0) return { ok: false, motivo: 'O valor precisa ser maior que zero. Consulta gratuita é cortesia, marcada à parte.' };
   if (centavos > LIMITE_PRECO_CENTAVOS) return { ok: false, motivo: 'O valor está alto demais (acima de R$ 100.000,00). Confira.' };
   return { ok: true, centavos };

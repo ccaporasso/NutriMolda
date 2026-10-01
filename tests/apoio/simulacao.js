@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { pathToFileURL } = require('node:url');
 
 const raiz = path.join(__dirname, '..', '..', 'src');
 const FIXO = Date.UTC(2026, 8, 30, 15, 0, 0); // 30/09/2026 12:00 em São Paulo
@@ -70,9 +71,9 @@ function criarAmbiente(opcoes = {}) {
   let seq = 0;
   const ui = {
     alert: (...a) => { alertas.push(a.slice(0, 2).join(' | ')); return a[2] === 'YES_NO' ? (opcoes.negar ? 'NO' : 'YES') : 'OK'; },
-    prompt: (...a) => { alertas.push(`PROMPT ${a[0]}`); return { getSelectedButton: () => 'OK', getResponseText: () => (opcoes.resposta || '') }; },
+    prompt: (...a) => { alertas.push(`PROMPT ${a[0]}`); return { getSelectedButton: () => (opcoes.cancelarPrompt ? 'CANCEL' : 'OK'), getResponseText: () => (opcoes.resposta || '') }; },
     ButtonSet: { OK: 'OK', OK_CANCEL: 'OK_CANCEL', YES_NO: 'YES_NO' },
-    Button: { OK: 'OK', YES: 'YES', NO: 'NO' },
+    Button: { OK: 'OK', YES: 'YES', NO: 'NO', CANCEL: 'CANCEL' },
     createMenu(nome) {
       const menu = { nome, itens: [] };
       const b = { addItem(t, f) { menu.itens.push([t, f]); return b; }, addSeparator() { menu.itens.push(['---']); return b; }, addSubMenu(s) { menu.itens.push(['>', s.nome, s.itens]); return b; }, addToUi() { ambiente.menu = menu; return b; }, nome, itens: menu.itens };
@@ -129,7 +130,8 @@ function criarAmbiente(opcoes = {}) {
   const ambiente = { planilha, propriedades, apagados, selecao, abas, alertas, emails, arquivos, contexto, ui, relogio, menu: null, sequencia: () => ++seq };
   vm.createContext(contexto);
   ambiente.carregar = (...nomes) => {
-    for (const n of nomes) vm.runInContext(fs.readFileSync(path.join(raiz, n), 'utf8'), contexto, { filename: n });
+    // filename em forma de URL de arquivo: é o que permite à cobertura nativa do Node contar estas linhas (Gate C).
+    for (const n of nomes) vm.runInContext(fs.readFileSync(path.join(raiz, n), 'utf8'), contexto, { filename: pathToFileURL(path.join(raiz, n)).href });
     return ambiente;
   };
   // Carrega arquivos que não vêm de src/ (por exemplo, o pacote de produção montado em memória).

@@ -41,7 +41,7 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
         if (falhas.copiar) throw new Error('Arquivo não encontrado: EXCECAO_FICTICIA_COPIA_001');
         const origem = existente(id);
         if (!origem.acessoDrive) throw new Error('Arquivo não encontrado.');
-        return { id: novo(recurso.name, { texto: origem.texto, pasta: (recurso.parents || [])[0] }).id };
+        return { id: novo(recurso.name, { texto: origem.texto, cabecalho: origem.cabecalho, rodape: origem.rodape, pasta: (recurso.parents || [])[0] }).id };
       },
       create(recurso, blob) {
         chamadas.push('Drive.Files.create');
@@ -104,12 +104,25 @@ function criarDriveSimulado({ idModelo = 'modelo123', idPasta = 'pasta123' } = {
         },
         getText: () => arq.texto,
       };
+      // Cabeçalho e rodapé (opcionais): seção com texto próprio, no mesmo formato do corpo.
+      const secaoExtra = (chave) => {
+        if (arq[chave] === undefined) return null;
+        const t = { deleteText(ini, fim) { arq[chave] = arq[chave].slice(0, ini) + arq[chave].slice(fim + 1); return t; }, insertText(ini, x) { arq[chave] = arq[chave].slice(0, ini) + x + arq[chave].slice(ini); return t; } };
+        return {
+          findText(padrao) {
+            const m = new RegExp(padrao).exec(arq[chave]);
+            if (!m) return null;
+            return { getElement: () => ({ asText: () => t }), getStartOffset: () => m.index, getEndOffsetInclusive: () => m.index + m[0].length - 1 };
+          },
+          getText: () => arq[chave],
+        };
+      };
       return {
-        getId: () => arq.id, getBody: () => corpo, getHeader: () => null, getFooter: () => null,
+        getId: () => arq.id, getBody: () => corpo, getHeader: () => secaoExtra('cabecalho'), getFooter: () => secaoExtra('rodape'),
         saveAndClose() { if (falhas.salvarDocumento) throw new Error('Falha ao salvar: EXCECAO_FICTICIA_SALVAR_001'); },
         getAs: (tipo) => {
           if (falhas.exportarPdf) throw new Error('Falha ao exportar: EXCECAO_FICTICIA_PDF_001');
-          const blob = { tipo, nome: arq.nome, texto: arq.texto, setName(n) { blob.nome = n; return blob; } };
+          const blob = { tipo, nome: arq.nome, texto: [arq.texto, arq.cabecalho, arq.rodape].filter((x) => x !== undefined).join('\n'), setName(n) { blob.nome = n; return blob; } };
           return blob;
         },
       };

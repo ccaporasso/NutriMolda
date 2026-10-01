@@ -66,6 +66,9 @@ test('forma inválida nunca marca pago', () => {
 test('ids de pagamento são únicos, crescentes e não reaproveitados por lacunas; id fora do padrão não derruba a numeração', () => {
   assert.equal(P.proximoNumeroPagamento([]), 1);
   assert.equal(P.proximoNumeroPagamento([{ id: 'PG000003' }, { id: 'PG000010' }, { id: 'lixo' }, { id: '' }, {}]), 11);
+  // a ordem das linhas não pode importar: o maior id manda, mesmo que a linha dele não seja a última (mutação M21)
+  assert.equal(P.proximoNumeroPagamento([{ id: 'PG000010' }, { id: 'PG000003' }]), 11);
+  assert.equal(P.proximoNumeroPagamento([{ id: 'PG000007' }, { id: 'PG000002' }, { id: 'PG000005' }]), 8);
   const consultas = Array.from({ length: 50 }, (_, i) => ({ id_evento: `e${i}`, data: '2026-09-10', hora: `${String(8 + (i % 10)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}`, tipo: 'retorno', codigo_paciente: `P90${i % 7}`, status: 'marcada', linha: i + 2 }));
   const plano = P.planejarAReceber({ consultas, pagamentos: [{ id: 'PG000007', id_evento: 'antigo', status: 'pago' }], config: { valor_primeira_consulta_centavos: 15000, valor_retorno_centavos: 10000 } });
   const ids = plano.novos.map((n) => n.id);
