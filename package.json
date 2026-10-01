@@ -13,6 +13,7 @@
     "seguranca": "node scripts/seguranca.js --historico",
     "gate": "node scripts/gate.js",
     "gate:completo": "node scripts/gate.js --mutacao --estrito",
-    "mutacao": "node scripts/mutacoes.js"
+    "mutacao": "node scripts/mutacoes.js",
+    "pontuacao": "node scripts/pontuacao.js"
   }
 }

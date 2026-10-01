@@ -58,6 +58,7 @@ RESULTADO: PASS (1 não medido(s))
 | Mutação manual | `node scripts/mutacoes.js` (gravar o relatório: `--escrever docs/gate/MUTACOES.md`; uma só: `--so M01`) | `N/N mutações detectadas.` |
 | Complexidade | `node scripts/complexidade.js` | tabela de funções e candidatas a separar |
 | Desempenho | `node scripts/desempenho.js` | tabelas de crescimento e chamadas externas |
+| Nota pela régua do Gate v1.0 (autoavaliação; as entradas são `docs/gate/CRITERIOS.md`) | `node scripts/pontuacao.js` (`--json` para máquina) | notas das duas bases (E2 e conservadora), faixa final e os sete eliminatórios |
 | Auditoria completa | `node scripts/gate.js --mutacao --estrito` | `RESULTADO: PASS` |
 
 Os nomes curtos do `package.json` (`npm test`, `npm run gate`, `npm run gate:completo`) chamam os mesmos comandos; não instalam nada.

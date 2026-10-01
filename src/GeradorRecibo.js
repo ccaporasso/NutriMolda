@@ -65,6 +65,11 @@ function gerarRecibo(numeroLinha) {
       throw erroDeUso_(`Já existem ${achados.quantos} PDFs de recibo para o pagamento ${pagamento.id} na pasta de recibos. `
         + 'Nada foi gerado nem ligado ao pagamento. Mande para a lixeira os que sobram, deixando um só, e tente de novo.');
     }
+    if (achados.situacao === 'divergente') {
+      throw erroDeUso_(`Já existe um PDF de recibo com o número do pagamento ${pagamento.id} na pasta de recibos, mas não consigo confirmar que ele mostra o mesmo valor, `
+        + 'data e forma de pagamento de hoje (pode ser de um pagamento apagado cujo número foi reaproveitado, de um dado corrigido depois ou de uma versão antiga do kit). '
+        + 'Nada foi gerado nem ligado ao pagamento. Confira o PDF na pasta: se não vale mais, mande-o para a lixeira e tente de novo; se vale, cole o link dele na coluna link_recibo.');
+    }
     if (achados.situacao === 'um') {
       gravarCelula('Pagamentos', numeroLinha, 'link_recibo', achados.arquivo.url, { id: pagamento.id, codigo_paciente: pagamento.codigo_paciente });
       registrar('recibo', 'info', `Recibo do pagamento ${pagamento.id} já existia no Drive; o link foi religado, sem gerar outro PDF.`);

@@ -165,13 +165,21 @@ test('identidade: mesmo pagamento mas outro paciente nas propriedades não é re
   assert.doesNotMatch(c.celula('Pagamentos', linha, 'link_recibo'), /alheio02/);
 });
 
-test('identidade: PDF antigo (sem propriedades) com o nome exato do recibo é religado; com outro nome, não', () => {
+test('identidade: PDF antigo (sem propriedades) com o nome exato do recibo NÃO é religado às cegas: o kit para e pede conferência (A-20)', () => {
   const { c, linha } = comPagamentoPago();
   const id = c.celula('Pagamentos', linha, 'id');
   c.drive.arquivos.set('antigo01', { id: 'antigo01', nome: `Recibo-${id}-P9001.pdf`, lixeira: false, tipo: 'application/pdf', pasta: 'pasta123', texto: '', conteudo: '' });
   gerar(c, linha);
+  assert.match(c.ultimoAlerta(), /não consigo confirmar/);
+  assert.equal(c.celula('Pagamentos', linha, 'link_recibo'), '', 'nada foi ligado');
+  assert.equal(c.drive.pdfsNaPasta().length, 1, 'nada foi criado: continua só o antigo');
+  assert.equal(c.amb.emails.length, 0, 'é problema de uso, não falha do sistema');
+  // a nutricionista confere e manda o antigo para a lixeira: aí o recibo novo sai, uma vez só
+  c.drive.arquivos.get('antigo01').lixeira = true;
+  gerar(c, linha);
   assert.equal(c.drive.pdfsNaPasta().length, 1);
-  assert.match(c.celula('Pagamentos', linha, 'link_recibo'), /antigo01/);
+  assert.notEqual(c.drive.pdfsNaPasta()[0].id, 'antigo01');
+  assert.match(c.celula('Pagamentos', linha, 'link_recibo'), /^https:/);
 });
 
 test('identidade: arquivo na lixeira não conta (a nutricionista descartou o recibo de propósito)', () => {
@@ -200,7 +208,12 @@ test('o PDF criado leva a identidade do pagamento e do paciente nas propriedades
   const { c, linha } = comPagamentoPago();
   gerar(c, linha);
   const pdf = c.drive.pdfsNaPasta()[0];
-  assert.deepEqual(pdf.appProperties, { kit_recibo_pagamento: c.celula('Pagamentos', linha, 'id'), kit_recibo_paciente: 'P9001' });
+  assert.deepEqual(pdf.appProperties, {
+    kit_recibo_pagamento: c.celula('Pagamentos', linha, 'id'),
+    kit_recibo_paciente: 'P9001',
+    kit_recibo_conteudo: `${c.celula('Pagamentos', linha, 'valor_centavos')}|${c.celula('Pagamentos', linha, 'data_pagamento')}|pix`,
+  });
+  assert.match(pdf.appProperties.kit_recibo_conteudo, /^\d+\|\d{4}-\d{2}-\d{2}\|pix$/, 'só valor, data e forma: nada que identifique a pessoa');
   assert.doesNotMatch(JSON.stringify(pdf.appProperties), SENSIVEL);
 });
 
@@ -224,4 +237,87 @@ test('a linha do pagamento mudou durante a reconciliação: o link não é grava
   assert.equal(aba.linhas[linha - 1][iLink], 'X', 'a linha inserida não foi tocada');
   assert.match(c.ultimoAlerta(), /mudou enquanto o kit trabalhava/);
   assert.equal(c.drive.pdfsNaPasta().length, 1);
+});
+
+// ---------- A-20: o PDF de uma tentativa anterior só é religado se ainda disser o mesmo que o pagamento diz hoje ----------
+
+// Último pagamento da planilha (o único cujo número a planilha reaproveita se a linha for apagada, A-07), já pago em Pix.
+function comUltimoPagamentoPago() {
+  const c = criarConsultorio();
+  c.rodar('sincronizarAgenda()');
+  c.rodar('gerarAReceber()');
+  const linha = c.amb.abas.get('Pagamentos').linhas.length;
+  c.selecionar('Pagamentos', linha);
+  c.rodar('marcarPagoPix()');
+  c.definir('Pagamentos', linha, 'pagador_nome', 'Maria Souza Teste');
+  c.definir('Pagamentos', linha, 'pagador_cpf', '52998224725');
+  return { c, linha };
+}
+
+test('A-20: número de pagamento reaproveitado depois de apagar a última linha NÃO religa o PDF do pagamento apagado', () => {
+  const { c, linha } = comUltimoPagamentoPago();
+  const id = c.celula('Pagamentos', linha, 'id');
+  gerar(c, linha);
+  const antigo = c.drive.pdfsNaPasta().find((a) => a.appProperties.kit_recibo_pagamento === id);
+  assert.ok(antigo, 'o recibo do pagamento original existe');
+  // a nutricionista apaga a última linha de Pagamentos (era um engano) e gera as cobranças de novo: o número volta
+  c.amb.abas.get('Pagamentos').deleteRow(linha);
+  c.rodar('gerarAReceber()');
+  const novaLinha = c.linhaOnde('Pagamentos', 'id', id);
+  assert.ok(novaLinha, 'o número foi reaproveitado (A-07 continua como está)');
+  c.selecionar('Pagamentos', novaLinha);
+  c.rodar('marcarPagoCartao()');
+  c.definir('Pagamentos', novaLinha, 'valor_centavos', 20000);
+  c.definir('Pagamentos', novaLinha, 'pagador_nome', 'Maria Souza Teste');
+  const antes = c.drive.pdfsNaPasta().length;
+  gerar(c, novaLinha);
+  assert.match(c.ultimoAlerta(), /não consigo confirmar/);
+  assert.equal(c.celula('Pagamentos', novaLinha, 'link_recibo'), '', 'o recibo antigo (outro valor e outra forma) não foi ligado ao pagamento novo');
+  assert.equal(c.drive.pdfsNaPasta().length, antes, 'nada foi criado nem apagado');
+  assert.doesNotMatch(textoQuePodeVazar(c), SENSIVEL);
+  // depois da conferência (PDF antigo para a lixeira), o recibo certo sai, uma vez só
+  antigo.lixeira = true;
+  gerar(c, novaLinha);
+  assert.equal(c.drive.pdfsNaPasta().length, 1);
+  assert.equal(c.drive.pdfsNaPasta()[0].appProperties.kit_recibo_conteudo, `20000|${c.celula('Pagamentos', novaLinha, 'data_pagamento')}|cartao`);
+});
+
+test('A-20: falha parcial e retry sem mudar nada continua religando (a correção do eliminador não regride)', () => {
+  const { c, linha } = comUltimoPagamentoPago();
+  const quebra = quebrarGravacaoDoLink(c);
+  gerar(c, linha);
+  assert.equal(c.drive.pdfsNaPasta().length, 1, 'o PDF ficou, o link não');
+  quebra.consertar();
+  gerar(c, linha);
+  assert.equal(c.drive.pdfsNaPasta().length, 1, 'o retry não cria segundo PDF');
+  assert.match(c.celula('Pagamentos', linha, 'link_recibo'), /^https:/);
+});
+
+test('A-20: falha parcial, valor corrigido antes do retry: o PDF antigo mostra o valor velho, então o kit para em vez de ligá-lo', () => {
+  const { c, linha } = comUltimoPagamentoPago();
+  const quebra = quebrarGravacaoDoLink(c);
+  gerar(c, linha);
+  quebra.consertar();
+  c.definir('Pagamentos', linha, 'valor_centavos', 17500);
+  gerar(c, linha);
+  assert.match(c.ultimoAlerta(), /não consigo confirmar/);
+  assert.equal(c.celula('Pagamentos', linha, 'link_recibo'), '');
+  assert.equal(c.drive.pdfsNaPasta().length, 1);
+});
+
+test('A-20: escolherReciboExistente separa "um que confere", "um que diverge", "vários" e "nenhum"', () => {
+  const R = require('../src/Recibo.js');
+  const pg = { id: 'PG000007', codigo_paciente: 'P9001', valor_centavos: 15000, data_pagamento: '2026-09-30', forma: 'pix' };
+  const base = { name: 'x.pdf', appProperties: R.propriedadesDoRecibo(pg) };
+  assert.equal(R.escolherReciboExistente([base], pg).situacao, 'um');
+  for (const mudanca of [{ valor_centavos: 15001 }, { data_pagamento: '2026-10-01' }, { forma: 'cartao' }]) {
+    assert.equal(R.escolherReciboExistente([base], { ...pg, ...mudanca }).situacao, 'divergente', JSON.stringify(mudanca));
+  }
+  const semImpressao = { name: 'x.pdf', appProperties: { kit_recibo_pagamento: 'PG000007', kit_recibo_paciente: 'P9001' } };
+  assert.equal(R.escolherReciboExistente([semImpressao], pg).situacao, 'divergente', 'identidade sem impressão (versão antiga) não basta');
+  assert.equal(R.escolherReciboExistente([base, { ...base, name: 'y.pdf' }], pg).situacao, 'varios');
+  assert.equal(R.escolherReciboExistente([{ name: 'Recibo-PG000007-P9001.pdf', appProperties: {} }], pg).situacao, 'divergente', 'só o nome não prova o conteúdo');
+  assert.equal(R.escolherReciboExistente([{ name: 'Recibo-PG000007-P9001.pdf' }], pg).situacao, 'divergente', 'o Drive pode devolver o arquivo sem o campo appProperties');
+  assert.equal(R.escolherReciboExistente([], pg).situacao, 'nenhum');
+  assert.equal(R.impressaoDoRecibo(pg), '15000|2026-09-30|pix');
 });

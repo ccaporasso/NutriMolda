@@ -16,7 +16,7 @@ Ordem de prioridade: agenda, pagamentos, pacotes, recibos, relatórios, configur
 | marcar cortesia | Sim | Sim | Sim: só parte de `a_receber` | Idem |
 | consumir pacote | Sim (por pagamento; `usadas` reconcilia) | Sim, e o saldo é lido depois da trava (R11b) | Sim: o pagamento é gravado primeiro; `usadas` é reconciliado pelos pagamentos | Sim: falha só em `usadas` (R11), excesso acima do total, 800 cenários gerados |
 | gerar Pix | Sim (só leitura; o texto depende de id e valor) | Não precisa (não escreve) | Sim | N/A (não escreve) |
-| gerar recibo | Sim (um PDF ativo por pagamento) | Sim, antes de ler o pagamento | Sim: reconcilia por identidade antes de criar | Sim: falha em cada um dos 9 passos + resposta perdida do Drive (`recibo-idempotencia`) |
+| gerar recibo | Sim (um PDF ativo por pagamento) | Sim, antes de ler o pagamento | Sim: reconcilia por identidade e conteúdo antes de criar | Sim: falha em cada um dos 9 passos + resposta perdida do Drive (`recibo-idempotencia`) |
 | gerar relatório | Sim (mesma aba, mesmo CSV por mês) | Sim (nesta rodada) | Sim: refaz a aba e substitui o CSV pelo nome | Sim: falha na aba, no CSV, resposta perdida (`relatorio-integridade`) |
 | criar modelo/pasta de recibos | Sim (nunca troca id preenchido) | Sim (nesta rodada), relendo Configurações | Sim: reaproveita o arquivo já criado (propriedade `kit_papel`) | Sim: falha ao gravar o id, ao criar, duplicado (`modelo-pasta-idempotencia`) |
 | instalar/atualizar planilha | Sim | Sim (nesta rodada) | Sim: só cria o que falta | Paralelo e repetido (`operacoes-idempotentes`, `instalador`) |
@@ -88,12 +88,12 @@ Convenção: "ponto de commit" é o instante em que o efeito passa a valer para 
 | Escritas | Cópia de trabalho no Drive; PDF no Drive (com propriedades de identidade); célula `link_recibo`; cópia vai para a lixeira |
 | Serviços externos | Drive v3 (`drive.file`), Docs |
 | Lock | Sim, antes de ler o pagamento |
-| Identidade | PDF: propriedades `kit_recibo_pagamento` + `kit_recibo_paciente` (nome do arquivo é só reforço); linha: `id` + `codigo_paciente` |
+| Identidade | PDF: propriedades `kit_recibo_pagamento` + `kit_recibo_paciente` + `kit_recibo_conteudo` (valor, data e forma; sem nome nem CPF; o nome do arquivo é só reforço); linha: `id` + `codigo_paciente` |
 | Ponto de commit | Criação do PDF no Drive. O link na planilha é o registro desse commit e pode faltar |
 | Falhas possíveis | Falha em copiar, abrir, trocar campo, salvar, exportar, criar PDF (inclusive com resposta perdida), gravar link, descartar o rascunho |
-| Retry | Seguro (R2/R4): antes de copiar o modelo, procura o PDF do pagamento; exatamente 1 → religa o link; 2 ou mais → para sem criar; 0 → cria |
-| Reconciliação | Por identidade. PDF de outro pagamento/paciente nunca é religado (R5); PDF antigo sem propriedades vale só com o nome exato; arquivo na lixeira não conta |
-| Teste | `recibo-idempotencia.test.js` (22 casos), `recibo.test.js`, `recibo-drive-file.test.js`, `falhas.test.js` |
+| Retry | Seguro (R2/R4): antes de copiar o modelo, procura o PDF do pagamento; exatamente 1 que ainda diz o mesmo que o pagamento → religa o link; 1 que diverge (valor, data ou forma mudou, ou sem impressão) → para sem criar nem ligar (A-20); 2 ou mais → para sem criar; 0 → cria |
+| Reconciliação | Por identidade. PDF de outro pagamento/paciente nunca é religado (R5); PDF antigo sem propriedades (ou sem a impressão do conteúdo) nunca é religado às cegas: o kit para e pede conferência (A-20); arquivo na lixeira não conta |
+| Teste | `recibo-idempotencia.test.js` (26 casos), `recibo.test.js`, `recibo-drive-file.test.js`, `falhas.test.js` |
 
 ### 2.5 Relatórios (`GerarRelatorio.js`, `Relatorio.js`)
 

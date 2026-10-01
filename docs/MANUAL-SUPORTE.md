@@ -46,6 +46,7 @@ Pré-requisitos e passos de `docs/PRIMEIROS-PASSOS.md` (Node, clasp, conta de te
 | 9 | "Já existem N PDFs de recibo para o pagamento ..." | Dois PDFs do mesmo pagamento na pasta de recibos (por exemplo, cópia feita à mão) | Mandar para a lixeira os que sobram, deixando um só, e gerar de novo. O kit não escolhe qual apagar. |
 | 10 | "O valor do Pix é alto demais para o padrão" | Preço acima de R$ 9.999.999.999,99 (o padrão do Pix limita o campo a 13 caracteres) | Corrigir o preço em Configuração > Definir preços (o teto do kit já é R$ 100.000,00). |
 | 11 | Só uma funcionalidade reclama de configuração | Desde o Gate, cada funcionalidade só exige as configurações que usa: a chave Pix em branco não trava a sincronização da agenda, mas trava "Gerar Pix" | Corrigir só a linha citada na mensagem. |
+| 12 | "Já existe um PDF de recibo ... não consigo confirmar que ele mostra o mesmo valor, data e forma" | O PDF achado na pasta tem outro valor, data ou forma de pagamento (pagamento apagado e refeito com o mesmo número, valor corrigido depois da falha) ou é de uma versão antiga do kit, sem a impressão do conteúdo (A-20) | Abrir o PDF. Se não vale mais, mandar para a lixeira e gerar de novo; se vale, colar o link dele na coluna `link_recibo`. O kit não cria outro nem liga às cegas. |
 
 ## 5. Escopos de permissão (resumo; a justificativa completa está em `docs/DECISOES.md`)
 

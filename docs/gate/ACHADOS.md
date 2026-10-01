@@ -25,6 +25,7 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 | A-17 | Erro inesperado no gatilho manda um e-mail por execução (sem limite por dia) | BAIXO | Aberto (decisão do Caio) |
 | A-18 | Laços dentro de laços na lógica (agenda x pacientes, a receber x consultas, pacotes x pagamentos) e uma chamada à planilha por linha na sincronização | MÉDIO | Corrigido (E2) |
 | A-19 | O arquivo do CI (`ci.yml`) tinha erro de sintaxe YAML e o GitHub o recusou na primeira execução real | MÉDIO | Corrigido (E1: o GitHub recusou; E2: teste de sintaxe); resultado verde do CI: ver `docs/gate/REAUDITORIA.md` |
+| A-20 | A correção do recibo (A-01) religava o PDF de um pagamento apagado se o número fosse reaproveitado (A-07) ou se o dado mudasse depois da falha: recibo com valor errado ligado em silêncio | MÉDIO | Corrigido (E2); comportamento real do Drive N/M |
 
 ---
 
@@ -39,6 +40,7 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **EVIDÊNCIA:** E2. O comportamento real do Drive (`appProperties`, consulta `appProperties has {...}` com `drive.file`) é **N/M** até o roteiro em `docs/gate/GOOGLE-REAL.md`.
 - **Corrigido em:** commit `e83bc76`. **Mudança de comportamento para a nutricionista:** para gerar de novo um recibo, não basta apagar o link: o PDF antigo precisa ir para a lixeira (senão o kit religa o antigo). Manuais atualizados.
 - **Risco residual (aceito):** se o link de um pagamento for apagado à mão e o PDF antigo continuar na pasta, o kit religa o antigo em vez de gerar um novo (comportamento desejado por R1).
+- **Revisto em A-20:** religar o PDF achado passou a exigir também que ele traga a mesma impressão do conteúdo (valor, data e forma); sem isso o kit para e pede conferência em vez de religar.
 
 ## A-02 Modelo e pasta de recibos podiam duplicar
 
@@ -74,7 +76,7 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 ## A-07 Id de pagamento pode ser reaproveitado (ABERTO, BAIXO)
 
 - **Encontrado em:** `proximoNumeroPagamento` (roteiro, item 29): o próximo número vem do maior id presente na planilha. Apagar a última linha de Pagamentos libera o número dela.
-- **Impacto:** o recibo é identificado por (id do pagamento, código do paciente). Um id reaproveitado para o mesmo paciente poderia religar o PDF do pagamento apagado. Exige apagar à mão a última linha, ter recibo emitido e gerar nova cobrança do mesmo paciente.
+- **Impacto (revisto no achado A-20):** o recibo era identificado só por (id do pagamento, código do paciente); um id reaproveitado para o mesmo paciente religava o PDF do pagamento apagado. **Esta consequência foi fechada em A-20** (o PDF só é religado se disser o mesmo valor, data e forma). O que continua aberto é só a reutilização do número em si (também usado como identificador da transação no Pix copia e cola), sem efeito conhecido sobre dado ou recibo.
 - **Opção de correção (não aplicada, muda dado persistido):** guardar o maior número já emitido em `PropertiesService` do documento. Fica para decisão do Caio.
 
 ## A-08 Dois CSVs de mesmo nome (ABERTO, BAIXO)
@@ -163,3 +165,14 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **Limite:** o teste não é um analisador de YAML completo; cobre o erro que aconteceu e os parentes mais próximos.
 - **REGRESSÃO:** `tests/reproducao.test.js` (teste de sintaxe do workflow).
 - **EVIDÊNCIA:** E1 (recusa do GitHub), E2 (teste). **Corrigido em:** commit `940700e`. **Prova:** no PR, o job "Gate local" e o job de mutação passaram em `940700e` (ver `docs/gate/REAUDITORIA.md`, seção G).
+
+## A-20 O recibo religado podia ser o do pagamento errado (consequência do A-01 com o A-07)
+
+- **Encontrado em:** aplicação da régua do Caio ao commit congelado (eliminatório "possibilidade plausível de corrupção/perda silenciosa de dados"), relendo o A-07: a correção do A-01 liga o PDF achado ao pagamento, e a identidade era só (número do pagamento, código do paciente). Em dois caminhos plausíveis o PDF achado mostrava outro conteúdo: (1) a nutricionista apaga a última linha de Pagamentos por engano e refaz a cobrança do mesmo paciente (o número é reaproveitado, A-07); (2) a falha parcial deixa o PDF sem link e o valor é corrigido antes da nova tentativa. O kit religava o PDF antigo **em silêncio**: o paciente receberia um recibo com valor, data ou forma errados, e o Registro diria "recibo religado".
+- **ANTES:** `tests/recibo-idempotencia.test.js`, rodado contra o código do commit `940700e`: 5 dos 26 casos falham, entre eles "número de pagamento reaproveitado depois de apagar a última linha NÃO religa o PDF do pagamento apagado" e "valor corrigido antes do retry".
+- **CORREÇÃO:** o PDF passa a levar `kit_recibo_conteudo` (valor em centavos, data e forma; sem nome, CPF ou dado de saúde, regra 6). Antes de religar, `escolherReciboExistente` confere se a impressão do PDF é a do pagamento de hoje. Se não for (ou se o PDF não tem impressão, caso de versão antiga ou de PDF sem propriedades), devolve `divergente` e `gerarRecibo` para, sem criar e sem ligar, com mensagem que diz o que conferir (o kit prefere parar a ligar o recibo errado, como na sincronização, R04).
+- **DEPOIS:** os 26 casos passam. A recuperação da falha parcial sem mudança de dado continua religando (o eliminador A-01 não regride): teste "falha parcial e retry sem mudar nada continua religando".
+- **Mudança de comportamento (decidida aqui, não pedida pelo Caio; decisão DG1 atualizada):** um PDF antigo achado só pelo nome, sem propriedades, deixou de ser religado automaticamente. Intenção preservada: nunca criar um segundo recibo nem ligar o errado. O custo é um passo manual raro (conferir o PDF e mandá-lo para a lixeira ou colar o link).
+- **REGRESSÃO:** `tests/recibo-idempotencia.test.js` (4 casos novos e 2 ajustados); mutações M58 (religar sem conferir o conteúdo) e M59 (impressão sem a forma de pagamento), ambas detectadas. **EVIDÊNCIA:** E2. **N/M:** como o Drive real grava e devolve `appProperties` (itens 5 e 10 de `GOOGLE-REAL.md`).
+- **Limite conhecido:** a impressão não cobre nome e CPF do pagador (não se grava PII nas propriedades). Se só o nome do pagador for corrigido entre uma falha parcial e a nova tentativa, o PDF antigo ainda é religado com o nome velho. O manual manda mandar o PDF antigo para a lixeira ao corrigir o nome.
+- **Corrigido em:** commit do SHA preenchido no fechamento (ver `docs/gate/REAUDITORIA.md`).

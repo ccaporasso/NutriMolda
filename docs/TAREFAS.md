@@ -22,14 +22,14 @@ Rodada de endurecimento a partir da auditoria (80,6/100, resultado efetivo "não
 
 | # | Etapa | Dono | Situação |
 |---|---|---|---|
-| G-A | Recibo idempotente depois de falha parcial (eliminador), com identidade no PDF, trava antes de ler e teste de falha em cada passo | Code | feita e testada localmente (E2); comportamento real do Drive N/M |
+| G-A | Recibo idempotente depois de falha parcial (eliminador), com identidade e impressão do conteúdo no PDF (A-20: PDF sem a impressão ou que não confere faz o kit parar e pedir conferência), trava antes de ler e teste de falha em cada passo | Code | feita e testada localmente (E2); comportamento real do Drive N/M |
 | G-B | Integridade: pacote 0 <= usadas <= total, agenda sem id repetido nem dependência do fuso da máquina, configuração por domínio, fórmula centralizada, Pix e formatos com limites | Code | feita e testada localmente (E2) |
-| G-C | Testabilidade: matriz de integridade, cobertura medida com piso, mutação manual, testes de propriedade com semente fixa | Code | feita (E2) |
+| G-C | Testabilidade: matriz de integridade, cobertura medida com piso, mutação manual (60), testes de propriedade com semente fixa, falhas parciais de todas as operações que escrevem | Code | feita (E2) |
 | G-D | Segurança local: PII, segredos, histórico do Git, escopos e serviços, experimento de exceções | Code | feita (E2/E3); isolamento entre contas N/M |
 | G-E | Disciplina: `scripts/gate.js`, CI no GitHub, Node fixo, guia de reprodução | Code | escrita e testada localmente; a primeira execução real do CI **recusou o arquivo** (erro de YAML, achado A-19), corrigido com teste; resultado verde do CI em `docs/gate/REAUDITORIA.md`; proteção da `main` é recomendação, não aplicada |
 | G-F | Eficiência: laços n² e escritas por linha corrigidos, política do Registro, complexidade e inventário (esqueletos fora da produção) | Code | feita (E2); tempos reais do Google N/M |
 | G-G | Validação no Google real: roteiro com Conta A e B | Ambos | **preparado, não executado** (`docs/gate/GOOGLE-REAL.md`); exige confirmação do Caio antes de qualquer `clasp push` |
-| G-H | Reauditoria independente com o mesmo critério da auditoria anterior | Programador / revisor | pacote de evidências pronto em `docs/gate/REAUDITORIA.md` (itens A a K do roteiro); **nota não recalculada**: a régua do Gate v1.0 (pesos, limiares e os sete eliminadores) não foi entregue a este trabalho; o revisor independente aplica |
+| G-H | Reauditoria independente com o mesmo critério da auditoria anterior | Programador / revisor | pacote de evidências e **régua aplicada** em `docs/gate/REAUDITORIA.md` (itens A a K): nota E2 88,1 (PASSA) e conservadora 73,2 (PASSA COM RESSALVAS), nenhum eliminatório SIM (E04 condicional); `node scripts/pontuacao.js` refaz a conta. **É autoavaliação**: o revisor independente refaz com as próprias listas de critérios |
 | G-D1 | Decisões DG1 a DG6 e as três pendentes do Registro (A-17, prazo de guarda, 1 linha por hora) | Você | aguardando o Caio |
 
 ## Fase 2a — Base e financeiro (pode começar agora, sem cliente)

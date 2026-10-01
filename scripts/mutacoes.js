@@ -70,6 +70,9 @@ const MUTACOES = [
   ['M54', 'scripts/gate.js', "const falhou = passos.some((p) => p.estado === 'FAIL' || (estrito && p.estado === 'WARN'));", 'const falhou = false;', 'gate: nunca falhar (exit code sempre zero)', 'gate'],
   ['M55', 'scripts/gate.js', 'const PROIBIDOS_NO_GIT = [/\\.csv$/i, ', 'const PROIBIDOS_NO_GIT = [', 'gate: aceitar CSV (dado exportado) no Git', 'gate'],
   ['M56', 'scripts/cobertura.js', 'return CRITICOS.filter((c) => !medidos.has(c));', 'return [];', 'cobertura: módulo crítico sem medição passa batido', 'cobertura-ferramenta'],
+  ['M58', 'src/Recibo.js', "return { situacao: confere ? 'um' : 'divergente', arquivo: dele[0], quantos: 1 };", "return { situacao: 'um', arquivo: dele[0], quantos: 1 };", 'recibo: religar o PDF achado sem conferir o que ele mostra (número reaproveitado liga o recibo errado)', 'recibo-idempotencia'],
+  ['M59', 'src/Recibo.js', "return `${pagamento.valor_centavos}|${pagamento.data_pagamento}|${pagamento.forma}`;", "return `${pagamento.valor_centavos}|${pagamento.data_pagamento}`;", 'recibo: impressão do conteúdo sem a forma de pagamento', 'recibo-idempotencia'],
+  ['M60', 'src/Menu.js', "  return comTrava_(() => {\n    const linhas = linhasSelecionadas(nomeAba, MAX_LINHAS_POR_ACAO);", "  return ((f) => f())(() => {\n    const linhas = linhasSelecionadas(nomeAba, MAX_LINHAS_POR_ACAO);", 'pagamento: pagar/cortesia/pacote sem a trava (duas execuções se atropelam)', 'falhas-parciais-operacoes'],
 ];
 
 function copiarProjeto() {

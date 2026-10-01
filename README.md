@@ -14,7 +14,7 @@ Solução configurável para consultórios de nutrição, com o **WhatsApp ofici
 - `tests/` — testes da lógica pura, rodados com `node --test`, sem dependências.
 - `scripts/` — ferramentas de apoio (ciclo de revisão com o ChatGPT: `docs/CICLO-REVISAO.md`).
 - `docs/` — especificação, tarefas, decisões, segurança e manutenção.
-- `docs/gate/` — evidências do Gate de Continuidade de Engenharia (achados, matriz de integridade, cobertura, mutação, segurança local, desempenho).
+- `docs/gate/` — evidências do Gate de Continuidade de Engenharia (achados, matriz de integridade, cobertura, mutação, segurança local, desempenho, critérios e nota pela régua do Gate v1.0 em `REAUDITORIA.md`).
 
 ## Verificar tudo
 
