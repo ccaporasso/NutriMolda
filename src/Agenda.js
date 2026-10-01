@@ -57,18 +57,47 @@ function contatosDoEvento(evento) {
   return { emails, telefones };
 }
 
-// Devolve o código do paciente, ou null se ninguém bate ou se mais de um paciente bate.
-// Paciente marcado com ativo = false não entra.
-function identificarPacienteAgenda(evento, pacientes) {
-  const { emails, telefones } = contatosDoEvento(evento);
-  const achados = new Set();
+// Índices e-mail -> códigos e telefone -> códigos, montados UMA vez por sincronização. Antes, cada evento percorria todos os pacientes
+// (crescimento eventos x pacientes: 5.000 x 5.000 levava 4 s no Node, muito mais no Apps Script). Paciente inativo não entra.
+function indexarPacientesAgenda(pacientes) {
+  const porEmail = new Map();
+  const porTelefone = new Map();
+  const juntar = (mapa, chave, codigo) => {
+    if (!mapa.has(chave)) mapa.set(chave, new Set());
+    mapa.get(chave).add(codigo);
+  };
   for (const p of pacientes) {
     if (p.ativo === false) continue;
     const email = String(p.email || '').trim().toLowerCase();
     const tel = normalizarTelefoneAgenda(p.telefone);
-    if ((email && emails.has(email)) || (tel.length >= 10 && telefones.has(tel))) achados.add(String(p.codigo));
+    if (email) juntar(porEmail, email, String(p.codigo));
+    if (tel.length >= 10) juntar(porTelefone, tel, String(p.codigo));
   }
+  return { porEmail, porTelefone };
+}
+
+// Devolve o código do paciente, ou null se ninguém bate ou se mais de um paciente bate.
+// Paciente marcado com ativo = false não entra. `indice` (opcional): resultado de indexarPacientesAgenda, para não refazer a cada evento.
+function identificarPacienteAgenda(evento, pacientes, indice) {
+  const { emails, telefones } = contatosDoEvento(evento);
+  const { porEmail, porTelefone } = indice || indexarPacientesAgenda(pacientes);
+  const achados = new Set();
+  for (const e of emails) for (const c of porEmail.get(e) || []) achados.add(c);
+  for (const t of telefones) for (const c of porTelefone.get(t) || []) achados.add(c);
   return achados.size === 1 ? [...achados][0] : null;
+}
+
+// Junta linhas vizinhas da planilha em faixas, para gravar cada faixa com UMA chamada (antes: uma chamada por linha; 5.000 linhas = 5.000 chamadas).
+// itens: [{ linha, valores }] em qualquer ordem. Só junta linhas consecutivas e do mesmo tamanho, então nenhuma célula fora das linhas
+// planejadas é tocada. Devolve [{ linha (a primeira), valores: [[...], ...] }].
+function agruparEmFaixas(itens) {
+  const faixas = [];
+  for (const item of [...itens].sort((a, b) => a.linha - b.linha)) {
+    const ultima = faixas[faixas.length - 1];
+    if (ultima && ultima.linha + ultima.valores.length === item.linha && ultima.valores[0].length === item.valores.length) ultima.valores.push(item.valores);
+    else faixas.push({ linha: item.linha, valores: [item.valores] });
+  }
+  return faixas;
 }
 
 function ehEventoDeConsulta(evento, prefixo) {
@@ -135,11 +164,12 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
   }
   validos.sort((a, b) => (a.local.data + a.local.hora).localeCompare(b.local.data + b.local.hora));
 
+  const indicePacientes = indexarPacientesAgenda(pacientes);
   const novosEventos = [];
   for (const { ev, id, local } of validos) {
     const atual = porId.get(id);
     if (!atual) { novosEventos.push({ ev, id, local }); continue; }
-    const codigoAgenda = identificarPacienteAgenda(ev, pacientes);
+    const codigoAgenda = identificarPacienteAgenda(ev, pacientes, indicePacientes);
     const base = atualizacoes.get(id) || atual;
     const novo = { ...base, data: local.data, hora: local.hora };
     if (!novo.codigo_paciente && codigoAgenda) { novo.codigo_paciente = codigoAgenda; recemIdentificados.add(id); }
@@ -201,7 +231,7 @@ function planejarSincronizacaoAgenda({ eventos, existentes, pacientes, prefixo, 
   }
   const novos = [];
   for (const { ev, id, local } of novosEventos.filter((n) => !idsDeOutraAgenda.has(n.id))) {
-    const codigoAgenda = identificarPacienteAgenda(ev, pacientes);
+    const codigoAgenda = identificarPacienteAgenda(ev, pacientes, indicePacientes);
     const anteriores = (historico.get(codigoAgenda) || []).filter((x) => x < local.data + local.hora);
     novos.push({
       id_evento: id, data: local.data, hora: local.hora,
@@ -233,7 +263,7 @@ function resumirSincronizacao(plano) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    calcularJanelaAgenda, marcaDaAgenda, normalizarTelefoneAgenda, contatosDoEvento, identificarPacienteAgenda,
+    calcularJanelaAgenda, marcaDaAgenda, normalizarTelefoneAgenda, contatosDoEvento, indexarPacientesAgenda, identificarPacienteAgenda, agruparEmFaixas,
     ehEventoDeConsulta, linhaConsulta, planejarSincronizacaoAgenda, resumirSincronizacao,
   };
 }

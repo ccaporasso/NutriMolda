@@ -27,6 +27,8 @@ function criarAba(nome, cabecalho) {
         getValues: () => Array.from({ length: nl }, (_, i) => Array.from({ length: nc },
           (__, j) => (linhas[linha - 1 + i] && linhas[linha - 1 + i][coluna - 1 + j] !== undefined ? linhas[linha - 1 + i][coluna - 1 + j] : ''))),
         setValues(v) {
+          // O Planilhas recusa dados com tamanho diferente do intervalo ("The number of rows/columns in the data does not match the number in the range").
+          if (v.length !== nl || v.some((l) => l.length !== nc)) throw new Error(`The number of rows or columns in the data does not match the range (${nl}x${nc}, recebeu ${v.length}x${v[0] ? v[0].length : 0}).`);
           if (linha + nl - 1 > aba.maxLinhas) throw new Error('The coordinates of the range are outside the dimensions of the sheet.');
           v.forEach((l, i) => l.forEach((x, j) => {
             while (linhas.length < linha + i) linhas.push([]);

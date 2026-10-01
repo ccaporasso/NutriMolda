@@ -93,16 +93,22 @@ function sincronizarAgenda() {
     const idsNaFolha = folha.getLastRow() >= 2 ? folha.getRange(1, 1, folha.getLastRow(), 1).getValues().map((l) => String(l[0])) : [];
     const aindaEhAMesma = (linha, id) => idsNaFolha[linha - 1] === String(id);
     let mudaram = 0;
+    // Linhas vizinhas são gravadas juntas (uma chamada por faixa, não por linha): 1.000 linhas a atualizar eram 1.000 chamadas à planilha.
+    const existentePorLinha = new Map(existentes.map((c) => [c.linha, c]));
+    const completas = [];
     for (const a of plano.atualizar) {
       if (!aindaEhAMesma(a.linha, a.valores[0])) { mudaram++; continue; }
-      const antiga = existentes.find((c) => c.linha === a.linha);
-      folha.getRange(a.linha, 1, 1, a.valores.length + 1).setValues([a.valores.concat([antiga ? antiga.origem : origemAtual])]);
+      const antiga = existentePorLinha.get(a.linha);
+      completas.push({ linha: a.linha, valores: a.valores.concat([antiga ? antiga.origem : origemAtual]) });
     }
+    for (const f of agruparEmFaixas(completas)) folha.getRange(f.linha, 1, f.valores.length, f.valores[0].length).setValues(f.valores);
+    const marcas = [];
     for (const c of existentes) { // linha antiga sem marca: passa a ter, sem mudar mais nada
       if (!c.semMarca || gravadas.has(c.linha)) continue;
       if (!aindaEhAMesma(c.linha, c.id_evento)) { mudaram++; continue; }
-      folha.getRange(c.linha, colunaOrigem, 1, 1).setValues([[c.origem]]);
+      marcas.push({ linha: c.linha, valores: [c.origem] });
     }
+    for (const f of agruparEmFaixas(marcas)) folha.getRange(f.linha, colunaOrigem, f.valores.length, 1).setValues(f.valores);
     if (mudaram > 0) {
       plano.avisos.push(`${mudaram} linha(s) da aba Consultas mudaram de lugar durante a sincronização e não foram atualizadas desta vez. `
         + 'Nada foi gravado nelas; a próxima sincronização confere de novo.');

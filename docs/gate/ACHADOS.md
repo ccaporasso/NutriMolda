@@ -22,6 +22,8 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 | A-14 | Configuração acoplada: chave Pix em branco travava sincronização da agenda, "gerar a receber", relatório e recibo | MÉDIO | Corrigido (E2) |
 | A-15 | Pix aceitava valor que estoura o campo de 13 caracteres e gerava payload inválido | BAIXO | Corrigido (E2); leitura por banco real N/M |
 | A-16 | Esqueletos T20 a T24 (sem ponto de entrada) iam no pacote de produção | BAIXO | Corrigido (E2/E3) |
+| A-17 | Erro inesperado no gatilho manda um e-mail por execução (sem limite por dia) | BAIXO | Aberto (decisão do Caio) |
+| A-18 | Laços dentro de laços na lógica (agenda x pacientes, a receber x consultas, pacotes x pagamentos) e uma chamada à planilha por linha na sincronização | MÉDIO | Corrigido (E2) |
 
 ---
 
@@ -130,3 +132,22 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 - **CORREÇÃO:** `ARQUIVOS_ESQUELETO` em `scripts/empacotar-producao.js` deixa os cinco fora do pacote de produção (o projeto de TESTE continua com `src/` inteiro); o verificador recusa um pacote que os leve ou use seus nomes. Inventário e classificação em `docs/gate/INVENTARIO-CODIGO.md`.
 - **REGRESSÃO:** `tests/inventario-codigo.test.js` (9 casos) e `tests/producao.test.js`; mutação M45 (esvaziar a lista) detectada. **EVIDÊNCIA:** E2/E3. **Impacto:** nenhum para a nutricionista (nada os chamava); quando uma tarefa T20 a T24 virar funcionalidade, o arquivo sai da lista no mesmo commit que liga o menu.
 - **Corrigido em:** commit da etapa F (ver `git log`).
+
+## A-17 Erro inesperado no gatilho manda um e-mail por execução
+
+- **Encontrado em:** roteiro, item 37, ao contar o que cada execução horária grava. `sincronizarAgendaAutomatica` limita a 1 e-mail por dia e por causa só os problemas de uso (`ErroDeUso`); um erro inesperado (`registrarErro`) manda um e-mail em cada execução. Uma falha persistente do Google ou um defeito mandaria até 24 e-mails por dia e 24 linhas de Registro por dia.
+- **Impacto:** ruído e cansaço de alerta; nenhum dado vaza (o e-mail só leva módulo e horário). O comportamento atual cumpre a especificação ("todo erro gera e-mail", fluxo 7), por isso **não foi alterado**.
+- **Decisão do Caio:** aplicar o mesmo limite diário às falhas inesperadas (tabela de decisões em `docs/gate/RETENCAO-REGISTRO.md`). Evidência: E2 (`tests/registro-crescimento.test.js`, pior caso por execução).
+
+## A-18 Crescimento da lógica e chamadas externas dentro de laço
+
+- **Encontrado em:** roteiro, item 36, ao medir cenários de 100 pacientes, 1.000 e 5.000 consultas e 1.000 e 5.000 pagamentos (`scripts/desempenho.js`, `docs/gate/DESEMPENHO.md`).
+- **ANTES (medido):**
+  1. `planejarAReceber`: "há consulta anterior do mesmo paciente?" percorria todas as consultas para cada "primeira" consulta. Com cada consulta de um paciente diferente: **2.022 leituras de dado por consulta com 1.000 consultas e 10.031 com 5.000** (laço dentro de laço, n²). Também uma busca em todos os pagamentos para cada consulta cancelada.
+  2. `identificarPacienteAgenda`: cada evento percorria todos os pacientes. 5.000 eventos com 5.000 pacientes: **4.108 ms** no Node (milhões de normalizações de telefone).
+  3. `consumidasPorPacote`: cada pacote percorria todos os pacotes e todos os pagamentos (pacotes x pagamentos): 11,6 leituras por pacote com 1.000 e 51,6 com 5.000.
+  4. Sincronização: uma chamada `setValues` por linha. Base com 5.000 linhas sem marca de agenda (primeira sincronização depois de atualizar o kit): **5.001 escritas**; 300 consultas vizinhas remarcadas: **301 escritas**.
+- **CORREÇÃO:** índices montados uma vez (`indexarPacientesAgenda`, `primeiraConsultaPorPaciente_`, conjuntos de ids com cobrança aberta, contagens por (paciente, início)) e `agruparEmFaixas`, que junta só linhas consecutivas e do mesmo tamanho e grava cada faixa com uma chamada. O resultado das regras é o mesmo (testes de equivalência contra a definição por varredura, com dados aleatórios de semente fixa).
+- **DEPOIS (medido):** a receber, 5.000 consultas de pacientes distintos: 38 leituras por consulta (n log n, só da ordenação); agenda 5.000 x 5.000: **56 ms**; pacotes: 1 leitura por pacote, plana; escritas da sincronização: **2** para 5.000 linhas sem marca, **2** para 5.000 consultas novas, **1** para 300 linhas vizinhas remarcadas.
+- **Resíduo (aceito, documentado):** linhas **não vizinhas** continuam com uma escrita por faixa; 500 linhas isoladas = 500 escritas. A alternativa (reescrever o intervalo inteiro) tocaria em células que a nutricionista pode estar editando no mesmo instante. A Agenda devolve 250 eventos por página: 5.000 eventos são 20 chamadas `Calendar.Events.list`, inevitável. Tempo real de cada chamada no Google: N/M.
+- **REGRESSÃO:** `tests/desempenho.test.js` (15 casos, contagem e não tempo: 8 ficam vermelhos no código anterior); mutações M46 a M50. Simulador agora recusa `setValues` com tamanho diferente do intervalo, como o Planilhas. **EVIDÊNCIA:** E2. **Corrigido em:** commit da etapa F (ver `git log`).

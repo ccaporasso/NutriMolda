@@ -59,6 +59,11 @@ const MUTACOES = [
   ['M43', 'src/LeitorConfiguracoes.js', 'const erros = dominios ? errosDosDominios(resultado, dominios) : resultado.erros;', 'const erros = resultado.erros;', 'configuração: erro de um domínio volta a travar os outros (Pix em branco bloqueia a agenda)', 'configuracao-dominios / falhas'],
   ['M44', 'src/Pix.js', 'if (valorTexto.length > LIMITE_VALOR_PIX) throw', 'if (false) throw', 'Pix: aceitar valor que estoura o campo de 13 caracteres', 'limites-pix'],
   ['M45', 'scripts/empacotar-producao.js', "const ARQUIVOS_ESQUELETO = ['FilaAjustes.js', 'Frases.js', 'Modos.js', 'Presenca.js', 'Respostas.js'];", 'const ARQUIVOS_ESQUELETO = [];', 'produção: levar os esqueletos T20 a T24 para o Google da nutricionista', 'inventario-codigo / producao'],
+  ['M46', 'src/Agenda.js', 'ultima.linha + ultima.valores.length === item.linha', 'ultima.linha + ultima.valores.length <= item.linha', 'faixas: juntar linhas com lacuna (gravaria em linhas que não eram para mexer)', 'desempenho (agruparEmFaixas)'],
+  ['M47', 'src/Agenda.js', 'for (const p of pacientes) {\n    if (p.ativo === false) continue;', 'for (const p of pacientes) {\n    if (false) continue;', 'índice de pacientes: incluir paciente inativo', 'desempenho (equivalência do índice)'],
+  ['M48', 'src/Pagamentos.js', 'primeiraConsulta.get(String(c.codigo_paciente)) < `${c.data}${c.hora}`', 'primeiraConsulta.get(String(c.codigo_paciente)) <= `${c.data}${c.hora}`', 'a receber: a própria consulta conta como "anterior" (todo retorno cobrado vira conferência)', 'desempenho (equivalência) / pagamentos'],
+  ['M49', 'src/Acoes.js', 'return inicio === \'\' || copias.get(k) > 1 ? 0 : (pagos.get(k) || 0);', 'return inicio === \'\' ? 0 : (pagos.get(k) || 0);', 'pacote: contar consumo de pacote duplicado (ambíguo)', 'desempenho (equivalência) / invariantes-financeiros'],
+  ['M50', 'src/SincronizarAgenda.js', 'folha.getRange(f.linha, colunaOrigem, f.valores.length, 1).setValues(f.valores);', 'folha.getRange(f.linha, colunaOrigem, 1, 1).setValues(f.valores);', 'marca de agenda: faixa gravada com o tamanho errado', 'desempenho (chamadas) / simulador estrito'],
 ];
 
 function copiarProjeto() {

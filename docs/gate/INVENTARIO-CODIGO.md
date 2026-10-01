@@ -54,7 +54,7 @@ Resumo: 23 de produção, 5 esqueletos, 2 de teste, 0 experimentais.
 
 ## Fora de src/
 
-Ferramentas de desenvolvimento, nunca enviadas ao Google: `scripts/empacotar-producao.js`, `scripts/cobertura.js`, `scripts/mutacoes.js`, `scripts/seguranca.js`, `scripts/complexidade.js`, `scripts/revisao.js` (ciclo de revisão com o ChatGPT) e, na etapa E, `scripts/gate.js`. O protótipo da ponte oficial (`prototipo/`, D35/D44) pertence à outra linha de trabalho (PR #15) e não faz parte desta branch; quando entrar na `main`, deve ganhar classificação própria aqui (EXPERIMENTAL ou ESQUELETO) e ficar fora de `src/`, como a regra 2 do `CLAUDE.md` já exige.
+Ferramentas de desenvolvimento, nunca enviadas ao Google: `scripts/empacotar-producao.js`, `scripts/cobertura.js`, `scripts/mutacoes.js`, `scripts/seguranca.js`, `scripts/complexidade.js`, `scripts/desempenho.js`, `scripts/revisao.js` (ciclo de revisão com o ChatGPT) e, na etapa E, `scripts/gate.js`. O protótipo da ponte oficial (`prototipo/`, D35/D44) pertence à outra linha de trabalho (PR #15) e não faz parte desta branch; quando entrar na `main`, deve ganhar classificação própria aqui (EXPERIMENTAL ou ESQUELETO) e ficar fora de `src/`, como a regra 2 do `CLAUDE.md` já exige.
 
 ## Outras partes incompletas conhecidas
 

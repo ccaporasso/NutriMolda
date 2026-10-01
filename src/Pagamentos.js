@@ -31,11 +31,18 @@ function linhaPagamento(p) {
 // consultas: objetos de Consultas. pagamentos: objetos de Pagamentos. config: resultado de lerConfiguracoes().
 // Devolve { novos, avisos, contagens }. Não cria nada por conta própria e não repete cobrança
 // (uma consulta = um pagamento, achado pelo id_evento).
-// Há consulta anterior (não cancelada) do mesmo paciente? Usada para não cobrar retorno como primeira consulta.
-function temConsultaAnterior_(consultas, c) {
-  const chave = `${c.data}${c.hora}`;
-  return consultas.some((o) => o !== c && String(o.codigo_paciente) === String(c.codigo_paciente) && o.status !== 'cancelada'
-    && `${o.data}${o.hora}` < chave);
+// Para cada paciente, a data+hora da consulta não cancelada mais antiga. "Há consulta anterior do mesmo paciente?" (para não cobrar
+// retorno como primeira consulta) vira uma comparação com esse valor, em vez de percorrer todas as consultas a cada "primeira"
+// (crescimento consultas x primeiras). Compara com `<` (texto), como a regra sempre fez.
+function primeiraConsultaPorPaciente_(consultas) {
+  const menor = new Map();
+  for (const o of consultas) {
+    if (o.status === 'cancelada') continue;
+    const codigo = String(o.codigo_paciente);
+    const chave = `${o.data}${o.hora}`;
+    if (!menor.has(codigo) || chave < menor.get(codigo)) menor.set(codigo, chave);
+  }
+  return menor;
 }
 
 // `primeirasAprovadas`: ids de evento que ela confirmou, no menu, que são mesmo primeira consulta apesar do histórico
@@ -44,6 +51,7 @@ function planejarAReceber({ consultas, pagamentos, config, primeirasAprovadas = 
   const aprovadas = new Set(primeirasAprovadas.map(String));
   const preco = precoPagamentos_();
   const idsComPagamento = new Set(pagamentos.map((p) => String(p.id_evento)).filter((x) => x !== ''));
+  const idsComCobrancaAberta = new Set(pagamentos.filter((p) => p.status === 'a_receber').map((p) => String(p.id_evento)));
   let numero = proximoNumeroPagamento(pagamentos);
   const contagens = { jaTinham: 0, semPaciente: 0, semTipo: 0, semPreco: 0, canceladasComCobranca: 0, semIdEvento: 0, idRepetido: 0, pagamentoSemConsulta: 0, primeiraComHistorico: 0 };
   const linhasPrimeiraComHistorico = [];
@@ -57,6 +65,7 @@ function planejarAReceber({ consultas, pagamentos, config, primeirasAprovadas = 
   const novos = [];
 
   const ordenadas = consultas.slice().sort((a, b) => (`${a.data}${a.hora}`).localeCompare(`${b.data}${b.hora}`));
+  const primeiraConsulta = primeiraConsultaPorPaciente_(ordenadas);
   for (const c of ordenadas) {
     const id = String(c.id_evento === undefined || c.id_evento === null ? '' : c.id_evento).trim();
     if (id === '') { // sem id_evento não há como ligar a cobrança à consulta: recusa em vez de cobrar de novo a cada execução
@@ -66,14 +75,13 @@ function planejarAReceber({ consultas, pagamentos, config, primeirasAprovadas = 
     if (idsJaVistos.has(id)) { contagens.idRepetido++; linhasRepetidas.push(c.linha); continue; }
     idsJaVistos.add(id);
     if (c.status === 'cancelada') {
-      const aberto = pagamentos.some((p) => String(p.id_evento) === id && p.status === 'a_receber');
-      if (aberto) contagens.canceladasComCobranca++;
+      if (idsComCobrancaAberta.has(id)) contagens.canceladasComCobranca++;
       continue;
     }
     if (!STATUS_QUE_GERAM_COBRANCA.includes(c.status)) continue; // faltou: decisão dela, não do kit
     if (idsComPagamento.has(id)) { contagens.jaTinham++; continue; }
     if (!c.codigo_paciente) { contagens.semPaciente++; continue; }
-    if (c.tipo === 'primeira' && !aprovadas.has(id) && temConsultaAnterior_(ordenadas, c)) {
+    if (c.tipo === 'primeira' && !aprovadas.has(id) && primeiraConsulta.get(String(c.codigo_paciente)) < `${c.data}${c.hora}`) {
       contagens.primeiraComHistorico++; linhasPrimeiraComHistorico.push(c.linha); idsPrimeiraComHistorico.push(id); continue;
     }
     let valor;

@@ -99,12 +99,23 @@ function montarPixDoPagamento(pagamento, config) {
 // nunca falta uma consulta contada a mais, só a menos. Pagamento de pacote sem `pacote_inicio` (versão antiga) não é atribuído
 // a ninguém e pacotes com o mesmo paciente e início não são corrigidos (ambíguos).
 function consumidasPorPacote(pacotes, pagamentos) {
+  // Contagens montadas uma vez (antes, cada pacote percorria todos os pacotes e todos os pagamentos: crescimento pacotes x pagamentos).
+  const chave = (codigo, inicio) => `${codigo}\u0000${inicio}`;
+  const copias = new Map();
+  for (const p of pacotes) {
+    const k = chave(String(p.codigo_paciente), String(p.inicio || ''));
+    copias.set(k, (copias.get(k) || 0) + 1);
+  }
+  const pagos = new Map();
+  for (const g of pagamentos) {
+    if (g.status !== 'pago' || g.forma !== 'pacote') continue;
+    const k = chave(String(g.codigo_paciente), String(g.pacote_inicio || ''));
+    pagos.set(k, (pagos.get(k) || 0) + 1);
+  }
   return pacotes.map((p) => {
-    const codigo = String(p.codigo_paciente);
     const inicio = String(p.inicio || '');
-    if (inicio === '' || pacotes.filter((x) => String(x.codigo_paciente) === codigo && String(x.inicio || '') === inicio).length > 1) return 0;
-    return pagamentos.filter((g) => String(g.codigo_paciente) === codigo && g.status === 'pago' && g.forma === 'pacote'
-      && String(g.pacote_inicio || '') === inicio).length;
+    const k = chave(String(p.codigo_paciente), inicio);
+    return inicio === '' || copias.get(k) > 1 ? 0 : (pagos.get(k) || 0);
   });
 }
 
