@@ -112,7 +112,7 @@ function criarAmbiente({ comAbaRegistro = true, emailAlertas = 'alertas@exemplo.
     },
     Logger: { log: (m) => logger.push(m) },
   });
-  for (const arq of ['Esquema.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js']) {
+  for (const arq of ['Esquema.js', 'Formatos.js', 'Configuracoes.js', 'LeitorConfiguracoes.js', 'Registro.js', 'Alertas.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', arq), 'utf8'), contexto, { filename: require('node:url').pathToFileURL(path.join(__dirname, '..', 'src', arq)).href });
   }
   return { contexto, linhasRegistro, emails, logger, fusos, alertas };

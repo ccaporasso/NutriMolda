@@ -41,6 +41,15 @@ function dataHoraLocal(instanteIso) {
   };
 }
 
+// Proteção CENTRAL contra injeção de fórmula (Planilhas e CSV aberto no Excel): texto que começa com = + - @ (ou que começa com
+// tabulação ou retorno de carro, ou com espaços invisíveis seguidos desses sinais) ganha um espaço na frente e vira só texto.
+// Todo texto que o kit escreve numa planilha ou num CSV e que veio de alguém passa por aqui (Registro, Relatório, Respostas, LeitorAbas).
+// Não trata o sinal "＝" de largura total: nem o Planilhas nem o Excel o leem como fórmula.
+function neutralizarFormula(texto) {
+  const t = String(texto === undefined || texto === null ? '' : texto);
+  return /^[\s\u00A0\u200B-\u200D\u2060\uFEFF]*[=+\-@]/.test(t) || /^[\t\r]/.test(t) ? ` ${t}` : t;
+}
+
 const LIMITE_PRECO_CENTAVOS = 10000000;
 
 // 15000 -> "R$ 150,00"; 123456 -> "R$ 1.234,56".
@@ -96,6 +105,6 @@ function formatarCpf(texto) {
 if (typeof module !== 'undefined') {
   module.exports = {
     dataParaTexto, somarDiasNaData, textoParaData, dataHoraLocal,
-    formatarReais, formatarReaisSimples, lerReais, apenasDigitos, cpfValido, formatarCpf,
+    formatarReais, formatarReaisSimples, lerReais, apenasDigitos, cpfValido, formatarCpf, neutralizarFormula,
   };
 }

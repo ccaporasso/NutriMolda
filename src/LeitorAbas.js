@@ -39,11 +39,16 @@ function lerAbaComoObjetos(nomeAba) {
   return objetos;
 }
 
+// Texto escrito pelo kit nunca vira fórmula, mesmo que a célula não esteja em formato texto (proteção central, Formatos.js).
+function valorSeguro_(valor) {
+  return typeof valor === 'string' ? neutralizarFormula(valor) : valor;
+}
+
 function adicionarLinhas(nomeAba, linhas) {
   if (linhas.length === 0) return;
   const { aba, folha } = abrirFolhaConferida_(nomeAba);
   garantirEspacoNaFolha_(folha, aba, linhas.length);
-  folha.getRange(folha.getLastRow() + 1, 1, linhas.length, linhas[0].length).setValues(linhas);
+  folha.getRange(folha.getLastRow() + 1, 1, linhas.length, linhas[0].length).setValues(linhas.map((l) => l.map(valorSeguro_)));
 }
 
 // A grade do Planilhas tem tamanho fixo (1000 linhas numa aba nova): gravar além dela falha. Aumenta a grade antes de
@@ -75,14 +80,14 @@ function conferirLinha_(aba, folha, numeroLinha, esperado) {
 function gravarLinha(nomeAba, numeroLinha, valores, esperado) {
   const { aba, folha } = abrirFolhaConferida_(nomeAba);
   conferirLinha_(aba, folha, numeroLinha, esperado || { [aba.cabecalho[0]]: valores[0] });
-  folha.getRange(numeroLinha, 1, 1, valores.length).setValues([valores]);
+  folha.getRange(numeroLinha, 1, 1, valores.length).setValues([valores.map(valorSeguro_)]);
 }
 
 // `esperado`: colunas que identificam a linha, com os valores lidos antes (obrigatório: sem ele não há como conferir).
 function gravarCelula(nomeAba, numeroLinha, nomeColuna, valor, esperado) {
   const { aba, folha } = abrirFolhaConferida_(nomeAba);
   conferirLinha_(aba, folha, numeroLinha, esperado);
-  folha.getRange(numeroLinha, aba.cabecalho.indexOf(nomeColuna) + 1, 1, 1).setValues([[valor]]);
+  folha.getRange(numeroLinha, aba.cabecalho.indexOf(nomeColuna) + 1, 1, 1).setValues([[valorSeguro_(valor)]]);
 }
 
 // Números das linhas selecionadas na aba indicada (nunca o cabeçalho). Pede a aba certa se ela estiver em outra.

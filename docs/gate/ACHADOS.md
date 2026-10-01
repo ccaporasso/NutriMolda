@@ -16,6 +16,9 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 | A-08 | Dois CSVs de mesmo nome já existentes: só o primeiro é substituído | BAIXO | Aberto (documentado) |
 | A-09 | Agenda: instante sem fuso era lido no fuso da máquina | MÉDIO | Corrigido (E2) |
 | A-10 | Cobertura não contava o código carregado no Google simulado | INFORMATIVO | Corrigido (ferramenta) |
+| A-11 | Proteção contra fórmula em três cópias, sem tabulação/CR/espaço invisível, e texto regravado dependia do formato da célula | MÉDIO | Corrigido (E2); efeito real no Excel/Sheets N/M |
+| A-12 | Mensagem crua de erro inesperado aparece na tela da nutricionista | BAIXO | Aberto (decisão do Caio) |
+| A-13 | `exceptionLogging: STACKDRIVER` mantido: nenhuma função de menu ou gatilho deixa a exceção escapar | INFORMATIVO | Analisado; decisão do Caio pendente |
 
 ---
 
@@ -82,3 +85,18 @@ contra o Google simulado, **E3** análise estática, **E4** documentação, **N/
 ## A-10 Cobertura não contava o código carregado no Google simulado
 
 - **Encontrado em:** etapa C: a cobertura nativa do Node ignorava os arquivos de `src/` carregados com `vm` sem nome de arquivo (`GeradorRecibo.js`, `SincronizarAgenda.js` etc. nem apareciam). **CORREÇÃO:** `filename` como URL de arquivo no simulador. **Corrigido em:** `4a10c69`.
+
+## A-11 Proteção contra fórmula incompleta e duplicada
+
+- **Encontrado em:** roteiro, item 24. Três cópias da regra `/^[=+\-@]/` (Registro, Relatório, Respostas), nenhuma cobrindo tabulação, retorno de carro ou espaço invisível antes do sinal; texto digitado e regravado pelo kit em Pagamentos (`gravarLinha`) dependia só do formato texto da célula.
+- **CORREÇÃO:** `neutralizarFormula` em `src/Formatos.js` é a única regra; Registro, Relatório (aba e CSV), Respostas e a camada de escrita de `LeitorAbas.js` (`adicionarLinhas`, `gravarLinha`, `gravarCelula`) passam por ela. `＝` de largura total não é fórmula em nenhum dos dois leitores e não é alterado.
+- **REGRESSÃO:** `tests/seguranca-local.test.js`; mutações M29, M29b, M37. **EVIDÊNCIA:** E2. **N/M:** como o Excel e o Google Planilhas tratam um valor que começa com espaço seguido de `=` (o kit mantém a escolha anterior, o espaço) só se vê abrindo o CSV nos programas (roteiro em `GOOGLE-REAL.md`, item 14).
+- **Corrigido em:** commit da etapa D (ver `git log`).
+
+## A-12 Mensagem crua de erro na tela (ABERTO, BAIXO)
+
+- `executarNoMenu_` mostra `e.message` de erro inesperado na caixa de diálogo. Não é canal de log (só a dona vê), mas ela pode tirar foto para o suporte. As mensagens do Google, nos testes, não trazem dado de paciente; o kit nunca monta mensagem de erro com nome ou CPF. Opção: trocar por texto fixo e deixar o detalhe só no Registro. Muda a experiência de suporte: decisão do Caio.
+
+## A-13 Registro de exceções (Stackdriver)
+
+- Ver `docs/gate/SEGURANCA-LOCAL.md`, seção "Registro de exceções". Resultado: com erro fictício contendo nome, CPF e condição lançado em 11 pontos do Google simulado e 20 funções de menu mais o gatilho, nenhuma exceção crua escapou e nenhum texto fictício chegou a Registro, e-mail, nome de arquivo ou `Logger`. O que escapa por desenho são funções internas chamadas direto pelo editor do Apps Script e o `onOpen`.

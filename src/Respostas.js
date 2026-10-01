@@ -52,7 +52,7 @@ function validarResposta({ dataHora, codigo, resposta, nota }, codigosConhecidos
   if (!OPCOES_RESPOSTA.includes(resposta)) return { ok: false, motivo: `Resposta inválida (esperado: ${OPCOES_RESPOSTA.join(', ')}).` };
   let texto = mascararRespostas_(nota === undefined || nota === null ? '' : nota).trim();
   if (Array.from(texto).length > MAX_NOTA) texto = `${Array.from(texto).slice(0, MAX_NOTA).join('')}…`;
-  if (/^[=+\-@]/.test(texto)) texto = ` ${texto}`; // não vira fórmula na planilha
+  texto = typeof neutralizarFormula !== 'undefined' ? neutralizarFormula(texto) : require('./Formatos.js').neutralizarFormula(texto); // não vira fórmula na planilha
   return { ok: true, linha: [String(dataHora), String(codigo), resposta, texto] };
 }
 

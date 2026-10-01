@@ -21,9 +21,9 @@ function mascararDadosPessoais(texto) {
     ));
 }
 
-// O Planilhas trata texto que começa com = + - @ como fórmula. Um espaço na frente evita.
+// O Planilhas trata texto que começa com = + - @ como fórmula: a proteção é central (Formatos.js, neutralizarFormula).
 function neutralizarFormula_(texto) {
-  return /^[=+\-@]/.test(texto) ? ` ${texto}` : texto;
+  return typeof neutralizarFormula !== 'undefined' ? neutralizarFormula(texto) : require('./Formatos.js').neutralizarFormula(texto);
 }
 
 // O módulo é um nome fixo do kit (ex.: "sincronizacao"), nunca texto digitado: só a lista fechada
